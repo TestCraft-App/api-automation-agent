@@ -14,7 +14,7 @@ An open-source AI Agent that automatically generates an automation framework fro
 
 - Python 3.8 or higher
 - Node.js 18 or higher
-- OpenAI API key or Anthropic API key (Anthropic API key required by default)
+- Anthropic API key (Anthropic API key required by default), OpenAI API key or Google API key
 
 ## Installation
 
@@ -45,13 +45,14 @@ An open-source AI Agent that automatically generates an automation framework fro
 
 ## Large Language Models
 
-This project supports both Anthropic and OpenAI language models:
+This project supports Anthropic, OpenAI and Google language models. 
 
 ### Default Model
 
-**Claude 3.7 Sonnet** (claude-3-7-sonnet-latest) is the default and recommended model
+**Claude 3.7 Sonnet** (claude-3-7-sonnet-latest) is the default and recommended model for this agentic workflow.
 - Provides superior code generation and understanding
 - Offers the best balance of performance and cost
+- **Strongly recommended**: Other models may not provide satisfactory results for this specific use case
 
 ### Supported Models
 
@@ -64,16 +65,23 @@ This project supports both Anthropic and OpenAI language models:
 
   - GPT-4o (gpt-4o)
   - GPT-4.1 (gpt-4.1)
-  - GPT-4.1 Mini (gpt-4.1-mini)
   - O3 (o3)
-  - O3 Mini (o3-mini)
   - O4 Mini (o4-mini)
+
+**Google**
+
+  - Gemini 2.5 Pro Preview (gemini-2.5-pro-preview-03-25")
+  - Gemini 2.5 Pro Experimiental (gemini-2.5-pro-exp-03-25)
+
+Note: Google models are experimental for the moment, and are not recommended for a production workload.  
 
 You can configure your preferred model in the `.env` file:
 
 ```env
 MODEL=o4-mini
 ```
+
+> **Important**: Before using any model, please check the current pricing and costs on the respective provider's website (Anthropic, OpenAI, or Google). Model costs can vary significantly and may impact your usage budget.
 
 ## Usage
 
@@ -340,6 +348,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- OpenAI and Anthropic for their AI models
+- Anthropic, OpenAI and Google for their AI models
 - All contributors who have helped build and improve this project
 

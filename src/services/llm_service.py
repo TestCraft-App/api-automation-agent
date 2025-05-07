@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 import pydantic
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
@@ -13,7 +14,7 @@ from .file_service import FileService
 from ..configuration.config import Config
 from ..ai_tools.file_creation_tool import FileCreationTool
 from ..ai_tools.file_reading_tool import FileReadingTool
-from ..ai_tools.tool_converters import convert_tool_for_model
+
 from ..utils.logger import Logger
 
 
@@ -66,13 +67,19 @@ class LLMService:
 
             if self.config.model.is_anthropic():
                 return ChatAnthropic(
-                    model_name=self.config.model.value,
+                    model=self.config.model.value,
                     temperature=1,
                     api_key=pydantic.SecretStr(self.config.anthropic_api_key),
                     timeout=None,
                     stop=None,
                     max_retries=3,
-                    max_tokens_to_sample=8192,
+                    max_tokens=8192,
+                )
+            elif self.config.model.is_gemini():
+                return ChatGoogleGenerativeAI(
+                    model=self.config.model.value,
+                    temperature=1,
+                    max_retries=3,
                 )
             return ChatOpenAI(
                 model=self.config.model.value,
@@ -126,12 +133,10 @@ class LLMService:
             llm = self._select_language_model(language_model)
             prompt_template = ChatPromptTemplate.from_template(self._load_prompt(prompt_path))
 
-            converted_tools = [convert_tool_for_model(tool, llm) for tool in all_tools]
-
             if tool_to_use:
-                llm_with_tools = llm.bind_tools(converted_tools, tool_choice=tool_to_use)
+                llm_with_tools = llm.bind_tools(all_tools, tool_choice=tool_to_use)
             else:
-                llm_with_tools = llm.bind_tools(converted_tools)
+                llm_with_tools = llm.bind_tools(all_tools)
 
             def process_response(response):
                 tool_map = {tool.name.lower(): tool for tool in all_tools}

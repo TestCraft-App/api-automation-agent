@@ -1,12 +1,7 @@
-from collections import defaultdict
-import json
 import os
-import re
 import subprocess
 import logging
-import sys
 from typing import List, Dict, Tuple, Optional, Callable
-from src.visuals.loading_animator import LoadingDotsAnimator
 
 from ..configuration.config import Config
 
