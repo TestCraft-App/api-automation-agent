@@ -5,7 +5,7 @@ from typing import List, Optional, Union
 
 from src.ai_tools.models.file_spec import FileSpec
 from src.processors.api_processor import APIProcessor
-from src.models import APIModel, APIPath, APIVerb, GeneratedModel, ModelInfo
+from src.models import APIModel, APIPath, APIVerb, GeneratedModel, ModelInfo, APIDefinition
 from src.processors.postman.models import RequestData, ServiceVerbs, VerbInfo
 from src.processors.postman.postman_utils import PostmanUtils
 from src.services.file_service import FileService
@@ -19,15 +19,15 @@ class PostmanProcessor(APIProcessor):
         self.file_service = file_service
         self.logger = Logger.get_logger(__name__)
 
-    def process_api_definition(self, json_file_path: str) -> List[Union[APIPath, APIVerb]]:
+    def process_api_definition(self, json_file_path: str) -> APIDefinition:
         with open(json_file_path, encoding="utf-8") as f:
             data = json.load(f)
         requests = PostmanUtils.extract_requests(data)
         verbs = PostmanUtils.extract_verb_path_info(requests)
 
-        result = []
+        result = APIDefinition()
         for verb in verbs:
-            result.append(
+            result.add_definition(
                 APIVerb(
                     verb=verb.verb,
                     path=verb.path,
@@ -37,18 +37,14 @@ class PostmanProcessor(APIProcessor):
             )
         return result
 
-    def extract_env_vars(self, requests: List[Union[APIPath, APIVerb]]) -> List[str]:
-        return PostmanUtils.extract_env_vars(requests)
+    def extract_env_vars(self, api_definition: APIDefinition) -> List[str]:
+        return PostmanUtils.extract_env_vars(api_definition.definitions)
 
-    def get_api_paths(
-        self,
-        requests: List[Union[APIPath, APIVerb]],
-        endpoints: Optional[List[str]] = None,
-    ) -> List[APIPath]:
+    def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath]:
         # Build VerbInfo list
-        verbs = PostmanUtils.extract_verb_path_info(requests)
+        verbs = PostmanUtils.extract_verb_path_info(api_definition.definitions)
         # Build ServiceVerbs
-        paths = [r.path.split("?", 1)[0] for r in requests]
+        paths = [r.path.split("?", 1)[0] for r in api_definition.definitions]
         sv = PostmanUtils.map_verb_path_pairs_to_services(verbs, paths)
 
         result = []
@@ -105,8 +101,8 @@ class PostmanProcessor(APIProcessor):
     def get_api_verb_name(self, verb: APIVerb) -> str:
         return verb.verb
 
-    def get_api_verbs(self, svc: List[Union[APIPath, APIVerb]], endpoints=None) -> List[APIVerb]:
-        return [v for v in svc if isinstance(v, APIVerb)]
+    def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb]:
+        return api_definition.get_verbs()
 
     def get_api_verb_content(self, verb: APIVerb) -> str:
         return verb.yaml
@@ -114,8 +110,8 @@ class PostmanProcessor(APIProcessor):
     def get_api_path_content(self, svc: APIPath) -> str:
         return svc.yaml
 
-    def update_framework_for_postman(self, destination_folder: str, requests: List[Union[APIPath, APIVerb]]):
-        self._create_run_order_file(destination_folder, requests)
+    def update_framework_for_postman(self, destination_folder: str, api_definition: APIDefinition):
+        self._create_run_order_file(destination_folder, api_definition)
         self._update_package_dot_json(destination_folder)
 
     def _update_package_dot_json(self, destination_folder: str):
@@ -130,11 +126,11 @@ class PostmanProcessor(APIProcessor):
         except Exception as e:
             self.logger.error(f"Failed to update package.json: {e}")
 
-    def _create_run_order_file(self, destination_folder: str, requests: List[Union[APIPath, APIVerb]]):
+    def _create_run_order_file(self, destination_folder: str, api_definition: APIDefinition):
         lines = ["// This file runs the tests in order"]
-        for r in requests:
-            if isinstance(r, APIVerb):
-                lines.append(f'import "./{r.path}.spec.ts";')
+        for definition in api_definition.definitions:
+            if isinstance(definition, APIVerb):
+                lines.append(f'import "./{definition.path}.spec.ts";')
         fspec = FileSpec(path="runTestsInOrder.js", fileContent="\n".join(lines))
         self.file_service.create_files(destination_folder, [fspec])
         self.logger.info(f"Created runTestsInOrder.js at {destination_folder}")
