@@ -1,11 +1,12 @@
-from dataclasses import dataclass
-import re
-import sys
-from typing import List, Dict, Optional, Tuple
-from collections import defaultdict
-import subprocess
-import os
 import json
+import os
+import re
+import subprocess
+import sys
+from collections import defaultdict
+from dataclasses import dataclass
+from typing import List, Dict, Optional, Tuple
+
 from src.configuration.config import Config
 from src.services.command_service import CommandService
 from src.utils.logger import Logger
@@ -108,7 +109,10 @@ class TestController:
 
         return all_parsed_tests, all_parsed_failures
 
-    def _report_tests(self, tests: List[Dict[str, str]], failures: List[Dict[str, str]] = []) -> None:
+    def _report_tests(self, tests: List[Dict[str, str]], failures=None) -> None:
+        if failures is None:
+            failures = []
+
         grouped_tests = defaultdict(list)
 
         seen = set()

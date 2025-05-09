@@ -3,19 +3,25 @@ from typing import Any, Dict, List, Optional
 
 import pydantic
 from langchain_anthropic import ChatAnthropic
-from langchain_openai import ChatOpenAI
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
-from src.configuration.models import Model
-from src.configuration.data_sources import DataSource
+from langchain_openai import ChatOpenAI
 
+from src.configuration.data_sources import DataSource
+from src.configuration.models import Model
 from .file_service import FileService
-from ..configuration.config import Config
 from ..ai_tools.file_creation_tool import FileCreationTool
 from ..ai_tools.file_reading_tool import FileReadingTool
-from ..ai_tools.tool_converters import convert_tool_for_model
+from ..configuration.config import Config
 from ..utils.logger import Logger
+from src.ai_tools.models.file_spec import FileSpec
+from src.ai_tools.tools.file_creation_tool import FileCreationTool
+from src.ai_tools.tools.file_reading_tool import FileReadingTool
+from src.configuration.prompt_config import PromptConfig
+from src.models import APIModel, APIVerb, GeneratedModel
+from src.models.model_info import ModelInfo
+from src.models.api_path import APIPath
 
 
 class PromptConfig:
@@ -54,10 +60,9 @@ class LLMService:
 
     def _select_language_model(
         self, language_model: Optional[Model] = None, override: bool = False
-    ) -> BaseLanguageModel:
+    ) -> ChatOpenAI | ChatAnthropic:
         """
         Select and configure the appropriate language model.
-
 
         Returns:
             BaseLanguageModel: Configured language model
@@ -115,7 +120,7 @@ class LLMService:
         Args:
             prompt_path (str): Path to the prompt template
             tools (Optional[List[BaseTool]]): Tools to bind
-            tool_to_use (Optional[str]): Name of the tool to use
+            must_use_tool (Optional[bool]): Whether to enforce tool usage
             language_model (Optional[BaseLanguageModel]): Language model to use
 
         Returns:
@@ -128,7 +133,6 @@ class LLMService:
             prompt_template = ChatPromptTemplate.from_template(self._load_prompt(prompt_path))
 
             if tools:
-                converted_tools = [convert_tool_for_model(tool, llm) for tool in all_tools]
                 tool_choice = "auto"
                 if self.config.model.is_anthropic():
                     if must_use_tool:
@@ -136,7 +140,7 @@ class LLMService:
                 else:
                     if must_use_tool:
                         tool_choice = "required"
-                llm_with_tools = llm.bind_tools(converted_tools, tool_choice=tool_choice)
+                llm_with_tools = llm.bind_tools(all_tools, tool_choice=tool_choice)
             else:
                 llm_with_tools = llm
 
@@ -158,49 +162,76 @@ class LLMService:
             self.logger.error(f"Chain creation error: {e}")
             raise
 
-    def generate_dot_env(self, api_definition: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Generate .env file configuration."""
-        return json.loads(
-            self.create_ai_chain(
-                PromptConfig.DOT_ENV,
-                tools=[FileCreationTool(self.config, self.file_service)],
-                must_use_tool=True,
-            ).invoke({"api_definition": api_definition})
-        )
+    def generate_models(self, api_definition: APIPath) -> List[GeneratedModel]:
+        """Generate models for the API definition."""
+        try:
+            self.logger.info(f"Generating models for {api_definition.path}")
+            model_info = ModelInfo(path=api_definition.path)
 
-    def generate_models(self, api_definition: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Generate models from API definition."""
-        return json.loads(
-            self.create_ai_chain(
-                PromptConfig.MODELS,
-                tools=[FileCreationTool(self.config, self.file_service, are_models=True)],
-                must_use_tool=True,
-            ).invoke({"api_definition": api_definition})
-        )
+            # Generate models using LLM
+            response = self._generate_with_llm(
+                api_definition.yaml, self.prompt_config.model_generation_prompt
+            )
+
+            if not response:
+                self.logger.warning(f"No models generated for {api_definition.path}")
+                return []
+
+            # Parse and create models
+            for model_data in response:
+                model = GeneratedModel(
+                    path=model_data["path"],
+                    fileContent=model_data["fileContent"],
+                    summary=model_data["summary"],
+                )
+                model_info.add_model(model)
+
+            self.logger.info(f"Generated {len(model_info.models)} models for {api_definition.path}")
+            return model_info.models
+
+        except Exception as e:
+            self.logger.error(f"Error generating models: {str(e)}")
+            return []
 
     def generate_first_test(
-        self, api_definition: Dict[str, Any], models: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
-        """Generate first test from API definition and models."""
-        prompt = None
-        if self.config.data_source == DataSource.POSTMAN:
-            prompt = PromptConfig.FIRST_TEST_POSTMAN
-        else:
-            prompt = PromptConfig.FIRST_TEST
+        self, api_definition: APIPath, models: List[GeneratedModel]
+    ) -> List[GeneratedModel]:
+        """Generate the first test for the API definition."""
+        try:
+            self.logger.info(f"Generating first test for {api_definition.path}")
+            model_info = ModelInfo(path=f"{api_definition.path}/tests")
 
-        return json.loads(
-            self.create_ai_chain(
-                prompt,
-                tools=[FileCreationTool(self.config, self.file_service)],
-                must_use_tool=True,
-            ).invoke({"api_definition": api_definition, "models": models})
-        )
+            # Generate test using LLM
+            response = self._generate_with_llm(
+                api_definition.yaml,
+                self.prompt_config.test_generation_prompt,
+                models=[model.to_json() for model in models],
+            )
+
+            if not response:
+                self.logger.warning(f"No test generated for {api_definition.path}")
+                return []
+
+            # Parse and create test model
+            test_model = GeneratedModel(
+                path=response[0]["path"],
+                fileContent=response[0]["fileContent"],
+                summary=response[0]["summary"],
+            )
+            model_info.add_model(test_model)
+
+            self.logger.info(f"Generated test for {api_definition.path}")
+            return model_info.models
+
+        except Exception as e:
+            self.logger.error(f"Error generating test: {str(e)}")
+            return []
 
     def get_additional_models(
         self,
-        relevant_models: List[Dict[str, Any]],
-        available_models: List[Dict[str, Any]],
-    ):
+        relevant_models: List[GeneratedModel],
+        available_models: List[APIModel],
+    ) -> List[FileSpec]:
         """Trigger read file tool to decide what additional model info is needed"""
         self.logger.info("\nGetting additional models...")
         return self.create_ai_chain(
@@ -209,31 +240,37 @@ class LLMService:
             must_use_tool=True,
         ).invoke(
             {
-                "relevant_models": relevant_models,
-                "available_models": available_models,
+                "relevant_models": [model.to_json() for model in relevant_models],
+                "available_models": [model.to_json() for model in available_models],
             }
         )
 
     def generate_additional_tests(
         self,
-        tests: List[Dict[str, Any]],
-        models: List[Dict[str, Any]],
-        api_definition: Dict[str, Any],
-    ) -> List[Dict[str, Any]]:
-        """Generate additional tests from tests, models and an API definition."""
-        return json.loads(
-            self.create_ai_chain(
-                PromptConfig.ADDITIONAL_TESTS,
-                tools=[FileCreationTool(self.config, self.file_service)],
-                must_use_tool=True,
-            ).invoke(
-                {
-                    "tests": tests,
-                    "models": models,
-                    "api_definition": api_definition,
-                }
-            )
+        tests: List[FileSpec],
+        models: List[GeneratedModel],
+        api_definition: str,
+    ) -> List[FileSpec]:
+        """Generate additional tests based on the initial test and models."""
+        return self.create_ai_chain(
+            PromptConfig.ADDITIONAL_TESTS,
+            tools=[FileCreationTool(self.config, self.file_service)],
+            must_use_tool=True,
+        ).invoke(
+            {
+                "tests": tests,
+                "models": [model.to_json() for model in models],
+                "api_definition": api_definition,
+            }
         )
+
+    def generate_dot_env(self, env_vars: List[str]) -> None:
+        """Generate .env file with environment variables."""
+        self.create_ai_chain(
+            PromptConfig.DOT_ENV,
+            tools=[FileCreationTool(self.config, self.file_service)],
+            must_use_tool=True,
+        ).invoke({"env_vars": env_vars})
 
     def fix_typescript(
         self, files: List[Dict[str, str]], messages: List[str], are_models: bool = False
@@ -244,6 +281,7 @@ class LLMService:
         Args:
             files (List[Dict[str, str]]): Files to fix
             messages (List[str]): Associated error messages
+            are_models (bool): Whether the files are models
         """
         self.logger.info("\nFixing TypeScript files:")
         for file in files:

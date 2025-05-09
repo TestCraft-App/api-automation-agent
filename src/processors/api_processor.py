@@ -1,8 +1,12 @@
-from abc import ABC, abstractmethod
 import json
-import yaml
 import logging
+from abc import ABC, abstractmethod
+from typing import List, Optional, Union
+
+import yaml
+
 from src.configuration.data_sources import DataSource
+from src.models import APIModel, APIPath, APIVerb, GeneratedModel, ModelInfo
 
 
 class APIProcessor(ABC):
@@ -42,51 +46,56 @@ class APIProcessor(ABC):
             except Exception as e:
                 if logger:
                     logger.error(f"Error reading file {api_file_path} with encoding {encoding}: {e}")
+        return DataSource.NONE
 
     @abstractmethod
-    def process_api_definition(self, api_file_path):
+    def process_api_definition(self, api_file_path: str) -> List[Union[APIPath, APIVerb]]:
         pass
 
     @abstractmethod
-    def get_api_verbs(self, api_definition, endpoints=None):
+    def get_api_verbs(
+        self, api_definition: List[Union[APIPath, APIVerb]], endpoints: Optional[List[str]] = None
+    ) -> List[APIVerb]:
         pass
 
     @abstractmethod
-    def get_api_paths(self, api_definition, endpoints=None):
+    def get_api_paths(
+        self, api_definition: List[Union[APIPath, APIVerb]], endpoints: Optional[List[str]] = None
+    ) -> List[APIPath]:
         pass
 
     @abstractmethod
-    def get_relevant_models(self, all_models, api_verb):
+    def get_relevant_models(self, all_models: List[ModelInfo], api_verb: APIVerb) -> List[GeneratedModel]:
         pass
 
     @abstractmethod
-    def get_other_models(self, all_models, api_verb):
+    def get_other_models(self, all_models: List[ModelInfo], api_verb: APIVerb) -> List[APIModel]:
         pass
 
     @abstractmethod
-    def get_api_path_content(self, api_path_definition):
+    def get_api_path_content(self, api_path: APIPath) -> str:
         pass
 
     @abstractmethod
-    def get_api_verb_content(self, api_verb_definition):
+    def get_api_verb_content(self, api_verb: APIVerb) -> str:
         pass
 
     @abstractmethod
-    def get_api_verb_rootpath(self, api_verb_definition):
+    def get_api_verb_rootpath(self, api_verb: APIVerb) -> str:
         pass
 
     @abstractmethod
-    def get_api_verb_path(self, api_verb_definition):
+    def get_api_verb_path(self, api_verb: APIVerb) -> str:
         pass
 
     @abstractmethod
-    def get_api_path_name(self, api_path):
+    def get_api_path_name(self, api_path: APIPath) -> str:
         pass
 
     @abstractmethod
-    def get_api_verb_name(self, api_verb):
+    def get_api_verb_name(self, api_verb: APIVerb) -> str:
         pass
 
     @abstractmethod
-    def extract_env_vars(self, api_defintions):
+    def extract_env_vars(self, api_definitions: List[Union[APIPath, APIVerb]]) -> List[str]:
         pass

@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 from typing import List, Type
@@ -7,12 +6,10 @@ from langchain_core.tools import BaseTool
 from pydantic import BaseModel
 
 from src.ai_tools.models.file_reading_input import FileReadingInput
-
 from .models.file_spec import FileSpec
-
 from ..configuration.config import Config
-from ..utils.logger import Logger
 from ..services.file_service import FileService
+from ..utils.logger import Logger
 
 
 class FileReadingTool(BaseTool):

@@ -1,12 +1,7 @@
-from collections import defaultdict
-import json
-import os
-import re
-import subprocess
 import logging
-import sys
+import os
+import subprocess
 from typing import List, Dict, Tuple, Optional, Callable
-from src.visuals.loading_animator import LoadingDotsAnimator
 
 from ..configuration.config import Config
 
@@ -93,18 +88,6 @@ class CommandService:
         except Exception as e:
             self._log_message(f"Unexpected error: {e}", is_error=True)
             return False, str(e)
-
-    def run_command_silently(self, command: str, cwd: str) -> str:
-        result = subprocess.run(
-            command,
-            shell=True,
-            cwd=cwd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            encoding="utf-8",
-            errors="replace",
-        )
-        return result.stdout or ""
 
     def run_command_with_fix(
         self,
@@ -198,34 +181,47 @@ class CommandService:
     ) -> Tuple[bool, str]:
         """Run TypeScript compiler for specific files"""
         self._log_message(f"Running TypeScript compiler for files: {[file['path'] for file in files]}")
-        compiler_command = build_typescript_compiler_command(files)
+        compiler_command = self.build_typescript_compiler_command(files)
         return self.run_command(compiler_command)
 
+    @staticmethod
+    def run_command_silently(command: str, cwd: str) -> str:
+        result = subprocess.run(
+            command,
+            shell=True,
+            cwd=cwd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="replace",
+        )
+        return result.stdout or ""
 
-def build_typescript_compiler_command(files: List[Dict[str, str]]) -> str:
-    """Build the TypeScript compiler command for specific files"""
-    file_paths = " ".join(file["path"] for file in files)
-    return (
-        f"npx tsc {file_paths} "
-        "--lib es2021 "
-        "--module NodeNext "
-        "--target ESNext "
-        "--strict "
-        "--esModuleInterop "
-        "--skipLibCheck "
-        "--forceConsistentCasingInFileNames "
-        "--moduleResolution nodenext "
-        "--allowUnusedLabels false "
-        "--allowUnreachableCode false "
-        "--noFallthroughCasesInSwitch "
-        "--noImplicitOverride "
-        "--noImplicitReturns "
-        "--noPropertyAccessFromIndexSignature "
-        "--noUncheckedIndexedAccess "
-        "--noUnusedLocals "
-        "--noUnusedParameters "
-        "--checkJs "
-        "--noEmit "
-        "--strictNullChecks false "
-        "--excludeDirectories node_modules"
-    )
+    @staticmethod
+    def build_typescript_compiler_command(files: List[Dict[str, str]]) -> str:
+        """Build the TypeScript compiler command for specific files"""
+        file_paths = " ".join(file["path"] for file in files)
+        return (
+            f"npx tsc {file_paths} "
+            "--lib es2021 "
+            "--module NodeNext "
+            "--target ESNext "
+            "--strict "
+            "--esModuleInterop "
+            "--skipLibCheck "
+            "--forceConsistentCasingInFileNames "
+            "--moduleResolution nodenext "
+            "--allowUnusedLabels false "
+            "--allowUnreachableCode false "
+            "--noFallthroughCasesInSwitch "
+            "--noImplicitOverride "
+            "--noImplicitReturns "
+            "--noPropertyAccessFromIndexSignature "
+            "--noUncheckedIndexedAccess "
+            "--noUnusedLocals "
+            "--noUnusedParameters "
+            "--checkJs "
+            "--noEmit "
+            "--strictNullChecks false "
+            "--excludeDirectories node_modules"
+        )
