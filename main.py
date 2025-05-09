@@ -1,31 +1,28 @@
-from argparse import Namespace
 import logging
 import os
 import traceback
+from argparse import Namespace
 
 from dependency_injector.wiring import inject, Provide
-from dependency_injector import providers
 from dotenv import load_dotenv
 
 from src.adapters.config_adapter import ProdConfigAdapter, DevConfigAdapter
 from src.adapters.processors_adapter import ProcessorsAdapter
 from src.configuration.cli import CLIArgumentParser
 from src.configuration.config import Config, GenerationOptions, Envs
+from src.configuration.data_sources import DataSource, get_processor_for_data_source
 from src.container import Container
-from src.framework_generator import FrameworkGenerator
+from src.processors.api_processor import APIProcessor
+from src.processors.swagger.endpoint_lister import EndpointLister
 from src.test_controller import TestController
 from src.utils.checkpoint import Checkpoint
 from src.utils.logger import Logger
-from src.processors.swagger.endpoint_lister import EndpointLister
-from src.configuration.data_sources import DataSource, get_processor_for_data_source
-from src.processors.api_processor import APIProcessor
 
 
 @inject
 def main(
     logger: logging.Logger,
     config: Config = Provide[Container.config],
-    framework_generator: FrameworkGenerator = Provide[Container.framework_generator],
     test_controller: TestController = Provide[Container.test_controller],
 ):
     """Main function to orchestrate the API framework generation process."""

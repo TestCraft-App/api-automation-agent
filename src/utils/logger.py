@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from typing import Optional, List
+from typing import List
 
 from src.configuration.config import Config
 
@@ -17,14 +17,12 @@ class Logger:
 
         # Handlers
         stdout_handler = logging.StreamHandler(sys.stdout)
-        stdout_handler.setLevel(logging.DEBUG if config.debug else logging.INFO)
+        stdout_handler.setLevel(log_level)
         stdout_handler.setFormatter(logging.Formatter(stdout_format))
 
         log_folder = "logs/"
         os.makedirs(os.path.dirname(log_folder), exist_ok=True)
-        file_handler = MultilineFileHandler(
-            log_folder + config.destination_folder.split("/")[-1] + ".log"
-        )
+        file_handler = MultilineFileHandler(log_folder + config.destination_folder.split("/")[-1] + ".log")
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(logging.Formatter(file_format))
 
@@ -49,9 +47,7 @@ class MultilineFileHandler(logging.FileHandler):
             if not isinstance(record.msg, str):
                 record.msg = str(record.msg)
 
-            messages: List[str] = [
-                message for message in record.msg.split("\n") if message.strip()
-            ]
+            messages: List[str] = [message for message in record.msg.split("\n") if message.strip()]
 
             if not messages:
                 return

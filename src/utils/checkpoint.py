@@ -1,9 +1,10 @@
+import dbm
 import inspect
 import os
 import shelve
-import dbm
 from functools import wraps
 from typing import Dict, Any, Optional, Iterable, Generator
+
 from src.utils.logger import Logger
 
 
@@ -103,14 +104,10 @@ class Checkpoint:
                     setattr(self.obj, key, value)
                 self.logger.info(f"🔄 Restored object state: {obj_state}")
 
-            function_state = {
-                var: saved_data[var] for var in saved_data if var != "self"
-            }
+            function_state = {var: saved_data[var] for var in saved_data if var != "self"}
             return function_state
 
-    def checkpoint_iter(
-        self, iterable: Iterable, tag: str, extra_state: Dict[str, Any] = None
-    ) -> Generator:
+    def checkpoint_iter(self, iterable: Iterable, tag: str, extra_state: Dict[str, Any] = None) -> Generator:
         """
         Wraps a for-loop to automatically save and restore progress.
 
@@ -139,9 +136,7 @@ class Checkpoint:
         if len(processed) == 0:
             self.logger.debug(f"🔄 Starting checkpoint '{tag}' from the beginning.")
         else:
-            self.logger.debug(
-                f"🔄 Already processed {len(processed)} items, resuming checkpoint '{tag}'."
-            )
+            self.logger.debug(f"🔄 Already processed {len(processed)} items, resuming checkpoint '{tag}'.")
 
         for item in remaining_items:
             yield item
@@ -186,9 +181,7 @@ class Checkpoint:
                     return result
                 except Exception as e:
                     self.save_state()
-                    Logger.get_logger(__name__).warning(
-                        f"⚠️ Exception occurred: {e}, state saved."
-                    )
+                    Logger.get_logger(__name__).warning(f"⚠️ Exception occurred: {e}, state saved.")
                     raise
 
             return wrapper
