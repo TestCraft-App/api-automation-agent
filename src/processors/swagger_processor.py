@@ -7,7 +7,7 @@ import yaml
 from src.ai_tools.models.file_spec import FileSpec
 from src.configuration.config import Config
 from src.processors.api_processor import APIProcessor
-from src.models import APIModel, APIPath, APIVerb, GeneratedModel, ModelInfo
+from src.models import APIModel, APIPath, APIVerb, GeneratedModel, ModelInfo, APIDefinition
 from src.services.file_service import FileService
 from .swagger import (
     APIDefinitionMerger,
@@ -47,7 +47,7 @@ class SwaggerProcessor(APIProcessor):
         self.api_definition_loader = api_definition_loader or APIDefinitionLoader()
         self.logger = Logger.get_logger(__name__)
 
-    def process_api_definition(self, api_definition: str) -> List[Union[APIPath, APIVerb]]:
+    def process_api_definition(self, api_definition: str) -> APIDefinition:
         """
         Processes an API definition by loading, splitting, and merging its components.
 
@@ -55,7 +55,7 @@ class SwaggerProcessor(APIProcessor):
             api_definition (str): URL or path to the API definition.
 
         Returns:
-            List of merged API definitions.
+            APIDefinition containing the processed API definitions.
         """
         try:
             self.logger.info("Starting API processing")
@@ -63,16 +63,16 @@ class SwaggerProcessor(APIProcessor):
             split_definitions = self.splitter.split(raw_definition)
             merged_definitions = self.merger.merge(split_definitions)
 
-            result = []
+            result = APIDefinition(endpoints=self.config.endpoints)
             for definition in merged_definitions:
                 if definition["type"] == "path":
-                    result.append(APIPath(path=definition["path"], yaml=definition["yaml"]))
+                    result.add_definition(APIPath(path=definition["path"], yaml=definition["yaml"]))
                 elif definition["type"] == "verb":
-                    result.append(
+                    result.add_definition(
                         APIVerb(
                             verb=definition["verb"],
                             path=definition["path"],
-                            root_path=self._get_root_path(definition["path"]),
+                            root_path=APIVerb.get_root_path(definition["path"]),
                             yaml=definition["yaml"],
                         )
                     )
@@ -83,10 +83,10 @@ class SwaggerProcessor(APIProcessor):
             self.logger.error(f"Error processing API definition: {e}")
             raise
 
-    def extract_env_vars(self, api_definitions: List[Union[APIPath, APIVerb]]) -> None:
+    def extract_env_vars(self, api_definition: APIDefinition) -> None:
         self.logger.info("\nGenerating .env file...")
 
-        api_definition_str = api_definitions[0].yaml
+        api_definition_str = api_definition.definitions[0].yaml
         try:
             api_spec = json.loads(api_definition_str)
         except json.JSONDecodeError:
@@ -124,37 +124,20 @@ class SwaggerProcessor(APIProcessor):
 
         return None
 
-    def get_api_paths(
-        self, api_definition: List[Union[APIPath, APIVerb]], endpoints: Optional[List[str]] = None
-    ) -> List[APIPath]:
-        result = []
-        for definition in api_definition:
-            if not self._should_process_endpoint(definition.path, endpoints):
-                continue
-            if isinstance(definition, APIPath):
-                result.append(definition)
-        return result
-
-    def _should_process_endpoint(self, path: str, endpoints: List[str]) -> bool:
-        """Check if an endpoint should be processed based on configuration"""
-        if endpoints is None:
-            return True
-
-        return any(path.startswith(endpoint) for endpoint in endpoints)
+    def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath]:
+        """Get all path definitions that should be processed."""
+        return [
+            path for path in api_definition.get_paths() if api_definition.should_process_endpoint(path.path)
+        ]
 
     def get_api_path_name(self, api_path: APIPath) -> str:
         return api_path.path
 
-    def get_api_verbs(
-        self, api_definition: List[Union[APIPath, APIVerb]], endpoints: Optional[List[str]] = None
-    ) -> List[APIVerb]:
-        result = []
-        for definition in api_definition:
-            if not self._should_process_endpoint(definition.path, endpoints):
-                continue
-            if isinstance(definition, APIVerb):
-                result.append(definition)
-        return result
+    def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb]:
+        """Get all verb definitions that should be processed."""
+        return [
+            verb for verb in api_definition.get_verbs() if api_definition.should_process_endpoint(verb.path)
+        ]
 
     def get_api_verb_path(self, api_verb: APIVerb) -> str:
         return api_verb.path
@@ -164,11 +147,6 @@ class SwaggerProcessor(APIProcessor):
 
     def get_api_verb_name(self, api_verb: APIVerb) -> str:
         return api_verb.verb
-
-    @staticmethod
-    def _get_root_path(path: str) -> str:
-        """Gets the root path from a full path."""
-        return APIVerb.get_root_path(path)
 
     def get_relevant_models(self, all_models: List[ModelInfo], api_verb: APIVerb) -> List[GeneratedModel]:
         """Get models relevant to the API verb."""
