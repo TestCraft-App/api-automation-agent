@@ -5,6 +5,7 @@ from typing import List
 from src.ai_tools.models.file_spec import FileSpec
 from src.processors.api_processor import APIProcessor
 from src.models import APIModel, APIPath, APIVerb, GeneratedModel, ModelInfo, APIDefinition
+from src.processors.postman.models import RequestData
 from src.processors.postman.postman_utils import PostmanUtils
 from src.services.file_service import FileService
 from src.utils.logger import Logger
@@ -17,23 +18,10 @@ class PostmanProcessor(APIProcessor):
         self.file_service = file_service
         self.logger = Logger.get_logger(__name__)
 
-    def process_api_definition(self, json_file_path: str) -> APIDefinition:
+    def process_api_definition(self, json_file_path: str) -> List[RequestData]:
         with open(json_file_path, encoding="utf-8") as f:
             data = json.load(f)
-        requests = PostmanUtils.extract_requests(data)
-        verbs = PostmanUtils.extract_verb_path_info(requests)
-
-        result = APIDefinition()
-        for verb in verbs:
-            result.add_definition(
-                APIVerb(
-                    verb=verb.verb,
-                    path=verb.path,
-                    root_path=verb.root_path,
-                    yaml=json.dumps({"verb": verb.verb, "path": verb.path}),
-                )
-            )
-        return result
+        return PostmanUtils.extract_requests(data)
 
     def extract_env_vars(self, api_definition: APIDefinition) -> List[str]:
         return PostmanUtils.extract_env_vars(api_definition)

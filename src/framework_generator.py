@@ -1,6 +1,6 @@
 import signal
 import sys
-from typing import List, Dict, Any, Optional, cast, Union
+from typing import List, Dict, Any, Optional, cast
 
 from src.configuration.data_sources import DataSource
 from src.processors.api_processor import APIProcessor
@@ -37,12 +37,13 @@ class FrameworkGenerator:
         signal.signal(signal.SIGINT, self._handle_interrupt)
         signal.signal(signal.SIGTERM, self._handle_interrupt)
 
-    def _handle_interrupt(self, signum, frame):
+    def _handle_interrupt(self, _signum, _frame):
         self.logger.warning("⚠️ Process interrupted! Saving progress...")
         try:
             self.save_state()
-        finally:
-            sys.exit(1)
+        except Exception as e:
+            self.logger.error(f"Error saving state: {e}")
+        sys.exit(1)
 
     def _log_error(self, message: str, exc: Exception):
         """Helper method to log errors consistently"""
@@ -68,7 +69,9 @@ class FrameworkGenerator:
         """Process the API definition file and return a list of API endpoints"""
         try:
             self.logger.info(f"\nProcessing API definition from {self.config.api_definition}")
-            return self.api_processor.process_api_definition(self.config.api_definition)
+            api_definition = self.api_processor.process_api_definition(self.config.api_definition)
+            api_definition.endpoints = self.config.endpoints
+            return api_definition
         except Exception as e:
             self._log_error("Error processing API definition", e)
             raise
@@ -112,9 +115,8 @@ class FrameworkGenerator:
             self.logger.info("\nProcessing API definitions")
             all_generated_models = GeneratedModels()
 
-            definition_with_endpoints = APIDefinition(api_definition, self.config.endpoints)
-            api_paths = self.api_processor.get_api_paths(definition_with_endpoints)
-            api_verbs = self.api_processor.get_api_verbs(definition_with_endpoints)
+            api_paths = self.api_processor.get_api_paths(api_definition)
+            api_verbs = self.api_processor.get_api_verbs(api_definition)
 
             for path in self.checkpoint.checkpoint_iter(api_paths, "generate_paths", all_generated_models):
                 models = self._generate_models(path)
@@ -177,10 +179,6 @@ class FrameworkGenerator:
             self._log_error("Error during final checks", e)
             raise
 
-    def _is_response_file(self, file: FileSpec) -> bool:
-        """Check if the file is a response interface"""
-        return GeneratedModel.is_response_file(file.path)
-
     def _generate_models(self, api_definition: APIPath) -> Optional[List[GeneratedModel]]:
         """Generate models for the API definition."""
         try:
@@ -220,15 +218,15 @@ class FrameworkGenerator:
 
             if other_models:
                 additional_models: List[FileSpec] = self.llm_service.get_additional_models(
-                    [model.to_json() for model in relevant_models],
-                    [model.to_json() for model in other_models],
+                    relevant_models,
+                    other_models,
                 )
                 self.logger.info(f"\nAdding additional models: {[model.path for model in additional_models]}")
                 relevant_models.extend(map(lambda x: GeneratedModel(**x.to_json()), additional_models))
 
             tests = self.llm_service.generate_first_test(
                 self.api_processor.get_api_verb_content(api_verb),
-                [model.to_json() for model in relevant_models],
+                relevant_models,
             )
 
             if tests:
@@ -273,7 +271,7 @@ class FrameworkGenerator:
 
             additional_tests = self.llm_service.generate_additional_tests(
                 tests,
-                [model.to_json() for model in models],
+                models,
                 self.api_processor.get_api_path_content(api_definition),
             )
             if additional_tests:
@@ -288,7 +286,7 @@ class FrameworkGenerator:
             )
             raise
 
-    def _run_code_quality_checks(self, files: List[Dict[str, Any]], are_models: bool = False):
+    def _run_code_quality_checks(self, files: List[GeneratedModel], are_models: bool = False):
         """Run code quality checks including TypeScript compilation, linting, and formatting"""
         try:
 
@@ -305,3 +303,8 @@ class FrameworkGenerator:
         except Exception as e:
             self._log_error("Error during code quality checks", e)
             raise
+
+    @staticmethod
+    def _is_response_file(file: FileSpec) -> bool:
+        """Check if the file is a response interface"""
+        return GeneratedModel.is_response_file(file.path)

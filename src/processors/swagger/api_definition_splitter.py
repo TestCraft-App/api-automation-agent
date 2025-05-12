@@ -14,7 +14,7 @@ class APIDefinitionSplitter:
     def __init__(self):
         self.logger = Logger.get_logger(__name__)
 
-    def split(self, api_definition: Dict) -> List[Union[APIPath, APIVerb]]:
+    def split(self, api_definition: Dict) -> List[APIDef]:
         """Splits the API definition into smaller, manageable parts."""
         self.logger.info("Splitting API definition into components...")
         api_definition_list = []

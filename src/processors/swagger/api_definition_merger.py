@@ -13,7 +13,7 @@ class APIDefinitionMerger:
     def __init__(self):
         self.logger = Logger.get_logger(__name__)
 
-    def merge(self, api_definition_list: List[Union[APIPath, APIVerb]]) -> List[Union[APIPath, APIVerb]]:
+    def merge(self, api_definition_list: List[APIDef]) -> List[APIDef]:
         """Merges API definitions by their base resources."""
         merged_definitions = {}
 
