@@ -12,7 +12,7 @@ from src.services.file_service import FileService
 from src.services.llm_service import LLMService
 from src.utils.checkpoint import Checkpoint
 from src.utils.logger import Logger
-from src.models import APIModel, APIPath, APIVerb, GeneratedModel, GeneratedModels, ModelInfo
+from src.models import APIPath, APIVerb, GeneratedModel, GeneratedModels, ModelInfo
 
 
 class FrameworkGenerator:

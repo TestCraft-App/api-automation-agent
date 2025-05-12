@@ -1,4 +1,3 @@
-import json
 from typing import Any, Dict, List, Optional
 
 import pydantic
@@ -8,7 +7,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
 from langchain_openai import ChatOpenAI
 
-from src.configuration.data_sources import DataSource
 from src.configuration.models import Model
 from .file_service import FileService
 from ..ai_tools.file_creation_tool import FileCreationTool
@@ -16,10 +14,7 @@ from ..ai_tools.file_reading_tool import FileReadingTool
 from ..configuration.config import Config
 from ..utils.logger import Logger
 from src.ai_tools.models.file_spec import FileSpec
-from src.ai_tools.tools.file_creation_tool import FileCreationTool
-from src.ai_tools.tools.file_reading_tool import FileReadingTool
-from src.configuration.prompt_config import PromptConfig
-from src.models import APIModel, APIVerb, GeneratedModel
+from src.models import APIModel, GeneratedModel
 from src.models.model_info import ModelInfo
 from src.models.api_path import APIPath
 

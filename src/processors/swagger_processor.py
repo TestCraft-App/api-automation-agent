@@ -65,15 +65,15 @@ class SwaggerProcessor(APIProcessor):
 
             result = APIDefinition(endpoints=self.config.endpoints)
             for definition in merged_definitions:
-                if definition["type"] == "path":
-                    result.add_definition(APIPath(path=definition["path"], yaml=definition["yaml"]))
-                elif definition["type"] == "verb":
+                if definition.type == "path":
+                    result.add_definition(APIPath(path=definition.path, yaml=definition.yaml))
+                elif definition.type == "verb":
                     result.add_definition(
                         APIVerb(
-                            verb=definition["verb"],
-                            path=definition["path"],
-                            root_path=APIVerb.get_root_path(definition["path"]),
-                            yaml=definition["yaml"],
+                            verb=definition.verb,
+                            path=definition.path,
+                            root_path=APIVerb.get_root_path(definition.path),
+                            yaml=definition.yaml,
                         )
                     )
 
