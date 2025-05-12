@@ -1,5 +1,5 @@
 import copy
-from typing import Optional, Dict, List, Union
+from typing import Dict, List, Union
 import re
 
 import yaml

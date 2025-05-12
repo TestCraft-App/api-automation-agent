@@ -1,12 +1,10 @@
-import copy
 import json
 import os
-from typing import List, Optional, Union
+from typing import List
 
 from src.ai_tools.models.file_spec import FileSpec
 from src.processors.api_processor import APIProcessor
 from src.models import APIModel, APIPath, APIVerb, GeneratedModel, ModelInfo, APIDefinition
-from src.processors.postman.models import RequestData, ServiceVerbs, VerbInfo
 from src.processors.postman.postman_utils import PostmanUtils
 from src.services.file_service import FileService
 from src.utils.logger import Logger
@@ -38,7 +36,7 @@ class PostmanProcessor(APIProcessor):
         return result
 
     def extract_env_vars(self, api_definition: APIDefinition) -> List[str]:
-        return PostmanUtils.extract_env_vars(api_definition.definitions)
+        return PostmanUtils.extract_env_vars(api_definition)
 
     def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath]:
         # Build VerbInfo list
@@ -101,7 +99,7 @@ class PostmanProcessor(APIProcessor):
     def get_api_verb_name(self, verb: APIVerb) -> str:
         return verb.verb
 
-    def get_api_verbs(self, api_definition: APIDefinition, endpoints=None) -> List[APIVerb]:
+    def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb]:
         return api_definition.get_verbs()
 
     def get_api_verb_content(self, verb: APIVerb) -> str:
@@ -131,6 +129,6 @@ class PostmanProcessor(APIProcessor):
         for definition in api_definition.definitions:
             if isinstance(definition, APIVerb):
                 lines.append(f'import "./{definition.path}.spec.ts";')
-        fspec = FileSpec(path="runTestsInOrder.js", fileContent="\n".join(lines))
-        self.file_service.create_files(destination_folder, [fspec])
+        file_spec = FileSpec(path="runTestsInOrder.js", fileContent="\n".join(lines))
+        self.file_service.create_files(destination_folder, [file_spec])
         self.logger.info(f"Created runTestsInOrder.js at {destination_folder}")

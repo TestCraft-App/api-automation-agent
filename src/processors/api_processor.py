@@ -1,7 +1,7 @@
 import json
 import logging
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Union
 
 import yaml
 
@@ -56,12 +56,12 @@ class APIProcessor(ABC):
         pass
 
     @abstractmethod
-    def extract_env_vars(self, api_definition: APIDefinition) -> None:
+    def extract_env_vars(self, api_definition: APIDefinition) -> List[str]:
         """Extract environment variables from the API definition"""
         pass
 
     @abstractmethod
-    def get_api_paths(self, api_definition: APIDefinition, endpoints=None) -> List[APIPath]:
+    def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath]:
         """Get all path definitions that should be processed"""
         pass
 
@@ -71,7 +71,7 @@ class APIProcessor(ABC):
         pass
 
     @abstractmethod
-    def get_api_verbs(self, api_definition: APIDefinition, endpoints=None) -> List[APIVerb]:
+    def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb]:
         """Get all verb definitions that should be processed"""
         pass
 

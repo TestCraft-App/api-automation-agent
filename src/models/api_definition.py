@@ -30,6 +30,14 @@ class APIDefinition:
             return True
         return any(path.startswith(endpoint) for endpoint in self.endpoints)
 
+    def get_filtered_paths(self) -> List[APIPath]:
+        """Get all path definitions that should be processed"""
+        return [path for path in self.get_paths() if self.should_process_endpoint(path.path)]
+
+    def get_filtered_verbs(self) -> List[APIVerb]:
+        """Get all verb definitions that should be processed"""
+        return [verb for verb in self.get_verbs() if self.should_process_endpoint(verb.path)]
+
     def to_json(self) -> dict:
         """Convert to JSON-serializable dictionary"""
         return {"definitions": [d.to_json() for d in self.definitions], "endpoints": self.endpoints}
