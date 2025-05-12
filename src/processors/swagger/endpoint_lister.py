@@ -1,4 +1,6 @@
-from src.models import APIPath, APIVerb
+from typing import List
+
+from src.models import APIDef
 
 
 class EndpointLister:
@@ -9,7 +11,7 @@ class EndpointLister:
     """
 
     @staticmethod
-    def list_endpoints(api_definition: list[APIPath | APIVerb]):
+    def list_endpoints(api_definition: List[APIDef]):
         """
         Process the API definition and logs each unique API path.
         """
