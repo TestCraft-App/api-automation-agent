@@ -4,13 +4,14 @@ from typing import List, Optional, Union
 from src.models import APIDef
 from src.models.api_path import APIPath
 from src.models.api_verb import APIVerb
+from src.processors.postman.models import RequestData
 
 
 @dataclass
 class APIDefinition:
     """Container for API definitions and their endpoints"""
 
-    definitions: List[APIDef] = field(default_factory=list)
+    definitions: List[APIDef | RequestData] = field(default_factory=list)
     endpoints: Optional[List[str]] = None
 
     def add_definition(self, definition: APIDef) -> None:

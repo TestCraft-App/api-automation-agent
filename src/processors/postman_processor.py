@@ -18,10 +18,10 @@ class PostmanProcessor(APIProcessor):
         self.file_service = file_service
         self.logger = Logger.get_logger(__name__)
 
-    def process_api_definition(self, json_file_path: str) -> List[RequestData]:
+    def process_api_definition(self, json_file_path: str) -> APIDefinition:
         with open(json_file_path, encoding="utf-8") as f:
             data = json.load(f)
-        return PostmanUtils.extract_requests(data)
+        return APIDefinition(PostmanUtils.extract_requests(data))
 
     def extract_env_vars(self, api_definition: APIDefinition) -> List[str]:
         return PostmanUtils.extract_env_vars(api_definition)
