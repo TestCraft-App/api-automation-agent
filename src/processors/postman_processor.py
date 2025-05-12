@@ -101,7 +101,7 @@ class PostmanProcessor(APIProcessor):
     def get_api_verb_name(self, verb: APIVerb) -> str:
         return verb.verb
 
-    def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb]:
+    def get_api_verbs(self, api_definition: APIDefinition, endpoints=None) -> List[APIVerb]:
         return api_definition.get_verbs()
 
     def get_api_verb_content(self, verb: APIVerb) -> str:
