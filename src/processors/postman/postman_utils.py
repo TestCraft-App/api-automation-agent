@@ -3,6 +3,7 @@ import re
 from typing import Any, Dict, Iterable, List
 from urllib.parse import parse_qsl
 
+from src.models import APIDefinition
 from src.processors.postman.models import RequestData, VerbInfo, ServiceVerbs
 
 
@@ -148,11 +149,9 @@ class PostmanUtils:
         return False
 
     @staticmethod
-    def extract_env_vars(requests: List[RequestData]) -> List[str]:
-        import re
-
+    def extract_env_vars(requests: APIDefinition) -> List[str]:
         evs = set()
-        for r in requests:
+        for r in requests.definitions:
             if r.path.startswith("{{"):
                 m = re.match(r"\{\{(.*?)}}", r.path)
                 if m:

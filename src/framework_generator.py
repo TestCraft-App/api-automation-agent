@@ -12,7 +12,7 @@ from src.services.file_service import FileService
 from src.services.llm_service import LLMService
 from src.utils.checkpoint import Checkpoint
 from src.utils.logger import Logger
-from src.models import APIPath, APIVerb, GeneratedModel, GeneratedModels, ModelInfo
+from src.models import APIPath, APIVerb, GeneratedModel, GeneratedModels, ModelInfo, APIDefinition
 
 
 class FrameworkGenerator:
@@ -64,7 +64,7 @@ class FrameworkGenerator:
         self.checkpoint.restore(restore_object=True)
 
     @Checkpoint.checkpoint()
-    def process_api_definition(self) -> List[Union[APIPath, APIVerb]]:
+    def process_api_definition(self) -> APIDefinition:
         """Process the API definition file and return a list of API endpoints"""
         try:
             self.logger.info(f"\nProcessing API definition from {self.config.api_definition}")
@@ -74,7 +74,7 @@ class FrameworkGenerator:
             raise
 
     @Checkpoint.checkpoint()
-    def setup_framework(self, api_definition: List[Union[APIPath, APIVerb]]):
+    def setup_framework(self, api_definition: APIDefinition):
         """Set up the framework environment"""
         try:
             self.logger.info(f"\nSetting up framework in {self.config.destination_folder}")
@@ -91,11 +91,11 @@ class FrameworkGenerator:
             raise
 
     @Checkpoint.checkpoint()
-    def create_env_file(self, api_definitions: List[Union[APIPath, APIVerb]]):
+    def create_env_file(self, api_definition: APIDefinition):
         """Generate the .env file from the provided API definition"""
         try:
             self.logger.info("\nGenerating .env file")
-            env_vars_data = self.api_processor.extract_env_vars(api_definitions)
+            env_vars_data = self.api_processor.extract_env_vars(api_definition)
             self.llm_service.generate_dot_env(env_vars_data)
         except Exception as e:
             self._log_error("Error creating .env file", e)
@@ -104,7 +104,7 @@ class FrameworkGenerator:
     @Checkpoint.checkpoint()
     def generate(
         self,
-        merged_api_definition_list: List[Union[APIPath, APIVerb]],
+        api_definition: APIDefinition,
         generate_tests: GenerationOptions,
     ):
         """Process the API definitions and generate models and tests"""
@@ -112,8 +112,9 @@ class FrameworkGenerator:
             self.logger.info("\nProcessing API definitions")
             all_generated_models = GeneratedModels()
 
-            api_paths = self.api_processor.get_api_paths(merged_api_definition_list, self.config.endpoints)
-            api_verbs = self.api_processor.get_api_verbs(merged_api_definition_list, self.config.endpoints)
+            definition_with_endpoints = APIDefinition(api_definition, self.config.endpoints)
+            api_paths = self.api_processor.get_api_paths(definition_with_endpoints)
+            api_verbs = self.api_processor.get_api_verbs(definition_with_endpoints)
 
             for path in self.checkpoint.checkpoint_iter(api_paths, "generate_paths", all_generated_models):
                 models = self._generate_models(path)

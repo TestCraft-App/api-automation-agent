@@ -1,6 +1,5 @@
 import json
-import re
-from typing import Dict, List, Optional, Union
+from typing import List
 
 import yaml
 
@@ -83,7 +82,7 @@ class SwaggerProcessor(APIProcessor):
             self.logger.error(f"Error processing API definition: {e}")
             raise
 
-    def extract_env_vars(self, api_definition: APIDefinition) -> None:
+    def extract_env_vars(self, api_definition: APIDefinition) -> list[str]:
         self.logger.info("\nGenerating .env file...")
 
         api_definition_str = api_definition.definitions[0].yaml
@@ -105,6 +104,7 @@ class SwaggerProcessor(APIProcessor):
         self.file_service.create_files(self.config.destination_folder, [file_spec])
 
         self.logger.info(f"Generated .env file with BASEURL={base_url}")
+        return []
 
     @staticmethod
     def _extract_base_url(api_spec):
@@ -124,20 +124,16 @@ class SwaggerProcessor(APIProcessor):
 
         return None
 
-    def get_api_paths(self, api_definition: APIDefinition, endpoints=None) -> List[APIPath]:
+    def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath]:
         """Get all path definitions that should be processed."""
-        return [
-            path for path in api_definition.get_paths() if api_definition.should_process_endpoint(path.path)
-        ]
+        return api_definition.get_filtered_paths()
 
     def get_api_path_name(self, api_path: APIPath) -> str:
         return api_path.path
 
-    def get_api_verbs(self, api_definition: APIDefinition, endpoints=None) -> List[APIVerb]:
+    def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb]:
         """Get all verb definitions that should be processed."""
-        return [
-            verb for verb in api_definition.get_verbs() if api_definition.should_process_endpoint(verb.path)
-        ]
+        return api_definition.get_filtered_verbs()
 
     def get_api_verb_path(self, api_verb: APIVerb) -> str:
         return api_verb.path

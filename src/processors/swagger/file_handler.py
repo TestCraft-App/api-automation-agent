@@ -23,7 +23,7 @@ class FileLoader:
                     return json.load(file)
                 else:
                     raise ValueError("Unsupported file format")
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             self.logger.error(f"File not found: {file_path}")
             raise
         except (yaml.YAMLError, json.JSONDecodeError) as e:
