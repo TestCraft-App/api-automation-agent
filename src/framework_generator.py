@@ -222,7 +222,7 @@ class FrameworkGenerator:
                     other_models,
                 )
                 self.logger.info(f"\nAdding additional models: {[model.path for model in additional_models]}")
-                relevant_models.extend(map(lambda x: GeneratedModel(**x.to_json()), additional_models))
+                relevant_models.extend([GeneratedModel(**m.to_json()) for m in additional_models])
 
             tests = self.llm_service.generate_first_test(
                 self.api_processor.get_api_verb_content(api_verb),
