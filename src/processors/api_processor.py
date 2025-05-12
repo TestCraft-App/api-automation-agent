@@ -61,7 +61,7 @@ class APIProcessor(ABC):
         pass
 
     @abstractmethod
-    def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath]:
+    def get_api_paths(self, api_definition: APIDefinition, endpoints=None) -> List[APIPath]:
         """Get all path definitions that should be processed"""
         pass
 
@@ -71,7 +71,7 @@ class APIProcessor(ABC):
         pass
 
     @abstractmethod
-    def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb]:
+    def get_api_verbs(self, api_definition: APIDefinition, endpoints=None) -> List[APIVerb]:
         """Get all verb definitions that should be processed"""
         pass
 

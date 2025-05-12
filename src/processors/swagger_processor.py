@@ -124,7 +124,7 @@ class SwaggerProcessor(APIProcessor):
 
         return None
 
-    def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath]:
+    def get_api_paths(self, api_definition: APIDefinition, endpoints=None) -> List[APIPath]:
         """Get all path definitions that should be processed."""
         return [
             path for path in api_definition.get_paths() if api_definition.should_process_endpoint(path.path)
@@ -133,7 +133,7 @@ class SwaggerProcessor(APIProcessor):
     def get_api_path_name(self, api_path: APIPath) -> str:
         return api_path.path
 
-    def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb]:
+    def get_api_verbs(self, api_definition: APIDefinition, endpoints=None) -> List[APIVerb]:
         """Get all verb definitions that should be processed."""
         return [
             verb for verb in api_definition.get_verbs() if api_definition.should_process_endpoint(verb.path)
