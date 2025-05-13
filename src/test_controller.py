@@ -1,19 +1,11 @@
 import json
-import os
 import re
 import subprocess
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Tuple
-
-from typing import List, Dict, Optional, Tuple, Set
-from collections import defaultdict
-import subprocess
-import json
 from pathlib import Path
-from dataclasses import dataclass
-from collections import defaultdict
+from typing import List, Dict, Optional, Tuple, Set
 
 from src.configuration.config import Config
 from src.services.command_service import CommandService
