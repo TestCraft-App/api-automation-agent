@@ -5,8 +5,8 @@ import yaml
 
 from src.ai_tools.models.file_spec import FileSpec
 from src.configuration.config import Config
-from src.processors.api_processor import APIProcessor
 from src.models import APIModel, APIPath, APIVerb, GeneratedModel, ModelInfo, APIDefinition
+from src.processors.api_processor import APIProcessor
 from src.services.file_service import FileService
 from .swagger import (
     APIDefinitionMerger,

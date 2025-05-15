@@ -1,7 +1,7 @@
 import json
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Union
+from typing import List
 
 import yaml
 

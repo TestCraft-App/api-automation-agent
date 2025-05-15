@@ -1,11 +1,10 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from src.processors.postman.models import RequestData
-
 from src.models.api_def import APIDef
 from src.models.api_path import APIPath
 from src.models.api_verb import APIVerb
+from src.processors.postman.models import RequestData
 
 
 @dataclass

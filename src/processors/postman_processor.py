@@ -3,9 +3,8 @@ import os
 from typing import List
 
 from src.ai_tools.models.file_spec import FileSpec
-from src.processors.api_processor import APIProcessor
 from src.models import APIModel, APIPath, APIVerb, GeneratedModel, ModelInfo, APIDefinition
-from src.processors.postman.models import RequestData
+from src.processors.api_processor import APIProcessor
 from src.processors.postman.postman_utils import PostmanUtils
 from src.services.file_service import FileService
 from src.utils.logger import Logger

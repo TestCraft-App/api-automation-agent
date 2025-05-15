@@ -5,7 +5,6 @@ from typing import List, Dict, Tuple, Optional, Callable
 
 from ..ai_tools.models.file_spec import FileSpec
 from ..configuration.config import Config
-from ..models import GeneratedModel
 
 
 class CommandService:

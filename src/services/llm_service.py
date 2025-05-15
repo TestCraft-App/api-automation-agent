@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import pydantic
 from langchain_anthropic import ChatAnthropic
@@ -16,7 +16,7 @@ from ..ai_tools.file_reading_tool import FileReadingTool
 from ..ai_tools.models.file_spec import FileSpec, file_specs_to_json
 from ..ai_tools.tool_converters import convert_tool_for_model
 from ..configuration.config import Config
-from ..models import APIPath, GeneratedModel, APIModel, APIDef
+from ..models import GeneratedModel, APIModel
 from ..models.api_model import api_models_to_json
 from ..models.generated_model import generated_models_to_json
 from ..models.usage_data import LLMCallUsageData, AggregatedUsageMetadata

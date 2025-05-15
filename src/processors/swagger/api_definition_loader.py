@@ -1,7 +1,9 @@
-import requests
 import json
-from src.utils.logger import Logger
+
+import requests
 import yaml
+
+from src.utils.logger import Logger
 
 
 class APIDefinitionLoader:
