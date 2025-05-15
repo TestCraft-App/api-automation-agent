@@ -11,7 +11,7 @@ from src.utils.logger import Logger
 class Checkpoint:
     DB_NAME = "checkpoints"
 
-    def __init__(self, obj=None, tag: str = None, namespace: str = None):
+    def __init__(self, obj=None, tag: str | None = None, namespace: str | None = None):
         self.obj = obj
         self.tag = tag or (obj.__class__.__name__ if obj else "global")
         self.namespace = namespace or "default"
@@ -28,7 +28,7 @@ class Checkpoint:
         """Attach a default save_state method to the object if missing."""
         setattr(self.obj, "save_state", self._default_save_state)
 
-    def _get_checkpoint_key(self, tag=None) -> str:
+    def _get_checkpoint_key(self, tag: str | None = None) -> str:
         """Generate a consistent key based on the namespace and tag."""
         return f"{self.namespace}_{tag or self.tag}"
 
@@ -68,7 +68,7 @@ class Checkpoint:
         with shelve.open(self.DB_NAME) as db:
             return db.get("last_namespace", "default")
 
-    def save(self, tag: str = None, state: Any = None, skip_object=True):
+    def save(self, tag: str | None = None, state: Any = None, skip_object=True):
         """Save function state and optionally object state."""
         frame = inspect.currentframe().f_back
         local_vars = frame.f_locals
@@ -107,7 +107,9 @@ class Checkpoint:
             function_state = {var: saved_data[var] for var in saved_data if var != "self"}
             return function_state
 
-    def checkpoint_iter(self, iterable: Iterable, tag: str, extra_state: Dict[str, Any] = None) -> Generator:
+    def checkpoint_iter(
+        self, iterable: Iterable, tag: str, extra_state: Dict[str, Any] | None = None
+    ) -> Generator:
         """
         Wraps a for-loop to automatically save and restore progress.
 

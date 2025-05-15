@@ -7,8 +7,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Set
 
-from json_repair import repair_json
-
 from src.configuration.config import Config
 from src.services.command_service import CommandService
 from src.utils.logger import Logger
@@ -203,18 +201,9 @@ class TestController:
                     cwd=self.config.destination_folder,
                     env_vars=node_env_options,
                 )
-                repaired_json_string = repair_json(stdout)
-                parsed = json.loads(repaired_json_string)
-
-                if isinstance(parsed, dict):
-                    all_parsed_tests.extend(parsed.get("tests", []))
-                    all_parsed_failures.extend(parsed.get("failures", []))
-                else:
-                    self.logger.warning(
-                        f"Mocha output for {test_file} was not a JSON object (got {type(parsed)}). "
-                        f"Skipping test/failure extraction for this file."
-                    )
-                    self.logger.debug(f"Parsed content for {test_file}: {parsed}")
+                parsed = json.loads(stdout)
+                all_parsed_tests.extend(parsed.get("tests", []))
+                all_parsed_failures.extend(parsed.get("failures", []))
 
                 animator.stop()
                 sys.stdout.write(f"\r{' ' * 80}\r✅ {file_name} ({index}/{total_files})\n")
