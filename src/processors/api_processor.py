@@ -1,11 +1,17 @@
-from abc import ABC, abstractmethod
 import json
-import yaml
 import logging
+from abc import ABC, abstractmethod
+from typing import List, Union
+
+import yaml
+
 from src.configuration.data_sources import DataSource
+from src.models import APIModel, APIPath, APIVerb, GeneratedModel, ModelInfo, APIDefinition
 
 
 class APIProcessor(ABC):
+    """Abstract base class for API processors."""
+
     @staticmethod
     def set_data_source(api_file_path: str, logger: logging.Logger = None) -> DataSource:
         """
@@ -42,51 +48,64 @@ class APIProcessor(ABC):
             except Exception as e:
                 if logger:
                     logger.error(f"Error reading file {api_file_path} with encoding {encoding}: {e}")
+        return DataSource.NONE
 
     @abstractmethod
-    def process_api_definition(self, api_file_path):
+    def process_api_definition(self, api_definition: str) -> APIDefinition:
+        """Process the API definition file and return a list of API endpoints"""
         pass
 
     @abstractmethod
-    def get_api_verbs(self, api_definition, endpoints=None):
+    def extract_env_vars(self, api_definition: APIDefinition) -> List[str]:
+        """Extract environment variables from the API definition"""
         pass
 
     @abstractmethod
-    def get_api_paths(self, api_definition, endpoints=None):
+    def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath]:
+        """Get all path definitions that should be processed"""
         pass
 
     @abstractmethod
-    def get_relevant_models(self, all_models, api_verb):
+    def get_api_path_name(self, api_path: APIPath) -> str:
+        """Get the name of the API path"""
         pass
 
     @abstractmethod
-    def get_other_models(self, all_models, api_verb):
+    def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb]:
+        """Get all verb definitions that should be processed"""
         pass
 
     @abstractmethod
-    def get_api_path_content(self, api_path_definition):
+    def get_api_verb_path(self, api_verb: APIVerb) -> str:
+        """Get the path of the API verb"""
         pass
 
     @abstractmethod
-    def get_api_verb_content(self, api_verb_definition):
+    def get_api_verb_rootpath(self, api_verb: APIVerb) -> str:
+        """Get the root path of the API verb"""
         pass
 
     @abstractmethod
-    def get_api_verb_rootpath(self, api_verb_definition):
+    def get_api_verb_name(self, api_verb: APIVerb) -> str:
+        """Get the name of the API verb"""
         pass
 
     @abstractmethod
-    def get_api_verb_path(self, api_verb_definition):
+    def get_relevant_models(self, all_models: List[ModelInfo], api_verb: APIVerb) -> List[GeneratedModel]:
+        """Get models relevant to the API verb"""
         pass
 
     @abstractmethod
-    def get_api_path_name(self, api_path):
+    def get_other_models(self, all_models: List[ModelInfo], api_verb: APIVerb) -> List[APIModel]:
+        """Get other models not directly related to the API verb"""
         pass
 
     @abstractmethod
-    def get_api_verb_name(self, api_verb):
+    def get_api_verb_content(self, api_verb: APIVerb) -> str:
+        """Get the content of the API verb"""
         pass
 
     @abstractmethod
-    def extract_env_vars(self, api_defintions):
+    def get_api_path_content(self, api_path: APIPath) -> str:
+        """Get the content of the API path"""
         pass

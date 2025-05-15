@@ -1,13 +1,14 @@
-import re
-import sys
-from typing import List, Dict, Optional, Tuple, Set
-from collections import defaultdict
-import subprocess
 import json
+import re
+import subprocess
+import sys
+from collections import defaultdict
+from dataclasses import dataclass
+from pathlib import Path
+from typing import List, Dict, Optional, Tuple, Set
 
 from json_repair import repair_json
-from pathlib import Path
-from dataclasses import dataclass
+
 from src.configuration.config import Config
 from src.services.command_service import CommandService
 from src.utils.logger import Logger
@@ -159,7 +160,8 @@ class TestController:
 
         return str(temp_file_path)
 
-    def _prompt_to_run_tests(self, interactive: bool = True) -> bool:
+    @staticmethod
+    def _prompt_to_run_tests(interactive: bool = True) -> bool:
         if not interactive:
             return True
         answer = input("\n🧪 Do you want to run the tests now? (y/n): ").strip().lower()
@@ -178,6 +180,9 @@ class TestController:
 
         for index, test_file in enumerate(test_files, start=1):
             file_name = Path(test_file).name
+            stdout = ""
+            repaired_json_string = None
+
             animator = LoadingDotsAnimator(prefix=f"▶️ Running file {file_name} ({index}/{total_files}) ")
             animator.start()
 
@@ -220,14 +225,14 @@ class TestController:
                 animator.stop()
                 self.logger.error(f"Failed to parse JSON from Mocha for {test_file}.")
                 self.logger.error(f"Original stdout:\n{stdout}")
-                if "repaired_json_string" in locals():
+                if repaired_json_string:
                     self.logger.error(f"After json_repair attempt:\n{repaired_json_string}")
                 sys.stdout.write(
                     f"\r❌ {file_name} ({index}/{total_files}) - "
                     "Failed to parse test output. Check agent logs.\n"
                 )
             except Exception as e:
-                if not animator._stop_event.is_set():  # Check if the event is NOT set (i.e., running)
+                if not animator.is_stop_set():  # Check if the event is NOT set (i.e., running)
                     animator.stop()
                 self.logger.error(f"Unexpected error during test run for {test_file}: {e}", exc_info=True)
                 sys.stdout.write(
@@ -236,9 +241,9 @@ class TestController:
 
         return all_parsed_tests, all_parsed_failures
 
-    def _report_tests(
-        self, tests: List[Dict[str, str]], failures: List[Dict[str, str]] = []
-    ) -> Dict[str, int]:
+    def _report_tests(self, tests: List[Dict[str, str]], failures=None) -> Dict[str, int]:
+        if failures is None:
+            failures = []
         grouped_tests = defaultdict(list)
 
         seen = set()

@@ -1,17 +1,14 @@
 from typing import List, Any
 
+from langchain_anthropic import ChatAnthropic
+from langchain_anthropic.chat_models import convert_to_anthropic_tool
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.tools import BaseTool
-from langchain_anthropic import ChatAnthropic
-from langchain_openai import ChatOpenAI
-from langchain_anthropic.chat_models import convert_to_anthropic_tool
 from langchain_core.utils.function_calling import convert_to_openai_tool
+from langchain_openai import ChatOpenAI
 
 
-def convert_tool_for_model(
-        tool: BaseTool,
-        model: BaseLanguageModel
-) -> Any:
+def convert_tool_for_model(tool: BaseTool, model: BaseLanguageModel) -> Any:
     """
     Convert a tool to the appropriate format for a specific language model.
 
@@ -33,10 +30,7 @@ def convert_tool_for_model(
         raise ValueError(f"Tool conversion error: {e}")
 
 
-def convert_tools_for_model(
-        tools: List[BaseTool],
-        model: BaseLanguageModel
-) -> List[Any]:
+def convert_tools_for_model(tools: List[BaseTool], model: BaseLanguageModel) -> List[Any]:
     """
     Convert multiple tools for a specific language model.
 

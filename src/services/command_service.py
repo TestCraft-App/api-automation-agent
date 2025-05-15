@@ -1,9 +1,11 @@
+import logging
 import os
 import subprocess
-import logging
 from typing import List, Dict, Tuple, Optional, Callable
 
+from ..ai_tools.models.file_spec import FileSpec
 from ..configuration.config import Config
+from ..models import GeneratedModel
 
 
 class CommandService:
@@ -126,7 +128,7 @@ class CommandService:
         self,
         command_func: Callable,
         fix_func: Optional[Callable] = None,
-        files: Optional[List[Dict[str, str]]] = None,
+        files: Optional[List[FileSpec]] = None,
         max_retries: int = 3,
     ) -> Tuple[bool, str]:
         """

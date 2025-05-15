@@ -7,18 +7,21 @@ import yaml
 class APIDefinitionLoader:
     """
     Downloads API definition from a URL or loads it from a file and returns it as a JSON object.
-
-    Args:
-        api_definition (str): URL or path to the API definition.
-
-    Returns:
-        dict: API definition as a dictionary.
     """
 
     def __init__(self):
         self.logger = Logger.get_logger(__name__)
 
     def load(self, api_definition: str) -> dict:
+        """
+        Load API definition from a URL or file.
+
+        Args:
+            api_definition (str): URL or path to the API definition.
+
+        Returns:
+            dict: API definition as a dictionary.
+        """
         try:
             if api_definition.startswith("http") and (api_definition.endswith((".json", ".yaml", ".yml"))):
                 self.logger.debug(f"Loading API definition from URL: {api_definition}")

@@ -11,7 +11,6 @@ from src.adapters.processors_adapter import ProcessorsAdapter
 from src.configuration.cli import CLIArgumentParser
 from src.configuration.config import Config, GenerationOptions, Envs
 from src.container import Container
-from src.framework_generator import FrameworkGenerator
 from src.test_controller import TestController
 from src.utils.checkpoint import Checkpoint
 from src.utils.logger import Logger
@@ -24,7 +23,6 @@ from src.processors.api_processor import APIProcessor
 def main(
     logger: logging.Logger,
     config: Config = Provide[Container.config],
-    framework_generator: FrameworkGenerator = Provide[Container.framework_generator],
     test_controller: TestController = Provide[Container.test_controller],
 ):
     """Main function to orchestrate the API framework generation process."""

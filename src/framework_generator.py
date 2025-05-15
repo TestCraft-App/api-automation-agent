@@ -1,12 +1,14 @@
 import signal
 import sys
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Optional, cast
 
-from src.processors.api_processor import APIProcessor
 from src.configuration.data_sources import DataSource
 from src.models.usage_data import AggregatedUsageMetadata
-
+from src.processors.api_processor import APIProcessor
+from .ai_tools.models.file_spec import FileSpec
 from .configuration.config import Config, GenerationOptions
+from .models import APIDefinition, APIPath, APIVerb, ModelInfo, GeneratedModel
+from .processors.postman_processor import PostmanProcessor
 from .services.command_service import CommandService
 from .services.file_service import FileService
 from .services.llm_service import LLMService
@@ -36,12 +38,13 @@ class FrameworkGenerator:
         signal.signal(signal.SIGINT, self._handle_interrupt)
         signal.signal(signal.SIGTERM, self._handle_interrupt)
 
-    def _handle_interrupt(self, signum, frame):
+    def _handle_interrupt(self, _signum, _frame):
         self.logger.warning("⚠️ Process interrupted! Saving progress...")
         try:
             self.save_state()
-        finally:
-            sys.exit(1)
+        except Exception as e:
+            self.logger.error(f"Error saving state: {e}")
+        sys.exit(1)
 
     def _log_error(self, message: str, exc: Exception):
         """Helper method to log errors consistently"""
@@ -67,35 +70,39 @@ class FrameworkGenerator:
         self.checkpoint.restore(restore_object=True)
 
     @Checkpoint.checkpoint()
-    def process_api_definition(self) -> List[Dict[str, Any]]:
+    def process_api_definition(self) -> APIDefinition:
         """Process the API definition file and return a list of API endpoints"""
         try:
             self.logger.info(f"\nProcessing API definition from {self.config.api_definition}")
-            return self.api_processor.process_api_definition(self.config.api_definition)
+            api_definition = self.api_processor.process_api_definition(self.config.api_definition)
+            api_definition.endpoints = self.config.endpoints
+            return api_definition
         except Exception as e:
             self._log_error("Error processing API definition", e)
             raise
 
     @Checkpoint.checkpoint()
-    def setup_framework(self, api_definition):
+    def setup_framework(self, api_definition: APIDefinition):
         """Set up the framework environment"""
         try:
             self.logger.info(f"\nSetting up framework in {self.config.destination_folder}")
             self.file_service.copy_framework_template(self.config.destination_folder)
+
             if self.config.data_source == DataSource.POSTMAN:
-                self.api_processor.update_framework_for_postman(
+                cast(PostmanProcessor, self.api_processor).update_framework_for_postman(
                     self.config.destination_folder, api_definition
                 )
+
             self.command_service.install_dependencies()
         except Exception as e:
             self._log_error("Error setting up framework", e)
             raise
 
     @Checkpoint.checkpoint()
-    def create_env_file(self, api_definitions):
+    def create_env_file(self, api_definition: APIDefinition):
         """Generate the .env file from the provided API definition"""
         try:
-            self.api_processor.extract_env_vars(api_definitions)
+            self.api_processor.extract_env_vars(api_definition)
         except Exception as e:
             self._log_error("Error creating .env file", e)
             raise
@@ -103,7 +110,7 @@ class FrameworkGenerator:
     @Checkpoint.checkpoint()
     def generate(
         self,
-        merged_api_definition_list: List[Dict[str, Any]],
+        api_definition: APIDefinition,
         generate_tests: GenerationOptions,
     ):
         """Process the API definitions and generate models and tests"""
@@ -111,19 +118,21 @@ class FrameworkGenerator:
             self.logger.info("\nProcessing API definitions")
             all_generated_models = {"info": []}
 
-            api_paths = self.api_processor.get_api_paths(merged_api_definition_list, self.config.endpoints)
-            api_verbs = self.api_processor.get_api_verbs(merged_api_definition_list, self.config.endpoints)
+            api_paths = self.api_processor.get_api_paths(api_definition)
+            api_verbs = self.api_processor.get_api_verbs(api_definition)
 
             for path in self.checkpoint.checkpoint_iter(api_paths, "generate_paths", all_generated_models):
                 models = self._generate_models(path)
-                all_generated_models["info"].append(
-                    {
-                        "path": self.api_processor.get_api_path_name(path),
-                        "files": [model["path"] + " - " + model["summary"] for model in models],
-                        "models": models,
-                    }
-                )
-                self.logger.debug("Generated models for path: " + self.api_processor.get_api_path_name(path))
+                if models:
+                    model_info = ModelInfo(
+                        path=self.api_processor.get_api_path_name(path),
+                        files=[model.path + " - " + model.summary for model in models],
+                        models=models,
+                    )
+                    all_generated_models["info"].append(model_info)
+                    self.logger.debug(
+                        "Generated models for path: " + self.api_processor.get_api_path_name(path)
+                    )
 
             if generate_tests in (
                 GenerationOptions.MODELS_AND_FIRST_TEST,
@@ -134,13 +143,10 @@ class FrameworkGenerator:
                     tests = self._generate_tests(verb, all_generated_models["info"], generate_tests)
                     for file in filter(self._is_response_file, tests):
                         for model in all_generated_models["info"]:
-                            if model["path"] == service_related_to_verb:
-                                model["files"].append(file["path"])
-                                model["models"].append(
-                                    {
-                                        "path": file["path"],
-                                        "fileContent": file["fileContent"],
-                                    }
+                            if model.path == service_related_to_verb:
+                                model.files.append(file.path)
+                                model.models.append(
+                                    GeneratedModel(path=file.path, fileContent=file.fileContent, summary="")
                                 )
 
                     verb_path_for_debug = self.api_processor.get_api_verb_path(verb)
@@ -161,52 +167,49 @@ class FrameworkGenerator:
     def run_final_checks(self, generate_tests: GenerationOptions) -> Optional[List[Dict[str, str]]]:
         """Run final checks like TypeScript compilation"""
         try:
-
             if generate_tests in (
                 GenerationOptions.MODELS_AND_FIRST_TEST,
                 GenerationOptions.MODELS_AND_TESTS,
             ):
                 test_files = self.command_service.get_generated_test_files()
-                if not test_files:
-                    self.logger.warning("⚠️ No test files found! Skipping tests.")
-                    return None
+                if test_files:
+                    return test_files
+                self.logger.warning("⚠️ No test files found! Skipping tests.")
 
-                return test_files
-
+            return None
         except Exception as e:
             self._log_error("Error during final checks", e)
             raise
 
-    def _is_response_file(self, file: Dict[str, Any]) -> bool:
-        """Check if the file is a response interface"""
-
-        return "/responses" in file["path"]
-
-    def _generate_models(self, api_definition: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
-        """Process a path definition and generate models"""
-        path_name = self.api_processor.get_api_path_name(api_definition)
+    def _generate_models(self, api_definition: APIPath) -> Optional[List[GeneratedModel]]:
+        """Generate models for the API definition."""
         try:
-            self.logger.info(f"\nGenerating models for path: {path_name}")
-            models_result = self.llm_service.generate_models(
-                self.api_processor.get_api_path_content(api_definition)
-            )
+            self.logger.info(f"Generating models for {api_definition.path}")
+            model_info = ModelInfo(path=api_definition.path)
+            definition_content = self.api_processor.get_api_path_content(api_definition)
+            # Generate models using LLM service
+            generated_models = self.llm_service.generate_models(definition_content)
+            if not generated_models:
+                self.logger.warning(f"No models generated for {api_definition.path}")
+                return None
 
-            if models_result:
-                self.models_count += len(models_result)
-                self._run_code_quality_checks(models_result, are_models=True)
-            else:
-                self.logger.warning(f"No models generated for {path_name}")
-            return models_result
+            # Add each generated model to the model info
+            for model in generated_models:
+                model_info.add_model(model)
+
+            self.logger.info(f"Generated {len(generated_models)} models for {api_definition.path}")
+            return model_info.models
+
         except Exception as e:
-            self._log_error(f"Error processing path definition for {path_name}", e)
-            raise
+            self.logger.error(f"Error generating models: {str(e)}")
+            return None
 
     def _generate_tests(
         self,
-        api_verb: Dict[str, Any],
-        all_models: List[Dict[str, Any]],
+        api_verb: APIVerb,
+        all_models: List[ModelInfo],
         generate_tests: GenerationOptions,
-    ) -> Optional[List[Dict[str, Any]]]:
+    ) -> Optional[List[FileSpec]]:
         """Generate tests for a specific verb (HTTP method) in the API definition"""
         verb_path = self.api_processor.get_api_verb_path(api_verb)
         verb_name = self.api_processor.get_api_verb_name(api_verb)
@@ -222,10 +225,17 @@ class FrameworkGenerator:
                 if additional_models_result:
                     model_paths = [m.path for m in additional_models_result if hasattr(m, "path")]
                     self.logger.info(f"\nAdding additional models: {model_paths}")
-                    relevant_models.extend(map(lambda x: x.to_json(), additional_models_result))
+                    for model in additional_models_result:
+                        generated_model = GeneratedModel(
+                            path=model.path,
+                            fileContent=model.fileContent,
+                            summary="",
+                        )
+                        relevant_models.append(generated_model)
 
             tests_result = self.llm_service.generate_first_test(
-                self.api_processor.get_api_verb_content(api_verb), relevant_models
+                self.api_processor.get_api_verb_content(api_verb),
+                relevant_models,
             )
 
             if tests_result:
@@ -251,10 +261,10 @@ class FrameworkGenerator:
 
     def _generate_additional_tests(
         self,
-        tests: List[Dict[str, Any]],
-        models: List[Dict[str, Any]],
-        api_definition: Dict[str, Any],
-    ) -> Optional[List[Dict[str, Any]]]:
+        tests: List[FileSpec],
+        models: List[GeneratedModel],
+        api_definition: APIVerb,
+    ) -> Optional[List[FileSpec]]:
         """Generate additional tests based on the initial test and models"""
         verb_path = self.api_processor.get_api_verb_path(api_definition)
         verb_name = self.api_processor.get_api_verb_name(api_definition)
@@ -277,7 +287,7 @@ class FrameworkGenerator:
             self._log_error(f"Error generating additional tests for {verb_path} - {verb_name}", e)
             return tests
 
-    def _run_code_quality_checks(self, files: List[Dict[str, Any]], are_models: bool = False):
+    def _run_code_quality_checks(self, files: List[FileSpec], are_models: bool = False):
         """Run code quality checks including TypeScript compilation, linting, and formatting"""
         error_type = "models" if are_models else "tests"
         try:
@@ -296,3 +306,8 @@ class FrameworkGenerator:
             self.command_service.run_linter()
         except Exception as e:
             self._log_error(f"Error during code quality checks for {error_type}", e)
+
+    @staticmethod
+    def _is_response_file(file: FileSpec) -> bool:
+        """Check if the file is a response interface"""
+        return GeneratedModel.is_response_file(file.path)

@@ -1,4 +1,6 @@
-import json
+from typing import List
+
+from src.models import APIDef
 
 
 class EndpointLister:
@@ -9,11 +11,11 @@ class EndpointLister:
     """
 
     @staticmethod
-    def list_endpoints(api_definition):
+    def list_endpoints(api_definition: List[APIDef]):
         """
         Process the API definition and logs each unique API path.
         """
-        endpoints_dict = {endpoint["path"] for endpoint in api_definition if endpoint.get("type") == "path"}
+        endpoints_dict = {endpoint.path for endpoint in api_definition if endpoint.type == "path"}
 
         print("\nEndpoints that can be used with the --endpoints flag:")
         for path in sorted(endpoints_dict):

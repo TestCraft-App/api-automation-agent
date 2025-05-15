@@ -1,6 +1,5 @@
 import os
 import shutil
-
 from typing import List, Optional
 
 from src.ai_tools.models.file_spec import FileSpec
@@ -18,7 +17,7 @@ class FileService:
         """
         self.logger = Logger.get_logger(__name__)
 
-    def copy_framework_template(self, destination_folder: str, api_definition=None) -> Optional[str]:
+    def copy_framework_template(self, destination_folder: str) -> Optional[str]:
         """
         Copy the API framework template to a new folder.
 

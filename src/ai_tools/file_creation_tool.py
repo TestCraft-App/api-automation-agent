@@ -1,9 +1,8 @@
 import json
 import logging
 from typing import List, Optional, Type, Dict, Any
+
 import json_repair
-
-
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel
 
@@ -11,10 +10,9 @@ from .models.file_creation_input import FileCreationInput
 from .models.file_spec import FileSpec
 from .models.model_creation_input import ModelCreationInput
 from .models.model_file_spec import ModelFileSpec
-
 from ..configuration.config import Config
-from ..utils.logger import Logger
 from ..services.file_service import FileService
+from ..utils.logger import Logger
 
 
 class FileCreationTool(BaseTool):
@@ -26,9 +24,7 @@ class FileCreationTool(BaseTool):
     logger: logging.Logger = None
     are_models: bool = False
 
-    def __init__(
-        self, config: Config, file_service: FileService, are_models: bool = False
-    ):
+    def __init__(self, config: Config, file_service: FileService, are_models: bool = False):
         super().__init__()
         self.config = config
         self.file_service = file_service
@@ -54,9 +50,7 @@ class FileCreationTool(BaseTool):
     async def _arun(self, files: List[FileSpec | ModelFileSpec]) -> str:
         return self._run(files)
 
-    def _parse_input(
-        self, tool_input: str | Dict, tool_call_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def _parse_input(self, tool_input: str | Dict, tool_call_id: Optional[str] = None) -> Dict[str, Any]:
         if isinstance(tool_input, str):
             data = json_repair.loads(tool_input)
         else:
@@ -78,9 +72,7 @@ class FileCreationTool(BaseTool):
         # Filter out non-dictionary objects
         valid_files = [f for f in files_data if isinstance(f, dict)]
         if len(valid_files) != len(files_data):
-            self.logger.info(
-                f"Filtered out {len(files_data) - len(valid_files)} invalid file specifications"
-            )
+            self.logger.info(f"Filtered out {len(files_data) - len(valid_files)} invalid file specifications")
 
         spec_class = ModelFileSpec if self.are_models else FileSpec
         file_specs = [spec_class(**file_spec) for file_spec in valid_files]

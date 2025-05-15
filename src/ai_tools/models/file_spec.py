@@ -1,3 +1,5 @@
+from typing import List, Dict, Any
+
 from pydantic import BaseModel, Field
 
 
@@ -14,3 +16,8 @@ class FileSpec(BaseModel):
 
     def to_json(self):
         return {"path": self.path, "fileContent": self.fileContent}
+
+
+def file_specs_to_json(file_specs: List[FileSpec]) -> List[Dict[str, Any]]:
+    """Convert a list of FileSpec objects to a JSON-serializable dictionary."""
+    return [file_spec.to_json() for file_spec in file_specs]

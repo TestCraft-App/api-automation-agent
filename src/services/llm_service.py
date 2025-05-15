@@ -3,21 +3,24 @@ from typing import Any, Dict, List, Optional
 
 import pydantic
 from langchain_anthropic import ChatAnthropic
-from langchain_openai import ChatOpenAI
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
-from src.configuration.models import Model, ModelCost
-from src.configuration.data_sources import DataSource
+from langchain_openai import ChatOpenAI
 
+from src.configuration.data_sources import DataSource
+from src.configuration.models import Model, ModelCost
 from .file_service import FileService
-from ..configuration.config import Config
 from ..ai_tools.file_creation_tool import FileCreationTool
 from ..ai_tools.file_reading_tool import FileReadingTool
+from ..ai_tools.models.file_spec import FileSpec, file_specs_to_json
 from ..ai_tools.tool_converters import convert_tool_for_model
+from ..configuration.config import Config
+from ..models import APIPath, GeneratedModel, APIModel, APIDef
+from ..models.api_model import api_models_to_json
+from ..models.generated_model import generated_models_to_json
 from ..models.usage_data import LLMCallUsageData, AggregatedUsageMetadata
 from ..utils.logger import Logger
-
 
 UsageMetadataPayload = LLMCallUsageData
 
@@ -51,6 +54,7 @@ class LLMService:
 
         Args:
             config (Config): Configuration object
+            file_service (FileService): File service for file operations
         """
         self.config = config
         self.file_service = file_service
@@ -67,6 +71,9 @@ class LLMService:
         """
         Select and configure the appropriate language model.
 
+        Args:
+            language_model (Optional[Model]): Optional model to use
+            override (bool): Whether to override the default model
 
         Returns:
             BaseLanguageModel: Configured language model
@@ -135,13 +142,12 @@ class LLMService:
         Args:
             prompt_path (str): Path to the prompt template
             tools (Optional[List[BaseTool]]): Tools to bind
-            tool_to_use (Optional[str]): Name of the tool to use
-            language_model (Optional[BaseLanguageModel]): Language model to use
+            must_use_tool (Optional[bool]): Whether to enforce tool usage
+            language_model (Optional[Model]): Language model to use
 
         Returns:
             Any: Configured AI processing chain
         """
-
         try:
             all_tools = tools or []
 
@@ -165,11 +171,9 @@ class LLMService:
                 if response.usage_metadata is not None:
                     try:
                         current_usage_metadata = LLMCallUsageData.model_validate(response.usage_metadata)
-
                         cost = self._calculate_llm_call_cost(self.config.model, current_usage_metadata)
                         current_usage_metadata.cost = cost
                         self.aggregated_usage_metadata.add_call_usage(current_usage_metadata)
-
                     except Exception as validation_error:
                         self.logger.warning(
                             f"Failed to validate usage metadata: {validation_error}. Using defaults."
@@ -197,102 +201,125 @@ class LLMService:
             self.logger.error(f"Chain creation error: {e}")
             raise
 
-    def generate_dot_env(self, api_definition: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Generate .env file configuration."""
-        chain_output = self.create_ai_chain(
+    def generate_dot_env(self, env_vars: List[str]) -> None:
+        """Generate .env file with environment variables."""
+        self.create_ai_chain(
             PromptConfig.DOT_ENV,
             tools=[FileCreationTool(self.config, self.file_service)],
             must_use_tool=True,
-        ).invoke({"api_definition": api_definition})
-        result = json.loads(chain_output)
-        return result
+        ).invoke({"env_vars": env_vars})
 
-    def generate_models(self, api_definition: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Generate models from API definition."""
-        chain_output = self.create_ai_chain(
-            PromptConfig.MODELS,
-            tools=[FileCreationTool(self.config, self.file_service, are_models=True)],
-            must_use_tool=True,
-        ).invoke({"api_definition": api_definition})
-        result = json.loads(chain_output)
-        return result
+    def generate_models(self, definition_content: str) -> List[GeneratedModel]:
+        """Generate models for the API definition."""
+        try:
+            chain_output = self.create_ai_chain(
+                PromptConfig.MODELS,
+                tools=[FileCreationTool(self.config, self.file_service, are_models=True)],
+                must_use_tool=True,
+            ).invoke({"api_definition": definition_content})
 
-    def generate_first_test(
-        self, api_definition: Dict[str, Any], models: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
-        """Generate first test from API definition and models."""
-        prompt = None
-        if self.config.data_source == DataSource.POSTMAN:
-            prompt = PromptConfig.FIRST_TEST_POSTMAN
-        else:
-            prompt = PromptConfig.FIRST_TEST
+            result = json.loads(chain_output)
+            if isinstance(result, list):
+                return [GeneratedModel(**model_data) for model_data in result]
+            return []
+        except Exception as e:
+            self.logger.error(f"Error generating models: {str(e)}")
+            return []
 
-        chain_output = self.create_ai_chain(
-            prompt,
-            tools=[FileCreationTool(self.config, self.file_service)],
-            must_use_tool=True,
-        ).invoke({"api_definition": api_definition, "models": models})
-        result = json.loads(chain_output)
-        return result
+    def generate_first_test(self, definition_content: str, models: List[GeneratedModel]) -> List[FileSpec]:
+        """Generate the first test for the API definition."""
+        try:
+            prompt = (
+                PromptConfig.FIRST_TEST_POSTMAN
+                if self.config.data_source == DataSource.POSTMAN
+                else PromptConfig.FIRST_TEST
+            )
+
+            chain_output = self.create_ai_chain(
+                prompt,
+                tools=[FileCreationTool(self.config, self.file_service)],
+                must_use_tool=True,
+            ).invoke({"api_definition": definition_content, "models": generated_models_to_json(models)})
+
+            result = json.loads(chain_output)
+            if isinstance(result, list):
+                return [FileSpec(**model_data) for model_data in result]
+            return []
+        except Exception as e:
+            self.logger.error(f"Error generating test: {e}")
+            return []
 
     def get_additional_models(
         self,
-        relevant_models: List[Dict[str, Any]],
-        available_models: List[Dict[str, Any]],
-    ) -> Any:
+        relevant_models: List[GeneratedModel],
+        available_models: List[APIModel],
+    ) -> List[FileSpec]:
         """Trigger read file tool to decide what additional model info is needed"""
         self.logger.info("\nGetting additional models...")
-        chain_output = self.create_ai_chain(
+        result = self.create_ai_chain(
             PromptConfig.ADD_INFO,
             tools=[FileReadingTool(self.config, self.file_service)],
             must_use_tool=True,
         ).invoke(
             {
-                "relevant_models": relevant_models,
-                "available_models": available_models,
+                "relevant_models": generated_models_to_json(relevant_models),
+                "available_models": api_models_to_json(available_models),
             }
         )
-        result = chain_output
-        return result
+
+        # Parse the JSON output and convert to FileSpec objects
+        if isinstance(result, List):
+            if len(result) > 0 and isinstance(result[0], FileSpec):
+                return result
+
+        if isinstance(result, str):
+            result = json.loads(result)
+        if isinstance(result, List):
+            print(result)
+            return [FileSpec(**file_spec) for file_spec in result]
+        return []
 
     def generate_additional_tests(
         self,
-        tests: List[Dict[str, Any]],
-        models: List[Dict[str, Any]],
-        api_definition: Dict[str, Any],
-    ) -> List[Dict[str, Any]]:
-        """Generate additional tests from tests, models and an API definition."""
-        chain_output = self.create_ai_chain(
+        tests: List[FileSpec],
+        models: List[GeneratedModel],
+        definition_content: str,
+    ) -> List[FileSpec]:
+        """Generate additional tests based on the initial test and models."""
+        result = self.create_ai_chain(
             PromptConfig.ADDITIONAL_TESTS,
             tools=[FileCreationTool(self.config, self.file_service)],
             must_use_tool=True,
         ).invoke(
             {
-                "tests": tests,
-                "models": models,
-                "api_definition": api_definition,
+                "tests": file_specs_to_json(tests),
+                "models": generated_models_to_json(models),
+                "api_definition": definition_content,
             }
         )
-        result = json.loads(chain_output)
-        return result
 
-    def fix_typescript(
-        self, files: List[Dict[str, str]], messages: List[str], are_models: bool = False
-    ) -> None:
+        # Parse the JSON output and convert to FileSpec objects
+        if isinstance(result, str):
+            result = json.loads(result)
+        if isinstance(result, list):
+            return [FileSpec(**file_spec) for file_spec in result]
+        return []
+
+    def fix_typescript(self, files: List[FileSpec], messages: List[str], are_models: bool = False) -> None:
         """
         Fix TypeScript files.
 
         Args:
-            files (List[Dict[str, str]]): Files to fix
+            files (List[FileSpec]): List of files to fix
             messages (List[str]): Associated error messages
+            are_models (bool): Whether the files are models
         """
         self.logger.info("\nFixing TypeScript files:")
         for file in files:
-            self.logger.info(f"  - {file['path']}")
+            self.logger.info(f"  - {file.path}")
 
         self.create_ai_chain(
             PromptConfig.FIX_TYPESCRIPT,
             tools=[FileCreationTool(self.config, self.file_service, are_models=are_models)],
             must_use_tool=True,
         ).invoke({"files": files, "messages": messages})
-        return None
