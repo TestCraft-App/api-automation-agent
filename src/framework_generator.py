@@ -42,8 +42,10 @@ class FrameworkGenerator:
         self.logger.warning("⚠️ Process interrupted! Saving progress...")
         try:
             self.save_state()
+        except OSError as e:
+            self.logger.error(f"File system error while saving state: {e}")
         except Exception as e:
-            self.logger.error(f"Error saving state: {e}")
+            self.logger.error(f"Unexpected error while saving state: {e}")
         sys.exit(1)
 
     def _log_error(self, message: str, exc: Exception):
