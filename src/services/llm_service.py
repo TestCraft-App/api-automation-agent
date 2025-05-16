@@ -295,4 +295,4 @@ class LLMService:
             PromptConfig.FIX_TYPESCRIPT,
             tools=[FileCreationTool(self.config, self.file_service, are_models=are_models)],
             must_use_tool=True,
-        ).invoke({"files": files, "messages": messages})
+        ).invoke({"files": file_specs_to_json(files), "messages": messages})

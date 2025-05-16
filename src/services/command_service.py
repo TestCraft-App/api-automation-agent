@@ -214,7 +214,7 @@ class CommandService:
         files: List[FileSpec],
     ) -> Tuple[bool, str]:
         """Run TypeScript compiler for specific files"""
-        self._log_message(f"Running TypeScript compiler for files: {[file['path'] for file in files]}")
+        self._log_message(f"Running TypeScript compiler for files: {[file.path for file in files]}")
         compiler_command = build_typescript_compiler_command(files)
         return self.run_command(compiler_command)
 

@@ -290,7 +290,7 @@ class FrameworkGenerator:
         error_type = "models" if are_models else "tests"
         try:
 
-            def typescript_fix_wrapper(problematic_files, messages):
+            def typescript_fix_wrapper(problematic_files: List[FileSpec], messages):
                 self.logger.info("\nAttempting to fix TypeScript errors with LLM...")
                 self.llm_service.fix_typescript(problematic_files, messages, are_models)
                 self.logger.info("TypeScript fixing attempt complete.")
