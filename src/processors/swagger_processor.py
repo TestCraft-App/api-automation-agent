@@ -151,26 +151,13 @@ class SwaggerProcessor(APIProcessor):
 
     def get_relevant_models(self, all_models: List[ModelInfo], api_verb: APIVerb) -> List[GeneratedModel]:
         """Get models relevant to the API verb."""
-        try:
-            self.logger.info(f"Getting relevant models for {api_verb.path} {api_verb.verb}")
+        result: List[GeneratedModel] = []
 
-            path_model_info = next(
-                (info for info in all_models if info.path == api_verb.path), ModelInfo(path=api_verb.path)
-            )
+        for model in all_models:
+            if api_verb.path == model.path or str(api_verb.path).startswith(model.path + "/"):
+                result.extend(model.models)
 
-            relevant_models = path_model_info.get_models_by_path(api_verb.path)
-
-            if not relevant_models:
-                relevant_models = path_model_info.get_models_by_summary(api_verb.verb.lower())
-
-            self.logger.info(
-                f"Found {len(relevant_models)} relevant models for {api_verb.path} {api_verb.verb}"
-            )
-            return relevant_models
-
-        except Exception as e:
-            self.logger.error(f"Error getting relevant models: {str(e)}")
-            return []
+        return result
 
     def get_other_models(
         self,
