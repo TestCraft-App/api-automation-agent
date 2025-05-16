@@ -34,13 +34,10 @@ def convert_to_file_spec(data: Any) -> List[FileSpec]:
     Returns:
         List[FileSpec]: List of FileSpec objects
     """
-    if isinstance(data, List):
-        if len(data) > 0 and isinstance(data[0], FileSpec):
-            return data
-
     if isinstance(data, str):
         data = json.loads(data)
     if isinstance(data, List):
-        print(data)
+        if len(data) > 0 and isinstance(data[0], FileSpec):
+            return data
         return [FileSpec(**file_spec) for file_spec in data]
     return []

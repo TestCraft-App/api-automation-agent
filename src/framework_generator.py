@@ -196,7 +196,7 @@ class FrameworkGenerator:
             self.models_count += len(models_result)
             self._run_code_quality_checks(models_result, are_models=True)
             self.logger.info(f"Generated {len(models_result)} models for {api_definition.path}")
-            return GeneratedModel.from_file_specs(models_result)
+            return GeneratedModel.from_model_file_specs(models_result)
 
         except Exception as e:
             self.logger.error(f"Error generating models: {str(e)}")

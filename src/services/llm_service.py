@@ -13,6 +13,7 @@ from .file_service import FileService
 from ..ai_tools.file_creation_tool import FileCreationTool
 from ..ai_tools.file_reading_tool import FileReadingTool
 from ..ai_tools.models.file_spec import FileSpec, file_specs_to_json, convert_to_file_spec
+from ..ai_tools.models.model_file_spec import convert_to_model_file_spec, ModelFileSpec
 from ..ai_tools.tool_converters import convert_tool_for_model
 from ..configuration.config import Config
 from ..models import GeneratedModel, APIModel
@@ -208,7 +209,7 @@ class LLMService:
             must_use_tool=True,
         ).invoke({"api_definition": definition_content})
 
-    def generate_models(self, definition_content: str) -> List[FileSpec]:
+    def generate_models(self, definition_content: str) -> List[ModelFileSpec]:
         """Generate models for the API definition."""
         try:
             result = self.create_ai_chain(
@@ -216,7 +217,7 @@ class LLMService:
                 tools=[FileCreationTool(self.config, self.file_service, are_models=True)],
                 must_use_tool=True,
             ).invoke({"api_definition": definition_content})
-            return convert_to_file_spec(result)
+            return convert_to_model_file_spec(result)
         except Exception as e:
             self.logger.error(f"Error generating models: {str(e)}")
             return []
