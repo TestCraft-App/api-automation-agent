@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Dict, Any, List
 
-from src.ai_tools.models.file_spec import FileSpec
 from src.ai_tools.models.model_file_spec import ModelFileSpec
 
 
