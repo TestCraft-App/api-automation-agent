@@ -189,13 +189,11 @@ class FrameworkGenerator:
             self.logger.info(f"Generating models for {api_definition.path}")
             model_info = ModelInfo(path=api_definition.path)
             definition_content = self.api_processor.get_api_path_content(api_definition)
-            # Generate models using LLM service
             generated_models = self.llm_service.generate_models(definition_content)
             if not generated_models:
                 self.logger.warning(f"No models generated for {api_definition.path}")
                 return None
 
-            # Add each generated model to the model info
             for model in generated_models:
                 model_info.add_model(model)
 

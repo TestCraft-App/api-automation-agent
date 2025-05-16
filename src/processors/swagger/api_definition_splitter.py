@@ -19,10 +19,6 @@ class APIDefinitionSplitter:
         self.logger.info("Splitting API definition into components...")
         api_definition_list = []
 
-        base_copy = copy.deepcopy(api_definition)
-        del base_copy["paths"]
-        api_definition_list.append(APIPath(path="/", yaml=yaml.dump(base_copy, sort_keys=False)))
-
         for path, path_data in api_definition.get("paths", {}).items():
             normalized_path = APIPath.normalize_path(path)
 

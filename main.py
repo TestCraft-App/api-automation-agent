@@ -104,7 +104,7 @@ def main(
         api_definitions = framework_generator.process_api_definition()
 
         if config.list_endpoints:
-            EndpointLister.list_endpoints(api_definitions)
+            EndpointLister.list_endpoints(api_definitions.definitions)
             logger.info("\n✅ Endpoint listing completed successfully!")
         else:
             if not config.use_existing_framework:

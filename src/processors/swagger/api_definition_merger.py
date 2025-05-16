@@ -21,6 +21,7 @@ class APIDefinitionMerger:
             if isinstance(item, APIPath):
                 base_path = "/" + item.path.split("/", 2)[1]
                 if base_path not in merged_definitions:
+                    item.path = base_path
                     merged_definitions[base_path] = copy.deepcopy(item)
                 else:
                     item_yaml = yaml.safe_load(item.yaml)

@@ -41,20 +41,20 @@ class PostmanUtils:
     @staticmethod
     def extract_request_data(data: Dict[str, Any], current_path: str) -> RequestData:
         req = data.get("request", {})
-        # verb
         verb = req.get("method", "")
-        # path
         raw_url = req.get("url")
         if isinstance(raw_url, dict):
             path = raw_url.get("raw", "")
         else:
             path = raw_url or ""
+
         # body
         raw_body = req.get("body", {}).get("raw", "").replace("\r", "").replace("\n", "")
         try:
             body = json.loads(raw_body) if raw_body else {}
         except json.JSONDecodeError:
             body = {}
+
         # scripts
         prereq: List[str] = []
         script: List[str] = []
@@ -63,6 +63,7 @@ class PostmanUtils:
                 prereq = ev.get("script", {}).get("exec", [])
             elif ev.get("listen") == "test":
                 script = ev.get("script", {}).get("exec", [])
+
         # name & file_path
         name = PostmanUtils.to_camel_case(data.get("name", ""))
         file_path = f"src/tests{current_path}/{name}"

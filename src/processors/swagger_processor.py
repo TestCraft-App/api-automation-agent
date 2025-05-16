@@ -76,6 +76,11 @@ class SwaggerProcessor(APIProcessor):
                         )
                     )
 
+                self.logger.debug(f"\nType: {definition.type}")
+                self.logger.debug(f"Path: {definition.path}")
+                if isinstance(definition, APIVerb):
+                    self.logger.debug(f"Verb: {definition.verb}")
+
             self.logger.info("Successfully processed API definition.")
             return result
         except Exception as e:
@@ -149,15 +154,12 @@ class SwaggerProcessor(APIProcessor):
         try:
             self.logger.info(f"Getting relevant models for {api_verb.path} {api_verb.verb}")
 
-            # Find the model info for this path
             path_model_info = next(
                 (info for info in all_models if info.path == api_verb.path), ModelInfo(path=api_verb.path)
             )
 
-            # Get models by path
             relevant_models = path_model_info.get_models_by_path(api_verb.path)
 
-            # If no models found by path, try to find by summary
             if not relevant_models:
                 relevant_models = path_model_info.get_models_by_summary(api_verb.verb.lower())
 

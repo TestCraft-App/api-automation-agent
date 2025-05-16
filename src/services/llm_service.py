@@ -201,13 +201,13 @@ class LLMService:
             self.logger.error(f"Chain creation error: {e}")
             raise
 
-    def generate_dot_env(self, env_vars: List[str]) -> None:
+    def generate_dot_env(self, definition_content: str) -> None:
         """Generate .env file with environment variables."""
         self.create_ai_chain(
             PromptConfig.DOT_ENV,
             tools=[FileCreationTool(self.config, self.file_service)],
             must_use_tool=True,
-        ).invoke({"env_vars": env_vars})
+        ).invoke({"api_definition": definition_content})
 
     def generate_models(self, definition_content: str) -> List[GeneratedModel]:
         """Generate models for the API definition."""
