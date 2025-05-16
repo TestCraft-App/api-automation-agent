@@ -187,18 +187,16 @@ class FrameworkGenerator:
         """Generate models for the API definition."""
         try:
             self.logger.info(f"Generating models for {api_definition.path}")
-            model_info = ModelInfo(path=api_definition.path)
             definition_content = self.api_processor.get_api_path_content(api_definition)
-            generated_models = self.llm_service.generate_models(definition_content)
-            if not generated_models:
+            models_result = self.llm_service.generate_models(definition_content)
+            if not models_result:
                 self.logger.warning(f"No models generated for {api_definition.path}")
                 return None
 
-            for model in generated_models:
-                model_info.add_model(model)
-
-            self.logger.info(f"Generated {len(generated_models)} models for {api_definition.path}")
-            return model_info.models
+            self.models_count += len(models_result)
+            self._run_code_quality_checks(models_result, are_models=True)
+            self.logger.info(f"Generated {len(models_result)} models for {api_definition.path}")
+            return GeneratedModel.from_file_specs(models_result)
 
         except Exception as e:
             self.logger.error(f"Error generating models: {str(e)}")

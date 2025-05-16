@@ -211,7 +211,7 @@ class CommandService:
 
     def run_typescript_compiler_for_files(
         self,
-        files: List[Dict[str, str]],
+        files: List[FileSpec],
     ) -> Tuple[bool, str]:
         """Run TypeScript compiler for specific files"""
         self._log_message(f"Running TypeScript compiler for files: {[file['path'] for file in files]}")
@@ -219,9 +219,9 @@ class CommandService:
         return self.run_command(compiler_command)
 
 
-def build_typescript_compiler_command(files: List[Dict[str, str]]) -> str:
+def build_typescript_compiler_command(files: List[FileSpec]) -> str:
     """Build the TypeScript compiler command for specific files"""
-    file_paths = " ".join(file["path"] for file in files)
+    file_paths = " ".join(file.path for file in files)
     return (
         f"npx tsc {file_paths} "
         "--lib es2021 "

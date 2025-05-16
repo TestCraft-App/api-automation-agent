@@ -1,4 +1,3 @@
-import json
 from typing import Any, List, Optional
 
 import pydantic
@@ -13,7 +12,7 @@ from src.configuration.models import Model, ModelCost
 from .file_service import FileService
 from ..ai_tools.file_creation_tool import FileCreationTool
 from ..ai_tools.file_reading_tool import FileReadingTool
-from ..ai_tools.models.file_spec import FileSpec, file_specs_to_json
+from ..ai_tools.models.file_spec import FileSpec, file_specs_to_json, convert_to_file_spec
 from ..ai_tools.tool_converters import convert_tool_for_model
 from ..configuration.config import Config
 from ..models import GeneratedModel, APIModel
@@ -209,19 +208,15 @@ class LLMService:
             must_use_tool=True,
         ).invoke({"api_definition": definition_content})
 
-    def generate_models(self, definition_content: str) -> List[GeneratedModel]:
+    def generate_models(self, definition_content: str) -> List[FileSpec]:
         """Generate models for the API definition."""
         try:
-            chain_output = self.create_ai_chain(
+            result = self.create_ai_chain(
                 PromptConfig.MODELS,
                 tools=[FileCreationTool(self.config, self.file_service, are_models=True)],
                 must_use_tool=True,
             ).invoke({"api_definition": definition_content})
-
-            result = json.loads(chain_output)
-            if isinstance(result, list):
-                return [GeneratedModel(**model_data) for model_data in result]
-            return []
+            return convert_to_file_spec(result)
         except Exception as e:
             self.logger.error(f"Error generating models: {str(e)}")
             return []
@@ -234,17 +229,12 @@ class LLMService:
                 if self.config.data_source == DataSource.POSTMAN
                 else PromptConfig.FIRST_TEST
             )
-
-            chain_output = self.create_ai_chain(
+            result = self.create_ai_chain(
                 prompt,
                 tools=[FileCreationTool(self.config, self.file_service)],
                 must_use_tool=True,
             ).invoke({"api_definition": definition_content, "models": generated_models_to_json(models)})
-
-            result = json.loads(chain_output)
-            if isinstance(result, list):
-                return [FileSpec(**model_data) for model_data in result]
-            return []
+            return convert_to_file_spec(result)
         except Exception as e:
             self.logger.error(f"Error generating test: {e}")
             return []
@@ -266,18 +256,7 @@ class LLMService:
                 "available_models": api_models_to_json(available_models),
             }
         )
-
-        # Parse the JSON output and convert to FileSpec objects
-        if isinstance(result, List):
-            if len(result) > 0 and isinstance(result[0], FileSpec):
-                return result
-
-        if isinstance(result, str):
-            result = json.loads(result)
-        if isinstance(result, List):
-            print(result)
-            return [FileSpec(**file_spec) for file_spec in result]
-        return []
+        return convert_to_file_spec(result)
 
     def generate_additional_tests(
         self,
@@ -297,13 +276,7 @@ class LLMService:
                 "api_definition": definition_content,
             }
         )
-
-        # Parse the JSON output and convert to FileSpec objects
-        if isinstance(result, str):
-            result = json.loads(result)
-        if isinstance(result, list):
-            return [FileSpec(**file_spec) for file_spec in result]
-        return []
+        return convert_to_file_spec(result)
 
     def fix_typescript(self, files: List[FileSpec], messages: List[str], are_models: bool = False) -> None:
         """
