@@ -1,19 +1,18 @@
 import json
-from typing import List
+from typing import List, Optional
 
 import yaml
 
-from src.ai_tools.models.file_spec import FileSpec
-from src.configuration.config import Config
-from src.models import APIModel, APIPath, APIVerb, GeneratedModel, ModelInfo, APIDefinition
-from src.processors.api_processor import APIProcessor
-from src.services.file_service import FileService
 from .swagger import (
     APIDefinitionMerger,
     APIDefinitionSplitter,
-    FileLoader,
     APIDefinitionLoader,
 )
+from ..ai_tools.models.file_spec import FileSpec
+from ..configuration.config import Config
+from ..models import APIModel, APIPath, APIVerb, GeneratedModel, ModelInfo, APIDefinition
+from ..processors.api_processor import APIProcessor
+from ..services.file_service import FileService
 from ..utils.logger import Logger
 
 
@@ -27,7 +26,7 @@ class SwaggerProcessor(APIProcessor):
         merger: APIDefinitionMerger,
         file_service: FileService,
         config: Config,
-        api_definition_loader: APIDefinitionLoader = None,
+        api_definition_loader: Optional[APIDefinitionLoader] = None,
     ):
         """
         Initialize the SwaggerProcessor.
@@ -46,19 +45,19 @@ class SwaggerProcessor(APIProcessor):
         self.api_definition_loader = api_definition_loader or APIDefinitionLoader()
         self.logger = Logger.get_logger(__name__)
 
-    def process_api_definition(self, api_definition: str) -> APIDefinition:
+    def process_api_definition(self, api_definition_path: str) -> APIDefinition:
         """
         Processes an API definition by loading, splitting, and merging its components.
 
         Args:
-            api_definition (str): URL or path to the API definition.
+            api_definition_path (str): URL or path to the API definition.
 
         Returns:
             APIDefinition containing the processed API definitions.
         """
         try:
             self.logger.info("Starting API processing")
-            raw_definition = self.api_definition_loader.load(api_definition)
+            raw_definition = self.api_definition_loader.load(api_definition_path)
             split_definitions = self.splitter.split(raw_definition)
             merged_definitions = self.merger.merge(split_definitions)
 

@@ -3,8 +3,8 @@ from typing import List
 
 import yaml
 
-from src.models import APIPath, APIVerb, APIDef
-from src.utils.logger import Logger
+from ...models import APIPath, APIVerb, APIDef
+from ...utils.logger import Logger
 
 
 class APIDefinitionMerger:

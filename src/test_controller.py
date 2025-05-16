@@ -7,10 +7,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Set
 
-from src.configuration.config import Config
-from src.services.command_service import CommandService
-from src.utils.logger import Logger
-from src.visuals.loading_animator import LoadingDotsAnimator
+from .configuration.config import Config
+from .services.command_service import CommandService
+from .utils.logger import Logger
+from .visuals.loading_animator import LoadingDotsAnimator
 
 
 @dataclass
@@ -47,6 +47,9 @@ class TestController:
             )
         except subprocess.CalledProcessError as e:
             tsc_output = e.output or ""
+        except Exception as e:
+            self.logger.error(f"Unexpected error during TypeScript compilation: {e}", exc_info=True)
+            return TestFileSet(runnable=[], skipped=[str(f["path"]) for f in test_files])
 
         all_error_files = self._extract_error_files(tsc_output)
 
@@ -117,6 +120,7 @@ class TestController:
             if temp_file.exists():
                 temp_file.unlink()
                 self.logger.debug(f"Deleted temporary tsconfig file: {temp_tsconfig_path}")
+            return TestFileSet(runnable=[], skipped=[])
 
     def _extract_error_files(self, tsc_output: str) -> Set[str]:
         error_files = set()

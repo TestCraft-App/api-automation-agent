@@ -5,7 +5,7 @@ import shelve
 from functools import wraps
 from typing import Dict, Any, Optional, Iterable, Generator
 
-from src.utils.logger import Logger
+from ..utils.logger import Logger
 
 
 class Checkpoint:

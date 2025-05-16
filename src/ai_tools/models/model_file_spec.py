@@ -37,7 +37,7 @@ def convert_to_model_file_spec(data: Any) -> List[ModelFileSpec]:
     if isinstance(data, str):
         data = json.loads(data)
     if isinstance(data, List):
-        if len(data) > 0 and isinstance(data[0], FileSpec):
+        if len(data) > 0 and isinstance(data[0], ModelFileSpec):
             return data
         return [ModelFileSpec(**file_spec) for file_spec in data]
     return []

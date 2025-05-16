@@ -3,7 +3,7 @@ import os
 import sys
 from typing import List
 
-from src.configuration.config import Config
+from ..configuration.config import Config
 
 
 class Logger:

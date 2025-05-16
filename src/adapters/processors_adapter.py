@@ -1,13 +1,13 @@
 from dependency_injector import containers, providers
 
-from src.processors.postman_processor import PostmanProcessor
-from src.processors.swagger import (
+from ..processors.postman_processor import PostmanProcessor
+from ..processors.swagger import (
     APIDefinitionMerger,
     APIDefinitionSplitter,
     FileLoader,
 )
-from src.processors.swagger_processor import SwaggerProcessor
-from src.services.file_service import FileService
+from ..processors.swagger_processor import SwaggerProcessor
+from ..services.file_service import FileService
 
 
 class ProcessorsAdapter(containers.DeclarativeContainer):

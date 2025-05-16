@@ -1,19 +1,20 @@
 import json
 import logging
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional, Dict
 
 import yaml
 
-from src.configuration.data_sources import DataSource
-from src.models import APIModel, APIPath, APIVerb, GeneratedModel, ModelInfo, APIDefinition
+from .postman.models import VerbInfo, RequestData
+from ..configuration.data_sources import DataSource
+from ..models import APIModel, APIPath, APIVerb, GeneratedModel, ModelInfo, APIDefinition
 
 
 class APIProcessor(ABC):
     """Abstract base class for API processors."""
 
     @staticmethod
-    def set_data_source(api_file_path: str, logger: logging.Logger = None) -> DataSource:
+    def set_data_source(api_file_path: str, logger: Optional[logging.Logger] = None) -> DataSource:
         """
         Determines the type of data source by reading and parsing the file.
 
@@ -51,7 +52,7 @@ class APIProcessor(ABC):
         return DataSource.NONE
 
     @abstractmethod
-    def process_api_definition(self, api_definition: str) -> APIDefinition:
+    def process_api_definition(self, api_definition_path: str) -> APIDefinition:
         """Process the API definition file and return a list of API endpoints"""
         pass
 
@@ -61,7 +62,7 @@ class APIProcessor(ABC):
         pass
 
     @abstractmethod
-    def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath]:
+    def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath] | Dict[str, List[VerbInfo]]:
         """Get all path definitions that should be processed"""
         pass
 
@@ -101,7 +102,7 @@ class APIProcessor(ABC):
         pass
 
     @abstractmethod
-    def get_api_verb_content(self, api_verb: APIVerb) -> str:
+    def get_api_verb_content(self, api_verb: APIVerb | RequestData) -> str:
         """Get the content of the API verb"""
         pass
 

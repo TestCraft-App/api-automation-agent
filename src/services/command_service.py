@@ -68,6 +68,9 @@ class CommandService:
 
             output_lines = []
             while True:
+                if process.stdout is None:
+                    self._log_message("No output stream available.", is_error=True)
+                    break
                 output = process.stdout.readline()
                 if output:
                     output_lines.append(output.rstrip())

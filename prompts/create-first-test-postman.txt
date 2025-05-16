@@ -183,8 +183,7 @@ API-FRAMEWORK
 ```typescript
 import {{ BookingService }} from "../../models/services/BookingService.js";
 import {{ BookingModel }} from "../../models/requests/BookingModel.js";
-import * as chai from "chai";
-chai.should();
+import 'chai/register-should.js';
 
 describe("Add Booking", () => {{
   const bookingService = new BookingService();

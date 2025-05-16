@@ -1,9 +1,10 @@
+import ast
 import os
 import shutil
 from typing import List, Optional
 
-from src.ai_tools.models.file_spec import FileSpec
-from src.utils.logger import Logger
+from ..ai_tools.models.file_spec import FileSpec
+from ..utils.logger import Logger
 
 
 class FileService:
@@ -55,6 +56,16 @@ class FileService:
             try:
                 path = file_spec.path
                 content = file_spec.fileContent
+
+                # For cases like '"import ....\n"' or "'import ....\n'"
+                if len(content) >= 2 and content[0] == content[-1] and content[0] in ('"', "'"):
+                    try:
+                        # ast.literal_eval will strip the quotes AND un-escape \n, \", etc.
+                        file_spec.fileContent = ast.literal_eval(content)
+                    except (ValueError, SyntaxError):
+                        # if it fails, leave it as-is
+                        pass
+
                 if path.startswith("./"):
                     path = path[2:]
                 path = path.lstrip("/")

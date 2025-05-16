@@ -7,18 +7,16 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
 from langchain_openai import ChatOpenAI
 
-from src.configuration.data_sources import DataSource
-from src.configuration.models import Model, ModelCost
 from .file_service import FileService
 from ..ai_tools.file_creation_tool import FileCreationTool
 from ..ai_tools.file_reading_tool import FileReadingTool
 from ..ai_tools.models.file_spec import FileSpec, file_specs_to_json, convert_to_file_spec
 from ..ai_tools.models.model_file_spec import convert_to_model_file_spec, ModelFileSpec
-from ..ai_tools.tool_converters import convert_tool_for_model
 from ..configuration.config import Config
+from ..configuration.data_sources import DataSource
+from ..configuration.models import Model, ModelCost
 from ..models import GeneratedModel, APIModel
 from ..models.api_model import api_models_to_json
-from ..models.generated_model import generated_models_to_json
 from ..models.usage_data import LLMCallUsageData, AggregatedUsageMetadata
 from ..utils.logger import Logger
 
@@ -155,7 +153,6 @@ class LLMService:
             prompt_template = ChatPromptTemplate.from_template(self._load_prompt(prompt_path))
 
             if tools:
-                converted_tools = [convert_tool_for_model(tool, llm) for tool in all_tools]
                 tool_choice = "auto"
                 if self.config.model.is_anthropic():
                     if must_use_tool:
@@ -163,7 +160,7 @@ class LLMService:
                 else:
                     if must_use_tool:
                         tool_choice = "required"
-                llm_with_tools = llm.bind_tools(converted_tools, tool_choice=tool_choice)
+                llm_with_tools = llm.bind_tools(all_tools, tool_choice=tool_choice)
             else:
                 llm_with_tools = llm
 
@@ -234,7 +231,7 @@ class LLMService:
                 prompt,
                 tools=[FileCreationTool(self.config, self.file_service)],
                 must_use_tool=True,
-            ).invoke({"api_definition": definition_content, "models": generated_models_to_json(models)})
+            ).invoke({"api_definition": definition_content, "models": GeneratedModel.list_to_json(models)})
             return convert_to_file_spec(result)
         except Exception as e:
             self.logger.error(f"Error generating test: {e}")
@@ -253,7 +250,7 @@ class LLMService:
             must_use_tool=True,
         ).invoke(
             {
-                "relevant_models": generated_models_to_json(relevant_models),
+                "relevant_models": GeneratedModel.list_to_json(relevant_models),
                 "available_models": api_models_to_json(available_models),
             }
         )
@@ -273,7 +270,7 @@ class LLMService:
         ).invoke(
             {
                 "tests": file_specs_to_json(tests),
-                "models": generated_models_to_json(models),
+                "models": GeneratedModel.list_to_json(models),
                 "api_definition": definition_content,
             }
         )

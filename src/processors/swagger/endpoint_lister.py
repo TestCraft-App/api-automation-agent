@@ -1,6 +1,6 @@
 from typing import List
 
-from src.models import APIDef
+from ...models.api_def import APIDef
 
 
 class EndpointLister:

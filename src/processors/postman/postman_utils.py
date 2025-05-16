@@ -3,8 +3,8 @@ import re
 from typing import Any, Dict, Iterable, List
 from urllib.parse import parse_qsl
 
-from src.models import APIDefinition
-from src.processors.postman.models import RequestData, VerbInfo, ServiceVerbs
+from ...models import APIDefinition
+from ...processors.postman.models import RequestData, VerbInfo
 
 
 class PostmanUtils:
@@ -69,6 +69,7 @@ class PostmanUtils:
         file_path = f"src/tests{current_path}/{name}"
 
         return RequestData(
+            service="",
             file_path=file_path,
             path=path,
             verb=verb,
@@ -80,7 +81,7 @@ class PostmanUtils:
 
     @staticmethod
     def extract_verb_path_info(requests: List[RequestData]) -> List[VerbInfo]:
-        distinct = {r.path.split("?", 1)[0] for r in requests}
+        distinct = {item.path.split("?")[0] for item in requests}
         out: List[VerbInfo] = []
 
         for base in distinct:
@@ -110,15 +111,29 @@ class PostmanUtils:
         return out
 
     @staticmethod
-    def map_verb_path_pairs_to_services(verbs: List[VerbInfo], paths: Iterable[str]) -> List[ServiceVerbs]:
+    def map_verb_path_pairs_to_services(
+        verb_path_pairs: List[RequestData], no_query_params_routes_grouped_by_service: Dict[str, List[str]]
+    ) -> Dict[str, List[VerbInfo]]:
         # first group raw paths by service root
-        grouped = PostmanUtils.group_paths_by_service(paths)
-        services: Dict[str, ServiceVerbs] = {svc: ServiceVerbs(service=svc) for svc in grouped}
-        for v in verbs:
-            for svc, routes in grouped.items():
-                if v.path in routes:
-                    services[svc].verbs.append(v)
-        return list(services.values())
+        verb_chunks_with_query_params = PostmanUtils.extract_verb_path_info(verb_path_pairs)
+
+        verb_path_pairs_and_services: Dict[str, List[VerbInfo]] = {}
+        for verb_path_pair in verb_chunks_with_query_params:
+            for service, routes in no_query_params_routes_grouped_by_service.items():
+                if verb_path_pair.path in routes:
+                    if service not in verb_path_pairs_and_services:
+                        verb_path_pairs_and_services[service] = []
+
+                    verb_path_pairs_and_services[service].append(
+                        VerbInfo(
+                            verb=verb_path_pair.verb,
+                            path=verb_path_pair.path,
+                            query_params=verb_path_pair.query_params,
+                            body_attributes=verb_path_pair.body_attributes,
+                            root_path="",
+                        )
+                    )
+        return verb_path_pairs_and_services
 
     @staticmethod
     def group_paths_by_service(paths: Iterable[str]) -> Dict[str, List[str]]:

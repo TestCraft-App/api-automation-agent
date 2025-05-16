@@ -1,13 +1,14 @@
 import signal
 import sys
+import traceback
 from typing import List, Dict, Optional, cast
 
-from src.configuration.data_sources import DataSource
-from src.models.usage_data import AggregatedUsageMetadata
-from src.processors.api_processor import APIProcessor
 from .ai_tools.models.file_spec import FileSpec
 from .configuration.config import Config, GenerationOptions
+from .configuration.data_sources import DataSource
 from .models import APIDefinition, APIPath, APIVerb, ModelInfo, GeneratedModel
+from .models.usage_data import AggregatedUsageMetadata
+from .processors.api_processor import APIProcessor
 from .processors.postman_processor import PostmanProcessor
 from .services.command_service import CommandService
 from .services.file_service import FileService
@@ -143,6 +144,8 @@ class FrameworkGenerator:
                 for verb in self.checkpoint.checkpoint_iter(api_verbs, "generate_verbs"):
                     service_related_to_verb = self.api_processor.get_api_verb_rootpath(verb)
                     tests = self._generate_tests(verb, all_generated_models["info"], generate_tests)
+                    if not tests:
+                        tests = []
                     for file in filter(self._is_response_file, tests):
                         for model in all_generated_models["info"]:
                             if model.path == service_related_to_verb:
@@ -183,19 +186,20 @@ class FrameworkGenerator:
             self._log_error("Error during final checks", e)
             raise
 
-    def _generate_models(self, api_definition: APIPath) -> Optional[List[GeneratedModel]]:
+    def _generate_models(self, api_definition: APIPath | str) -> Optional[List[GeneratedModel]]:
         """Generate models for the API definition."""
         try:
-            self.logger.info(f"Generating models for {api_definition.path}")
+            path_name = self.api_processor.get_api_path_name(api_definition)
+            self.logger.info(f"Generating models for {path_name}")
             definition_content = self.api_processor.get_api_path_content(api_definition)
             models_result = self.llm_service.generate_models(definition_content)
             if not models_result:
-                self.logger.warning(f"No models generated for {api_definition.path}")
+                self.logger.warning(f"No models generated for {path_name}")
                 return None
 
             self.models_count += len(models_result)
             self._run_code_quality_checks(models_result, are_models=True)
-            self.logger.info(f"Generated {len(models_result)} models for {api_definition.path}")
+            self.logger.info(f"Generated {len(models_result)} models for {path_name}")
             return GeneratedModel.from_model_file_specs(models_result)
 
         except Exception as e:
@@ -227,7 +231,6 @@ class FrameworkGenerator:
                         generated_model = GeneratedModel(
                             path=model.path,
                             fileContent=model.fileContent,
-                            summary="",
                         )
                         relevant_models.append(generated_model)
 
@@ -260,7 +263,7 @@ class FrameworkGenerator:
     def _generate_additional_tests(
         self,
         tests: List[FileSpec],
-        models: List[GeneratedModel],
+        models: List[GeneratedModel | str],
         api_definition: APIVerb,
     ) -> Optional[List[FileSpec]]:
         """Generate additional tests based on the initial test and models"""
@@ -268,11 +271,9 @@ class FrameworkGenerator:
         verb_name = self.api_processor.get_api_verb_name(api_definition)
         try:
             self.logger.info(f"\nGenerating additional tests for path: {verb_path} and verb: {verb_name}")
-
             additional_tests_result = self.llm_service.generate_additional_tests(
                 tests, models, self.api_processor.get_api_verb_content(api_definition)
             )
-
             if additional_tests_result:
                 if len(additional_tests_result) > len(tests):
                     self.test_files_count += len(additional_tests_result) - len(tests)
@@ -282,7 +283,10 @@ class FrameworkGenerator:
                 return additional_tests_result
             return tests
         except Exception as e:
-            self._log_error(f"Error generating additional tests for {verb_path} - {verb_name}", e)
+            self._log_error(
+                f"Error generating additional tests for {verb_path} - {verb_name}\n{traceback.format_exc()}",
+                e,
+            )
             return tests
 
     def _run_code_quality_checks(self, files: List[FileSpec], are_models: bool = False):
