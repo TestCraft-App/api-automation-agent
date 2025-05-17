@@ -1,8 +1,9 @@
+import logging
 import os
 import subprocess
-import logging
 from typing import List, Dict, Tuple, Optional, Callable
 
+from ..ai_tools.models.file_spec import FileSpec
 from ..configuration.config import Config
 
 
@@ -67,6 +68,9 @@ class CommandService:
 
             output_lines = []
             while True:
+                if process.stdout is None:
+                    self._log_message("No output stream available.", is_error=True)
+                    break
                 output = process.stdout.readline()
                 if output:
                     output_lines.append(output.rstrip())
@@ -126,7 +130,7 @@ class CommandService:
         self,
         command_func: Callable,
         fix_func: Optional[Callable] = None,
-        files: Optional[List[Dict[str, str]]] = None,
+        files: Optional[List[FileSpec]] = None,
         max_retries: int = 3,
     ) -> Tuple[bool, str]:
         """
@@ -210,17 +214,17 @@ class CommandService:
 
     def run_typescript_compiler_for_files(
         self,
-        files: List[Dict[str, str]],
+        files: List[FileSpec],
     ) -> Tuple[bool, str]:
         """Run TypeScript compiler for specific files"""
-        self._log_message(f"Running TypeScript compiler for files: {[file['path'] for file in files]}")
+        self._log_message(f"Running TypeScript compiler for files: {[file.path for file in files]}")
         compiler_command = build_typescript_compiler_command(files)
         return self.run_command(compiler_command)
 
 
-def build_typescript_compiler_command(files: List[Dict[str, str]]) -> str:
+def build_typescript_compiler_command(files: List[FileSpec]) -> str:
     """Build the TypeScript compiler command for specific files"""
-    file_paths = " ".join(file["path"] for file in files)
+    file_paths = " ".join(file.path for file in files)
     return (
         f"npx tsc {file_paths} "
         "--lib es2021 "

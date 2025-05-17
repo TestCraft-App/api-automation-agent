@@ -70,7 +70,7 @@ When you create a Service Model, you extend `ServiceBase` and define methods spe
 Here's a simple example of a service model:
 
 ```tsx
-import {{ ServiceBase }} from './ServiceBase.js'; // Import the base class
+import {{ ServiceBase }} from "../../base/ServiceBase.js"; // Import the base class
 
 export class BookingService extends ServiceBase {{
   constructor() {{
@@ -176,13 +176,13 @@ API-FRAMEWORK
 ├── .prettierrc.json
 └── src
     ├── base
-		├── ApiClient.ts
+    │  	├── ApiClient.ts
     │   └── ApiClientBase.ts
     │   └── ServiceBase.ts
     ├── models
     │   ├── requests
     │   └── responses
-		│   │  └── Response.ts
+    │   │   └── Response.ts
     │   └── services
     │     ├── AuthService.ts
     │     └── BookingService.ts

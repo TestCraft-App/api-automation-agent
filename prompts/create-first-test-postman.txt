@@ -78,7 +78,7 @@ When you create a Service Model, you extend `ServiceBase` and define methods spe
 Here's a simple example of a service model:
 
 ```tsx
-import {{ ServiceBase }} from './ServiceBase.js'; // Import the base class
+import {{ ServiceBase }} from "../../base/ServiceBase.js"; // Import the base class
 
 export class BookingService extends ServiceBase {{
   constructor() {{
@@ -183,8 +183,7 @@ API-FRAMEWORK
 ```typescript
 import {{ BookingService }} from "../../models/services/BookingService.js";
 import {{ BookingModel }} from "../../models/requests/BookingModel.js";
-import * as chai from "chai";
-chai.should();
+import 'chai/register-should.js';
 
 describe("Add Booking", () => {{
   const bookingService = new BookingService();

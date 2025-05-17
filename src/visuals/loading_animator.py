@@ -19,6 +19,9 @@ class LoadingDotsAnimator:
             sys.stdout.flush()
             time.sleep(self.interval)
 
+    def is_stop_set(self):
+        return self._stop_event.is_set()
+
     def start(self):
         self._stop_event.clear()
         self._thread = threading.Thread(target=self._animate)

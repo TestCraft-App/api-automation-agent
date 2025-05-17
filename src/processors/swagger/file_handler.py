@@ -3,7 +3,7 @@ from typing import Dict
 
 import yaml
 
-from src.utils.logger import Logger
+from ...utils.logger import Logger
 
 
 class FileLoader:
@@ -15,7 +15,7 @@ class FileLoader:
     def load(self, file_path: str) -> Dict:
         """Loads a YAML or JSON file and returns its content."""
         try:
-            self.logger.info(f"Loading API definition from...")
+            self.logger.info("Loading API definition from...")
             with open(file_path, "r") as file:
                 if file_path.endswith((".yml", ".yaml")):
                     return yaml.safe_load(file)
@@ -23,7 +23,7 @@ class FileLoader:
                     return json.load(file)
                 else:
                     raise ValueError("Unsupported file format")
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             self.logger.error(f"File not found: {file_path}")
             raise
         except (yaml.YAMLError, json.JSONDecodeError) as e:

@@ -1,12 +1,11 @@
+from dependency_injector import containers, providers
+
 from src.adapters.processors_adapter import ProcessorsAdapter
 from src.configuration.cli import CLIArgumentParser
 from src.framework_generator import FrameworkGenerator
 from src.services.command_service import CommandService
-from src.services.llm_service import LLMService
 from src.services.file_service import FileService
-
-from dependency_injector import containers, providers
-
+from src.services.llm_service import LLMService
 from src.test_controller import TestController
 
 

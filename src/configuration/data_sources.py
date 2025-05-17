@@ -4,6 +4,7 @@ from enum import Enum, auto
 class DataSource(Enum):
     SWAGGER = auto()
     POSTMAN = auto()
+    NONE = auto()
 
 
 def get_processor_for_data_source(data_source: DataSource, container):

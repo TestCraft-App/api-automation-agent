@@ -1,15 +1,16 @@
 import argparse
-import os
-import sys
-import json
-import logging
-from datetime import datetime
-from typing import List, Optional
-from tabulate import tabulate
-import time
-from pydantic import BaseModel, Field
 import concurrent.futures
 import csv
+import json
+import logging
+import os
+import sys
+import time
+from datetime import datetime
+from typing import List, Optional
+
+from pydantic import BaseModel, Field
+from tabulate import tabulate
 
 # Add project root to Python path to allow importing project modules
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
