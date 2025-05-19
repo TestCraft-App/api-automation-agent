@@ -114,13 +114,12 @@ class TestController:
                     self.logger.warning(f"   - {path}")
 
             self.logger.info("\nFinal checks completed")
-            return TestFileSet(runnable=runnable_files, skipped=skipped_files)
         finally:
             temp_file = Path(temp_tsconfig_path)
             if temp_file.exists():
                 temp_file.unlink()
                 self.logger.debug(f"Deleted temporary tsconfig file: {temp_tsconfig_path}")
-            return TestFileSet(runnable=[], skipped=[])
+            return TestFileSet(runnable=runnable_files, skipped=skipped_files)
 
     def _extract_error_files(self, tsc_output: str) -> Set[str]:
         error_files = set()
