@@ -7,6 +7,7 @@ from .swagger import (
     APIDefinitionMerger,
     APIDefinitionSplitter,
     APIDefinitionLoader,
+    APIComponentsFilter,
 )
 from ..ai_tools.models.file_spec import FileSpec
 from ..configuration.config import Config
@@ -24,6 +25,7 @@ class SwaggerProcessor(APIProcessor):
         file_loader: FileService,
         splitter: APIDefinitionSplitter,
         merger: APIDefinitionMerger,
+        components_filter: APIComponentsFilter,
         file_service: FileService,
         config: Config,
         api_definition_loader: Optional[APIDefinitionLoader] = None,
@@ -35,6 +37,7 @@ class SwaggerProcessor(APIProcessor):
             file_loader (FileLoader): Service to load API definition files.
             splitter (APIDefinitionSplitter): Service to split API definitions.
             merger (APIDefinitionMerger): Service to merge API definitions.
+            components_filter (APIComponentsFilter): Service to filter API components.
             api_definition_loader (APIDefinitionLoader): Service to load API definition from URL or file.
         """
         self.config = config
@@ -42,6 +45,7 @@ class SwaggerProcessor(APIProcessor):
         self.file_loader = file_loader
         self.splitter = splitter
         self.merger = merger
+        self.components_filter = components_filter
         self.api_definition_loader = api_definition_loader or APIDefinitionLoader()
         self.base_definition: str | None = None
         self.logger = Logger.get_logger(__name__)
@@ -180,4 +184,5 @@ class SwaggerProcessor(APIProcessor):
         base_spec = yaml.safe_load(self.base_definition or "{}")
         paths_spec = yaml.safe_load(paths_yaml or "{}")
         base_spec["paths"] = paths_spec
-        return yaml.dump(base_spec, sort_keys=False)
+        filtered_spec = self.components_filter.filter_schemas(base_spec)
+        return yaml.dump(filtered_spec, sort_keys=False)
