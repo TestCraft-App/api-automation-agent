@@ -1,0 +1,7 @@
+spec: sample
+endpoints:
+  /user:
+    get:
+      - "User Suite::should get user"
+    post:
+      - "User Suite::should create user"
