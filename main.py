@@ -141,7 +141,7 @@ def main(
             logger.info(f"   Duration: {format_duration(duration_seconds)}")
             logger.info(f"   Input Tokens: {usage_metadata.total_input_tokens:,}")
             logger.info(f"   Output Tokens: {usage_metadata.total_output_tokens:,}")
-            logger.info(f"   Total Cost ($): ${usage_metadata.total_cost:.4f}")
+            logger.info(f"   Total Cost (USD): ${usage_metadata.total_cost:.4f}")
 
             if test_files:
                 test_controller.run_tests_flow(test_files)
