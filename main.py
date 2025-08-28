@@ -1,6 +1,7 @@
 from argparse import Namespace
 import logging
 import os
+import time
 import traceback
 
 from dependency_injector.wiring import inject, Provide
@@ -107,6 +108,8 @@ def main(
             EndpointLister.list_endpoints(api_definition.definitions)
             logger.info("\n✅ Endpoint listing completed successfully!")
         else:
+            start_time = time.monotonic()
+
             if not config.use_existing_framework:
                 framework_generator.create_env_file(api_definition)
                 framework_generator.setup_framework(api_definition)
@@ -114,7 +117,31 @@ def main(
             framework_generator.generate(api_definition, config.generate)
             test_files = framework_generator.run_final_checks(config.generate)
 
+            end_time = time.monotonic()
+            duration_seconds = round(end_time - start_time, 2)
+
             logger.info("\n✅ Framework generation completed successfully!")
+
+            usage_metadata = framework_generator.get_aggregated_usage_metadata()
+
+            def format_duration(duration_seconds: float) -> str:
+                hours = int(duration_seconds // 3600)
+                remaining_seconds = duration_seconds % 3600
+                minutes = int(remaining_seconds // 60)
+                seconds = int(remaining_seconds % 60)
+
+                if hours > 0:
+                    return f"{hours}h {minutes}m {seconds}s"
+                elif minutes > 0:
+                    return f"{minutes}m {seconds}s"
+                else:
+                    return f"{seconds}s"
+
+            logger.info("\n📊 Generation Metrics:")
+            logger.info(f"   Duration: {format_duration(duration_seconds)}")
+            logger.info(f"   Input Tokens: {usage_metadata.total_input_tokens:,}")
+            logger.info(f"   Output Tokens: {usage_metadata.total_output_tokens:,}")
+            logger.info(f"   Total Cost (USD): ${usage_metadata.total_cost:.4f}")
 
             if test_files:
                 test_controller.run_tests_flow(test_files)
