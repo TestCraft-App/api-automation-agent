@@ -34,19 +34,39 @@ class CommandService:
         log_method = self.logger.error if is_error else self.logger.info
         log_method(message)
 
-    def run_command(self, command: str, cwd: Optional[str] = None) -> Tuple[bool, str]:
+    def run_command(
+        self,
+        command: str,
+        cwd: Optional[str] = None,
+        env_vars: Optional[Dict[str, str]] = None,
+    ) -> Tuple[bool, str]:
         """
         Run a shell command with real-time output and error handling.
 
         Args:
             command (str): Command to execute
             cwd (Optional[str]): Working directory for command execution
+            env_vars (Optional[Dict[str, str]]): Additional environment variables
 
         Returns:
             Tuple[bool, str]: Success status and command output
         """
         try:
             self.logger.debug(f"Running command: {command}")
+
+            process_env = os.environ.copy()
+            process_env.update(
+                {
+                    "PYTHONUNBUFFERED": "1",
+                    "FORCE_COLOR": "true",
+                    "TERM": "xterm-256color",
+                    "LANG": "en_US.UTF-8",
+                    "LC_ALL": "en_US.UTF-8",
+                }
+            )
+            if env_vars:
+                process_env.update(env_vars)
+
             process = subprocess.Popen(
                 command,
                 cwd=cwd or self.config.destination_folder,
@@ -56,14 +76,7 @@ class CommandService:
                 bufsize=0,
                 universal_newlines=True,
                 encoding="utf-8",
-                env={
-                    **os.environ,
-                    "PYTHONUNBUFFERED": "1",
-                    "FORCE_COLOR": "true",
-                    "TERM": "xterm-256color",
-                    "LANG": "en_US.UTF-8",
-                    "LC_ALL": "en_US.UTF-8",
-                },
+                env=process_env,
             )
 
             output_lines = []
@@ -218,34 +231,53 @@ class CommandService:
     ) -> Tuple[bool, str]:
         """Run TypeScript compiler for specific files"""
         self._log_message(f"Running TypeScript compiler for files: {[file.path for file in files]}")
-        compiler_command = build_typescript_compiler_command(files)
+        compiler_command = self.build_typescript_compiler_command(files)
         return self.run_command(compiler_command)
 
+    def build_typescript_compiler_command(self, files: List[FileSpec]) -> str:
+        """Build the TypeScript compiler command for specific files"""
+        file_paths = " ".join(file.path for file in files)
+        return (
+            f"npx tsc {file_paths} "
+            "--lib es2021 "
+            "--module NodeNext "
+            "--target ESNext "
+            "--strict "
+            "--esModuleInterop "
+            "--skipLibCheck "
+            "--forceConsistentCasingInFileNames "
+            "--moduleResolution nodenext "
+            "--allowUnusedLabels false "
+            "--allowUnreachableCode false "
+            "--noFallthroughCasesInSwitch "
+            "--noImplicitOverride "
+            "--noImplicitReturns "
+            "--noPropertyAccessFromIndexSignature "
+            "--noUncheckedIndexedAccess "
+            "--noUnusedLocals "
+            "--noUnusedParameters "
+            "--checkJs "
+            "--noEmit "
+            "--strictNullChecks false "
+            "--excludeDirectories node_modules"
+        )
 
-def build_typescript_compiler_command(files: List[FileSpec]) -> str:
-    """Build the TypeScript compiler command for specific files"""
-    file_paths = " ".join(file.path for file in files)
-    return (
-        f"npx tsc {file_paths} "
-        "--lib es2021 "
-        "--module NodeNext "
-        "--target ESNext "
-        "--strict "
-        "--esModuleInterop "
-        "--skipLibCheck "
-        "--forceConsistentCasingInFileNames "
-        "--moduleResolution nodenext "
-        "--allowUnusedLabels false "
-        "--allowUnreachableCode false "
-        "--noFallthroughCasesInSwitch "
-        "--noImplicitOverride "
-        "--noImplicitReturns "
-        "--noPropertyAccessFromIndexSignature "
-        "--noUncheckedIndexedAccess "
-        "--noUnusedLocals "
-        "--noUnusedParameters "
-        "--checkJs "
-        "--noEmit "
-        "--strictNullChecks false "
-        "--excludeDirectories node_modules"
-    )
+    def run_test(self, test_files: List[FileSpec]):
+        file_paths = " ".join(file.path for file in test_files)
+
+        command = (
+            "npx mocha --require mocha-suppress-logs --no-config "
+            "--extension ts "
+            "--file ./src/interceptor.ts "
+            f"{file_paths} "
+            "--reporter min --timeout 10000 --no-warnings"
+        )
+        node_env_options = {
+            "NODE_OPTIONS": "--loader ts-node/esm --no-warnings=ExperimentalWarning --no-deprecation"
+        }
+
+        return self.run_command(
+            command,
+            cwd=self.config.destination_folder,
+            env_vars=node_env_options,
+        )

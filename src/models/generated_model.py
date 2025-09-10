@@ -22,9 +22,9 @@ class GeneratedModel:
         return json
 
     @staticmethod
-    def is_response_file(path: str) -> bool:
+    def is_model(path: str) -> bool:
         """Check if the file is a response interface"""
-        return "/responses" in path
+        return "/models" in path
 
     @staticmethod
     def from_model_file_specs(file_specs: List[ModelFileSpec]) -> List["GeneratedModel"]:

@@ -7,6 +7,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
 from langchain_openai import ChatOpenAI
 
+from src.models.api_verb import APIVerb
+
 from .file_service import FileService
 from ..ai_tools.file_creation_tool import FileCreationTool
 from ..ai_tools.file_reading_tool import FileReadingTool
@@ -35,6 +37,7 @@ class PromptConfig:
     SUMMARY = "./prompts/generate-model-summary.txt"
     ADD_INFO = "./prompts/add-models-context.txt"
     ADDITIONAL_TESTS = "./prompts/create-additional-tests.txt"
+    FIX_TEST = "./prompts/fix-test.txt"
 
 
 class LLMService:
@@ -238,9 +241,7 @@ class LLMService:
             return []
 
     def get_additional_models(
-        self,
-        relevant_models: List[GeneratedModel],
-        available_models: List[APIModel],
+        self, relevant_models: List[GeneratedModel], available_models: List[APIModel], api_verb: APIVerb
     ) -> List[FileSpec]:
         """Trigger read file tool to decide what additional model info is needed"""
         self.logger.info("\nGetting additional models...")
@@ -252,6 +253,7 @@ class LLMService:
             {
                 "relevant_models": GeneratedModel.list_to_json(relevant_models),
                 "available_models": api_models_to_json(available_models),
+                "api_verb": api_verb,
             }
         )
         return convert_to_file_spec(result)
@@ -294,3 +296,21 @@ class LLMService:
             tools=[FileCreationTool(self.config, self.file_service, are_models=are_models)],
             must_use_tool=True,
         ).invoke({"files": file_specs_to_json(files), "messages": messages})
+
+    def fix_test(self, files: List[FileSpec], run_output: List[str]) -> None:
+        """
+        Improve test files based on run output.
+
+        Args:
+            files (List[FileSpec]): List of files to fix
+            run_output (List[str]): HTTP activity/Reporter output
+        """
+        self.logger.info("\nFixing Test & Models:")
+        for file in files:
+            self.logger.info(f"  - {file.path}")
+
+        self.create_ai_chain(
+            PromptConfig.FIX_TEST,
+            tools=[FileCreationTool(self.config, self.file_service)],
+            must_use_tool=True,
+        ).invoke({"files": file_specs_to_json(files), "run_output": run_output})

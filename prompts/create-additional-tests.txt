@@ -34,18 +34,31 @@ import {{ BookingService }} from "../../models/services/BookingService.js";
 import {{ BookingModel }} from "../../models/requests/BookingModel.js";
 import 'chai/register-should.js';
 
+const randomString = (len: number) => Math.random().toString(36).slice(2, 2 + len);
+const formatYMD = (d: Date) => {{
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${{y}}-${{m}}-${{day}}`;
+}};
+const addDaysUTC = (days: number) => {{
+  const now = new Date();
+  const t = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + days);
+  return formatYMD(new Date(t));
+}};
+
 describe("Add Booking", () => {{
   const bookingService = new BookingService();
 
   it("@Smoke - Add Booking Successfully", async () => {{
     const booking: BookingModel = {{
-      firstname: "Jim",
-      lastname: "Brown",
-      totalprice: 111,
+      firstname: randomString(5),
+      lastname: randomString(7),
+      totalprice: Math.floor(Math.random() * 1500) + 100,
       depositpaid: true,
       bookingdates: {{
-        checkin: "2020-01-01",
-        checkout: "2021-01-01",
+        checkin: addDaysUTC(1),
+        checkout: addDaysUTC(366),
       }},
       additionalneeds: "Breakfast",
     }};
@@ -64,13 +77,13 @@ describe("Add Booking", () => {{
 
   it("@Regression - Add Booking Successfully - Response time < 1000 ms", async () => {{
     const booking: BookingModel = {{
-      firstname: "Jim",
-      lastname: "Brown",
-      totalprice: 111,
+      firstname: randomString(6),
+      lastname: randomString(8),
+      totalprice: Math.floor(Math.random() * 2000) + 200,
       depositpaid: true,
       bookingdates: {{
-        checkin: "2020-01-01",
-        checkout: "2021-01-01",
+        checkin: addDaysUTC(7),
+        checkout: addDaysUTC(37),
       }},
       additionalneeds: "Breakfast",
     }};
@@ -81,12 +94,12 @@ describe("Add Booking", () => {{
 
   it("@Regression - No Firstname - 400", async () => {{
     const response = await bookingService.addBooking<BookingResponse>({{
-      lastname: "Snow",
-      totalprice: 1000,
+      lastname: randomString(6),
+      totalprice: Math.floor(Math.random() * 1500) + 300,
       depositpaid: true,
       bookingdates: {{
-        checkin: "2024-01-01",
-        checkout: "2024-02-01",
+        checkin: addDaysUTC(14),
+        checkout: addDaysUTC(44),
       }},
       additionalneeds: "Breakfast",
     }});
@@ -101,6 +114,20 @@ import {{ BookingResponse }} from "../../models/responses/BookingResponse.js";
 import {{ BookingService }} from "../../models/services/BookingService.js";
 import 'chai/register-should.js';
 
+const randomString = (len: number) => Math.random().toString(36).slice(2, 2 + len);
+const formatYMD = (d: Date) => {{
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${{y}}-${{m}}-${{day}}`;
+}};
+const addDaysUTC = (days: number) => {{
+  const now = new Date();
+  const t = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + days);
+  return formatYMD(new Date(t));
+}};
+const randomLargeId = () => 10_000_000 + Math.floor(Math.random() * 9_000_000);
+
 describe("Get Booking", () => {{
   const bookingService = new BookingService();
   let bookingId: number;
@@ -108,13 +135,13 @@ describe("Get Booking", () => {{
 
   before(async () => {{
     createdBooking = await bookingService.addBooking<BookingResponse>({{
-      firstname: "Damian",
-      lastname: "Pereira",
-      totalprice: 1000,
+      firstname: randomString(6),
+      lastname: randomString(8),
+      totalprice: Math.floor(Math.random() * 2000) + 200,
       depositpaid: true,
       bookingdates: {{
-        checkin: "2024-01-01",
-        checkout: "2024-02-01",
+        checkin: addDaysUTC(2),
+        checkout: addDaysUTC(12),
       }},
       additionalneeds: "Breakfast",
     }});
@@ -140,8 +167,8 @@ describe("Get Booking", () => {{
   }});
 
   it("@Regression - Get Non-existent Booking - 404", async () => {{
-    const bookingId = 999999999;
-    const response = await bookingService.getBooking<BookingResponse>(bookingId);
+    const nonExistentId = randomLargeId();
+    const response = await bookingService.getBooking<BookingResponse>(nonExistentId);
     response.status.should.equal(404, JSON.stringify(response.data));
   }});
 }});

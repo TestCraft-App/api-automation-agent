@@ -36,13 +36,25 @@ class FileCreationTool(BaseTool):
             self.name = "create_models"
             self.description = "Create models from a given API definition."
 
+    def _is_protected(self, path: str) -> bool:
+        for protected in self.config.protected_files or []:
+            if path == protected or path.startswith(protected):
+                return True
+        return False
+
     def _run(self, files: List[FileSpec | ModelFileSpec]) -> str:
+        filtered_files = [f for f in files if not self._is_protected(f.path)]
+        skipped = [f.path for f in files if self._is_protected(f.path)]
+        if skipped:
+            self.logger.info(f"Skipped protected files: {skipped}")
+        if not filtered_files:
+            return json.dumps([])
         try:
             created_files = self.file_service.create_files(
-                destination_folder=self.config.destination_folder, files=files
+                destination_folder=self.config.destination_folder, files=filtered_files
             )
             self.logger.info(f"Successfully created {len(created_files)} files")
-            return json.dumps([file_spec.model_dump() for file_spec in files])
+            return json.dumps([file_spec.model_dump() for file_spec in filtered_files])
         except Exception as e:
             self.logger.error(f"Error creating files: {e}")
             raise

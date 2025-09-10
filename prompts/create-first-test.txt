@@ -111,42 +111,97 @@ Next, you can create a simple test like this.
 ```tsx
 describe("Get Booking", () => {{
   const bookingService = new BookingService();
+  let createdBookingId: number;
+
+  const randomString = (len: number) =>
+    Math.random().toString(36).substring(2, 2 + len);
+
+  const formatYMD = (d: Date) => {{
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    return `${{y}}-${{m}}-${{day}}`;
+  }};
+  const addDaysUTC = (days: number) => {{
+    const now = new Date();
+    const t = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + days);
+    return formatYMD(new Date(t));
+  }};
+
+  before(async () => {{
+    const booking: BookingModel = {{
+      firstname: randomString(6),
+      lastname: randomString(8),
+      totalprice: Math.floor(Math.random() * 1000) + 100,
+      depositpaid: true,
+      bookingdates: {{
+        checkin: addDaysUTC(1),
+        checkout: addDaysUTC(5),
+      }},
+      additionalneeds: "Lunch",
+    }};
+
+    const response = await bookingService.addBooking<{{ bookingid: number }}>(booking);
+    response.status.should.equal(200, JSON.stringify(response.data));
+    createdBookingId = response.data.bookingid;
+  }});
 
   it("@Smoke - Get Booking successfully - 200", async () => {{
-    const bookingId = 123456;
-    const response = await bookingService.getBooking<BookingModel>(bookingId);
+    const response = await bookingService.getBooking<BookingModel>(createdBookingId);
     response.status.should.equal(200, JSON.stringify(response.data));
   }});
+}});
 ```
 
 Note the BookingModel on the generic getBooking function that will be used to deserialize the response into a Response<BookingModel>. With that in place, you can easily assert against the response body properties.
 
 ```tsx
 it("@Smoke - Get Booking successfully - 200", async () => {{
-    const booking = await bookingService.addBooking<BookingResponse>({{
-      firstname: "Damian",
-      lastname: "Pereira",
-      totalprice: 1000,
-      depositpaid: true,
-      bookingdates: {{
-        checkin: "2024-01-01",
-        checkout: "2024-02-01",
-      }},
-      additionalneeds: "Breakfast",
-    }});
+  const randomString = (len: number) =>
+    Math.random().toString(36).substring(2, 2 + len);
 
-    const bookingId = booking.data.bookingid;
+  const formatYMD = (d: Date) => {{
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    return `${{y}}-${{m}}-${{day}}`;
+  }};
+  const addDaysUTC = (days: number) => {{
+    const now = new Date();
+    const t = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + days);
+    return formatYMD(new Date(t));
+  }};
 
-    const response = await bookingService.getBooking<BookingModel>(bookingId);
-    response.status.should.equal(200, JSON.stringify(response.data));
-    response.data.firstname?.should.equal(booking.data.booking.firstname);
-    response.data.lastname?.should.equal(booking.data.booking.lastname);
-    response.data.totalprice?.should.equal(booking.data.booking.totalprice);
-    response.data.depositpaid?.should.be.true;
-    response.data.bookingdates?.checkin?.should.equal(booking.data.booking.bookingdates?.checkin);
-    response.data.bookingdates?.checkout?.should.equal(booking.data.booking.bookingdates?.checkout);
-    response.data.additionalneeds?.should.equal(booking.data.booking.additionalneeds);
+  const booking = await bookingService.addBooking<BookingResponse>({{
+    firstname: randomString(6),
+    lastname: randomString(8),
+    totalprice: Math.floor(Math.random() * 2000) + 200,
+    depositpaid: true,
+    bookingdates: {{
+      checkin: addDaysUTC(2),
+      checkout: addDaysUTC(12),
+    }},
+    additionalneeds: "Breakfast",
   }});
+
+  const bookingId = booking.data.bookingid;
+
+  const response = await bookingService.getBooking<BookingModel>(bookingId);
+  response.status.should.equal(200, JSON.stringify(response.data));
+  response.data.firstname?.should.equal(booking.data.booking.firstname);
+  response.data.lastname?.should.equal(booking.data.booking.lastname);
+  response.data.totalprice?.should.equal(booking.data.booking.totalprice);
+  response.data.depositpaid?.should.be.true;
+  response.data.bookingdates?.checkin?.should.equal(
+    booking.data.booking.bookingdates?.checkin
+  );
+  response.data.bookingdates?.checkout?.should.equal(
+    booking.data.booking.bookingdates?.checkout
+  );
+  response.data.additionalneeds?.should.equal(
+    booking.data.booking.additionalneeds
+  );
+}});
 ```
 
 In the example above, I am using a call to the addBooking endpoint to create the booking needed for the getBooking test, and then using the newly created booking to assert against it.
@@ -225,20 +280,35 @@ import {{ BookingService }} from "../../models/services/BookingService.js";
 import {{ BookingModel }} from "../../models/requests/BookingModel.js";
 import 'chai/register-should.js';
 
+const randomString = (len: number) => Math.random().toString(36).slice(2, 2 + len);
+const pickOne = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+const formatYMD = (d: Date) => {{
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${{y}}-${{m}}-${{day}}`;
+}};
+const addDaysUTC = (days: number) => {{
+  const now = new Date();
+  const t = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + days);
+  return formatYMD(new Date(t));
+}};
+
 describe("Add Booking", () => {{
   const bookingService = new BookingService();
+  const needs = ["Breakfast", "Late checkout", "Airport pickup", "Baby crib"];
 
   it("@Smoke - Add Booking Successfully", async () => {{
     const booking: BookingModel = {{
-      firstname: "Jim",
-      lastname: "Brown",
-      totalprice: 111,
+      firstname: randomString(5),
+      lastname: randomString(7),
+      totalprice: Math.floor(Math.random() * 1500) + 100,
       depositpaid: true,
       bookingdates: {{
-        checkin: "2020-01-01",
-        checkout: "2021-01-01",
+        checkin: addDaysUTC(1),
+        checkout: addDaysUTC(366),
       }},
-      additionalneeds: "Breakfast",
+      additionalneeds: pickOne(needs),
     }};
 
     const response = await bookingService.addBooking<BookingModel>(booking);
@@ -255,15 +325,15 @@ describe("Add Booking", () => {{
 
   it("@Regression - Add Booking Successfully - Response time < 1000 ms", async () => {{
     const booking: BookingModel = {{
-      firstname: "Jim",
-      lastname: "Brown",
-      totalprice: 111,
+      firstname: randomString(6),
+      lastname: randomString(8),
+      totalprice: Math.floor(Math.random() * 2000) + 200,
       depositpaid: true,
       bookingdates: {{
-        checkin: "2020-01-01",
-        checkout: "2021-01-01",
+        checkin: addDaysUTC(7),
+        checkout: addDaysUTC(37),
       }},
-      additionalneeds: "Breakfast",
+      additionalneeds: pickOne(needs),
     }};
 
     const response = await bookingService.addBooking<BookingResponse>(booking);
@@ -272,14 +342,14 @@ describe("Add Booking", () => {{
 
   it("@Regression - No Firstname - 400", async () => {{
     const response = await bookingService.addBooking<BookingResponse>({{
-      lastname: "Snow",
-      totalprice: 1000,
+      lastname: randomString(6),
+      totalprice: Math.floor(Math.random() * 1500) + 300,
       depositpaid: true,
       bookingdates: {{
-        checkin: "2024-01-01",
-        checkout: "2024-02-01",
+        checkin: addDaysUTC(14),
+        checkout: addDaysUTC(44),
       }},
-      additionalneeds: "Breakfast",
+      additionalneeds: pickOne(needs),
     }});
     response.status.should.equal(400);
   }});
@@ -287,53 +357,82 @@ describe("Add Booking", () => {{
 ```
 
 ```tsx
-import {{ BookingModel }} from "../../models/requests/BookingModel.js";
-import {{ BookingResponse }} from "../../models/responses/BookingResponse.js";
 import {{ BookingService }} from "../../models/services/BookingService.js";
+import {{ BookingModel }} from "../../models/requests/BookingModel.js";
 import 'chai/register-should.js';
 
-describe("Get Booking", () => {{
-  const bookingService = new BookingService();
-  let bookingId: number;
-  let createdBooking: Response<BookingResponse>;
+const randomString = (len: number) => Math.random().toString(36).slice(2, 2 + len);
+const pickOne = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+const formatYMD = (d: Date) => {{
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${{y}}-${{m}}-${{day}}`;
+}};
+const addDaysUTC = (days: number) => {{
+  const now = new Date();
+  const t = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + days);
+  return formatYMD(new Date(t));
+}};
 
-  before(async () => {{
-    createdBooking = await bookingService.addBooking<BookingResponse>({{
-      firstname: "Damian",
-      lastname: "Pereira",
-      totalprice: 1000,
+describe("Add Booking", () => {{
+  const bookingService = new BookingService();
+  const needs = ["Breakfast", "Late checkout", "Airport pickup", "Baby crib"];
+
+  it("@Smoke - Add Booking Successfully", async () => {{
+    const booking: BookingModel = {{
+      firstname: randomString(5),
+      lastname: randomString(7),
+      totalprice: Math.floor(Math.random() * 1500) + 100,
       depositpaid: true,
       bookingdates: {{
-        checkin: "2024-01-01",
-        checkout: "2024-02-01",
+        checkin: addDaysUTC(1),
+        checkout: addDaysUTC(366),
       }},
-      additionalneeds: "Breakfast",
-    }});
+      additionalneeds: pickOne(needs),
+    }};
 
-    bookingId = createdBooking.data.bookingid;
-  }});
+    const response = await bookingService.addBooking<BookingModel>(booking);
 
-  it("@Smoke - Get Booking successfully - 200", async () => {{
-    const response = await bookingService.getBooking<BookingModel>(bookingId);
     response.status.should.equal(200, JSON.stringify(response.data));
-    response.data.firstname?.should.equal(createdBooking.data.booking.firstname);
-    response.data.lastname?.should.equal(createdBooking.data.booking.lastname);
-    response.data.totalprice?.should.equal(createdBooking.data.booking.totalprice);
+    response.data.firstname?.should.equal(booking.firstname);
+    response.data.lastname?.should.equal(booking.lastname);
+    response.data.totalprice?.should.equal(booking.totalprice);
     response.data.depositpaid?.should.be.true;
-    response.data.bookingdates?.checkin?.should.equal(createdBooking.data.booking.bookingdates?.checkin);
-    response.data.bookingdates?.checkout?.should.equal(createdBooking.data.booking.bookingdates?.checkout);
-    response.data.additionalneeds?.should.equal(createdBooking.data.booking.additionalneeds);
+    response.data.bookingdates?.checkin?.should.equal(booking.bookingdates?.checkin);
+    response.data.bookingdates?.checkout?.should.equal(booking.bookingdates?.checkout);
+    response.data.additionalneeds?.should.equal(booking.additionalneeds);
   }});
 
-  it("@Regression - Get Booking successfully - Response time < 1000 ms", async () => {{
-    const response = await bookingService.getBooking<BookingModel>(bookingId);
+  it("@Regression - Add Booking Successfully - Response time < 1000 ms", async () => {{
+    const booking: BookingModel = {{
+      firstname: randomString(6),
+      lastname: randomString(8),
+      totalprice: Math.floor(Math.random() * 2000) + 200,
+      depositpaid: true,
+      bookingdates: {{
+        checkin: addDaysUTC(7),
+        checkout: addDaysUTC(37),
+      }},
+      additionalneeds: pickOne(needs),
+    }};
+
+    const response = await bookingService.addBooking<BookingResponse>(booking);
     response.responseTime.should.be.lessThan(1000);
   }});
 
-  it("@Regression - Get Non-existent Booking - 404", async () => {{
-    const bookingId = 999999999;
-    const response = await bookingService.getBooking<BookingResponse>(bookingId);
-    response.status.should.equal(404, JSON.stringify(response.data));
+  it("@Regression - No Firstname - 400", async () => {{
+    const response = await bookingService.addBooking<BookingResponse>({{
+      lastname: randomString(6),
+      totalprice: Math.floor(Math.random() * 1500) + 300,
+      depositpaid: true,
+      bookingdates: {{
+        checkin: addDaysUTC(14),
+        checkout: addDaysUTC(44),
+      }},
+      additionalneeds: pickOne(needs),
+    }});
+    response.status.should.equal(400);
   }});
 }});
 ```

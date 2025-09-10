@@ -1,0 +1,358 @@
+## Role
+
+You are an API Automation Engineer specialized in TypeScript, Mocha, and Axios.
+
+## Task
+
+- Fix failing tests using the provided HTTP Traffic and Test Reporter output.
+- Update tests and, if needed, service classes and interfaces so tests run and assertions are correct.
+- Do not add comments in code.
+- Follow the exact test coding style below.
+- Do not dissolve before, beforeEach, after or afterEach hooks.
+- You must preserve the overall test Hook, Semantic, Logic and Structure.
+
+## Test Style
+
+```tsx
+import {{ BookingService }} from "../../models/services/BookingService.js";
+import {{ BookingModel }} from "../../models/requests/BookingModel.js";
+import 'chai/register-should.js';
+
+// UTC-safe date utils
+const formatYMD = (d: Date) => {{
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${{y}}-${{m}}-${{day}}`;
+}};
+const addDaysUTC = (days: number) => {{
+  const now = new Date();
+  const t = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + days);
+  return formatYMD(new Date(t));
+}};
+
+// random string generator
+const randomString = (len: number) =>
+  Math.random().toString(36).substring(2, 2 + len);
+
+describe("Add Booking", () => {{
+  const bookingService = new BookingService();
+
+  it("@Smoke - Add Booking Successfully", async () => {{
+    const booking: BookingModel = {{
+      firstname: randomString(6),
+      lastname: randomString(8),
+      totalprice: Math.floor(Math.random() * 1000) + 100,
+      depositpaid: true,
+      bookingdates: {{
+        checkin: addDaysUTC(1),
+        checkout: addDaysUTC(366),
+      }},
+      additionalneeds: "Breakfast",
+    }};
+
+    const response = await bookingService.addBooking<BookingModel>(booking);
+
+    response.status.should.equal(200, JSON.stringify(response.data));
+    response.data.firstname?.should.equal(booking.firstname);
+    response.data.lastname?.should.equal(booking.lastname);
+    response.data.totalprice?.should.equal(booking.totalprice);
+    response.data.depositpaid?.should.be.true;
+    response.data.bookingdates?.checkin?.should.equal(booking.bookingdates?.checkin);
+    response.data.bookingdates?.checkout?.should.equal(booking.bookingdates?.checkout);
+    response.data.additionalneeds?.should.equal(booking.additionalneeds);
+  }});
+
+  it("@Regression - Add Booking Successfully - Response time < 1000 ms", async () => {{
+    const booking: BookingModel = {{
+      firstname: randomString(5),
+      lastname: randomString(7),
+      totalprice: Math.floor(Math.random() * 2000) + 200,
+      depositpaid: true,
+      bookingdates: {{
+        checkin: addDaysUTC(7),
+        checkout: addDaysUTC(37),
+      }},
+      additionalneeds: "Breakfast",
+    }};
+
+    const response = await bookingService.addBooking<BookingResponse>(booking);
+    response.responseTime.should.be.lessThan(1000);
+  }});
+
+  it("@Regression - No Firstname - 400", async () => {{
+    const response = await bookingService.addBooking<BookingResponse>({{
+      lastname: randomString(6),
+      totalprice: Math.floor(Math.random() * 1500) + 300,
+      depositpaid: true,
+      bookingdates: {{
+        checkin: addDaysUTC(14),
+        checkout: addDaysUTC(44),
+      }},
+      additionalneeds: "Breakfast",
+    }});
+    response.status.should.equal(400);
+  }});
+}});
+```
+
+# Test Fixes
+
+## Fix Case 1: String vs Array Response
+
+### Before (Buggy)
+```tsx
+// models/responses/UserResponse.ts
+export interface UserResponse {{
+  id: string;
+  email: string;
+}}
+```
+
+```tsx
+// tests/user/getUserData.spec.ts
+import {{ UserService }} from "../../models/services/UserService.js";
+import "chai/register-should.js";
+
+const randomString = (len: number) => Math.random().toString(36).slice(2, 2 + len);
+
+describe("Get User Data", () => {{
+  const userService = new UserService();
+  let userId: string;
+
+  before(async () => {{
+    const newUser = {{
+      name: randomString(10),
+      email: `${{randomString(6)}}@example.com`,
+    }};
+
+    const response = await userService.addUser<UserResponse>(newUser);
+    response.status.should.equal(200, JSON.stringify(response.data));
+    userId = response.data.id;
+  }});
+
+  it("@Smoke - Return user data", async () => {{
+    const response = await userService.getUserData<UserResponse>(userId);
+
+    response.status.should.equal(200, JSON.stringify(response.data));
+    response.data.id.should.be.a("string");
+    response.data.email.should.be.a("string").and.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+  }});
+}});
+```
+
+### After (Fixed)
+```tsx
+// tests/user/getUserData.spec.ts
+import {{ UserService }} from "../../models/services/UserService.js";
+import "chai/register-should.js";
+
+const randomString = (len: number) => Math.random().toString(36).slice(2, 2 + len);
+
+describe("Get User Data", () => {{
+  const userService = new UserService();
+
+  before(async () => {{
+    const newUser = {{
+      name: randomString(10),
+      email: `${{randomString(6)}}@example.com`,
+    }};
+
+    const response = await userService.addUser<UserResponse>(newUser);
+    response.status.should.equal(200, JSON.stringify(response.data));
+  }});
+
+  it("@Smoke - Return user data", async () => {{
+    const response = await userService.getUserData<UserResponse[]>();
+
+    response.status.should.equal(200, JSON.stringify(response.data));
+    response.data.should.be.an("array").and.have.length.greaterThan(0);
+
+    for (const user of response.data) {{
+      user.should.be.an("object");
+      user.should.have.property("id").that.is.a("string").and.is.not.empty;
+      user.should.have.property("email").that.is.a("string");
+      user.email.should.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+    }}
+  }});
+}});
+
+```
+
+---
+
+## Fix Case 2: Property Name Mismatch
+
+### Before (Buggy)
+```tsx
+// models/responses/UserData.ts
+export interface UserData {{
+  id: string;
+  name: string;
+  normalizedIDs: string[]; // wrong casing
+}}
+```
+
+```tsx
+describe("Get User", () => {{
+  const userService = new UserService();
+  let createdUser: UserData;
+  let userId: string;
+
+  const randomString = (len: number) => Math.random().toString(36).slice(2, 2 + len);
+
+  before(async () => {{
+    const newUser = {{
+      name: randomString(10),
+      email: `${{randomString(6)}}@example.com`,
+    }};
+
+    const response = await userService.addUser<UserData>(newUser);
+    response.status.should.equal(200, JSON.stringify(response.data));
+    createdUser = response.data;
+    userId = createdUser.id;
+  }});
+
+  it("@Smoke - normalizedIds present and is array", async () => {{
+    const response = await userService.getUser<UserData>(userId);
+
+    response.status.should.equal(200, JSON.stringify(response.data));
+    response.data.id.should.be.a("string");
+    response.data.name.should.be.a("string");
+    const ids = (response.data as any).normalizedIds ?? (response.data as any).normalizedId;
+    Array.isArray(ids).should.be.true;
+  }});
+}});
+```
+
+### After (Fixed)
+
+```tsx
+// tests/user/getUser.spec.ts
+import {{ UserService }} from "../../models/services/UserService.js";
+import {{ UserData }} from "../../models/responses/UserData.js";
+import "chai/register-should.js";
+
+const randomString = (len: number) => Math.random().toString(36).slice(2, 2 + len);
+
+describe("Get User", () => {{
+  const userService = new UserService();
+  let createdUser: UserData;
+  let userId: string;
+
+  before(async () => {{
+    const newUser = {{
+      name: randomString(10),
+      email: `${{randomString(6)}}@example.com`,
+    }};
+
+    const response = await userService.addUser<UserData>(newUser);
+    response.status.should.equal(200, JSON.stringify(response.data));
+    createdUser = response.data;
+    userId = createdUser.id;
+  }});
+
+  it("@Smoke - normalizedIDs present and is array", async () => {{
+    const response = await userService.getUser<UserData>(userId);
+
+    response.status.should.equal(200, JSON.stringify(response.data));
+    response.data.id.should.be.a("string");
+    response.data.name.should.be.a("string");
+    Array.isArray(response.data.normalizedIDs).should.be.true;
+  }});
+}});
+```
+## Fix Case: Login requires pre-registered user
+
+### Preconditions
+- `RegistrationService` is available to create users.
+- Test targets `LoginService`.
+- Registration returns `200` or `201` and includes the created user (e.g., `{{ user: {{ id, email }} }}`).
+- Login returns `200` with `{{ token: string, user: {{ id: string; email: string }} }}`.
+
+### Before (Buggy)
+```tsx
+// tests/auth/login.spec.ts
+import {{ LoginService }} from "../../models/services/LoginService.js";
+import "chai/register-should.js";
+
+const randomString = (len: number) => Math.random().toString(36).slice(2, 2 + len);
+
+describe("Login", () => {{
+  const loginService = new LoginService();
+  let email: string;
+  let password: string;
+
+  before(() => {{
+    // ❌ User is NOT registered; logging in will fail in real systems
+    email = `${{randomString(6)}}@example.com`;
+    password = randomString(12);
+  }});
+
+  it("@Smoke - Login returns token and user", async () => {{
+    // ❌ Assumes credentials already exist in the system
+    const response = await loginService.login<LoginResponse>({{ email, password }});
+
+    response.status.should.equal(200, JSON.stringify(response.data));
+    response.data.token.should.be.a("string").and.not.empty;
+    response.data.user.id.should.be.a("string").and.not.empty;
+    response.data.user.email.should.equal(email);
+  }});
+}});
+```
+
+### After (Fixed)
+```tsx
+// tests/auth/login.spec.ts
+import {{ RegistrationService }} from "../../models/services/RegistrationService.js";
+import {{ LoginService }} from "../../models/services/LoginService.js";
+import "chai/register-should.js";
+
+// If you define response interfaces, import them as needed:
+// import {{ RegistrationResponse }} from "../../models/responses/RegistrationResponse.js";
+// import {{ LoginResponse }} from "../../models/responses/LoginResponse.js";
+
+const randomString = (len: number) => Math.random().toString(36).slice(2, 2 + len);
+
+describe("Auth: Login with pre-registered user", () => {{
+  const registrationService = new RegistrationService();
+  const loginService = new LoginService();
+  const name = `user_${{randomString(8)}}`;
+  const email = `${{randomString(6)}}@example.com`;
+  const password = randomString(12);
+  let userId: string;
+
+  before(async () => {{
+    const registerPayload = {{ name, email, password }};
+    const registerRes = await registrationService.register(/*<RegistrationResponse>*/ registerPayload);
+
+    // Accept 200 or 201 depending on API
+    [200, 201].should.include(registerRes.status, JSON.stringify(registerRes.data));
+
+    // Normalize user id extraction (supports {{ user: {{ id }} }} or {{ id }})
+    const createdUser = (registerRes.data && (registerRes.data.user ?? registerRes.data)) as {{ id?: string; email?: string }};
+    createdUser.should.be.an("object");
+    createdUser.should.have.property("id").that.is.a("string").and.is.not.empty;
+    userId = createdUser.id!;
+  }});
+
+  it("@Smoke - Login returns token and user", async () => {{
+    const response = await loginService.login(/*<LoginResponse>*/ {{ email, password }});
+
+    response.status.should.equal(200, JSON.stringify(response.data));
+    response.data.should.be.an("object");
+    response.data.should.have.property("token").that.is.a("string").and.is.not.empty;
+    response.data.should.have.property("user").that.is.an("object");
+
+    const user = response.data.user;
+    user.should.have.property("id").that.is.a("string").and.equals(userId);
+    user.should.have.property("email").that.is.a("string").and.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/).and.equals(email);
+  }});
+}});
+```
+
+Test File to fix along with used Services and Interfaces
+{files}
+
+HTTP Traffic and Test Reporter Output
+{run_output}
