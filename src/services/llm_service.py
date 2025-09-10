@@ -241,7 +241,7 @@ class LLMService:
             return []
 
     def get_additional_models(
-        self, relevant_models: List[GeneratedModel], available_models: List[APIModel], api_verb: APIVerb
+        self, relevant_models: List[GeneratedModel], available_models: List[APIModel]
     ) -> List[FileSpec]:
         """Trigger read file tool to decide what additional model info is needed"""
         self.logger.info("\nGetting additional models...")
