@@ -129,7 +129,7 @@ class FrameworkGenerator:
                 if models:
                     model_info = ModelInfo(
                         path=self.api_processor.get_api_path_name(path),
-                        files={model.path: model.path + " - " + model.summary for model in models},
+                        files=[model.path + " - " + model.summary for model in models],
                         models=models,
                     )
                     all_generated_models["info"].append(model_info)
@@ -146,24 +146,13 @@ class FrameworkGenerator:
                     tests = self._generate_tests(verb, all_generated_models["info"], generate_tests)
                     if not tests:
                         tests = []
-                    for file in filter(self._is_model, tests):
-                        for model_info in all_generated_models["info"]:
-                            if model_info.path == service_related_to_verb:
-                                if file.path not in model_info.files:
-                                    model_info.files[file.path] = f"{file.path} - "
-                                existing = next((m for m in model_info.models if m.path == file.path), None)
-                                if existing:
-                                    self.logger.info(f"🔄 Updated model in global state: {file.path}")
-                                    existing.fileContent = file.fileContent
-                                else:
-                                    self.logger.info(f"🆕 Added new model to global state: {file.path}")
-                                    model_info.models.append(
-                                        GeneratedModel(
-                                            path=file.path,
-                                            fileContent=file.fileContent,
-                                            summary=getattr(file, "summary", ""),
-                                        )
-                                    )
+                    for file in filter(self._is_response_file, tests):
+                        for model in all_generated_models["info"]:
+                            if model.path == service_related_to_verb:
+                                model.files.append(file.path)
+                                model.models.append(
+                                    GeneratedModel(path=file.path, fileContent=file.fileContent, summary="")
+                                )
                     verb_path_for_debug = self.api_processor.get_api_verb_path(verb)
                     verb_name_for_debug = self.api_processor.get_api_verb_name(verb)
                     self.logger.debug(
@@ -232,7 +221,7 @@ class FrameworkGenerator:
 
             if other_models:
                 additional_models_result = self.llm_service.get_additional_models(
-                    relevant_models, other_models, api_verb
+                    relevant_models, other_models
                 )
                 if additional_models_result:
                     model_paths = [m.path for m in additional_models_result if hasattr(m, "path")]
@@ -253,51 +242,22 @@ class FrameworkGenerator:
                 self.test_files_count += len(tests_result)
                 self.save_state()
                 model_file_specs = [FileSpec(path=m.path, fileContent=m.fileContent) for m in relevant_models]
-                delta = self._run_code_quality_checks(tests_result + model_file_specs)
-                if delta:
-                    rel_models_map = {
-                        model.path: model for model in relevant_models if hasattr(model, "path")
-                    }
-                    for file in delta:
-                        if file.path in rel_models_map:
-                            self.logger.info(f"🔄 Updated model: {file.path}")
-                            rel_models_map[file.path].fileContent = file.fileContent
-                        else:
-                            self.logger.info(f"🆕 Added new model: {file.path}")
-                            relevant_models.append(
-                                GeneratedModel(
-                                    path=file.path,
-                                    fileContent=file.fileContent,
-                                    summary=getattr(file, "summary", ""),
-                                )
-                            )
+                fixed_tests = self._run_code_quality_checks(tests_result + model_file_specs)
                 if generate_tests == GenerationOptions.MODELS_AND_TESTS:
                     additional_tests_result = self._generate_additional_tests(
-                        tests_result,
+                        fixed_tests,
                         relevant_models,
                         api_verb,
                     )
-                    return self._upsert_filespec(additional_tests_result, delta)
+                    return additional_tests_result
 
-                return self._upsert_filespec(tests_result, delta)
+                return fixed_tests
             else:
                 self.logger.warning(f"No tests generated for {verb_path} - {verb_name}")
                 return None
         except Exception as e:
             self._log_error(f"Error processing verb definition for {verb_path} - {verb_name}", e)
             raise
-
-    def _upsert_filespec(self, a: List[FileSpec], b: Optional[List[FileSpec]]) -> List[FileSpec]:
-        """Return list a where entries with matching .path are replaced by entries from b."""
-        if not b:
-            return a
-        else:
-            b_by_path = {item.path: item for item in b}
-            result = [b_by_path.get(item.path, item) for item in a]
-            a_paths = {item.path for item in a}
-            result.extend(item for path, item in b_by_path.items() if path not in a_paths)
-
-            return result
 
     def _generate_additional_tests(
         self,
@@ -318,8 +278,8 @@ class FrameworkGenerator:
                     self.test_files_count += len(additional_tests_result) - len(tests)
 
                 self.save_state()
-                delta = self._run_code_quality_checks(additional_tests_result)
-                return delta
+                fixed_tests = self._run_code_quality_checks(additional_tests_result + models)
+                return fixed_tests
             return tests
         except Exception as e:
             self._log_error(
@@ -340,14 +300,14 @@ class FrameworkGenerator:
             Exception: If any error occurs during the code quality checks, it is logged and the exception is raised.
         """
         error_type = "models" if are_models else "tests"
-        test_delta: List[FileSpec] = []
+        fixed_files: List[FileSpec] = []
 
         try:
 
             def typescript_fix_wrapper(problematic_files: List[FileSpec], messages):
-                nonlocal test_delta
+                nonlocal fixed_files
                 self.logger.info("\nAttempting to fix TypeScript errors with LLM...")
-                test_delta = self.llm_service.fix_typescript(problematic_files, messages, are_models)
+                fixed_files = self.llm_service.fix_typescript(problematic_files, messages, are_models)
                 self.logger.info("TypeScript fixing attempt complete.")
 
             self.command_service.run_command_with_fix(
@@ -359,23 +319,26 @@ class FrameworkGenerator:
             if not are_models:
 
                 def test_fix_wrapper(files: FileSpec, run_output: str):
-                    nonlocal test_delta
+                    nonlocal fixed_files
                     self.logger.info("\nAttempting to fix Test errors with LLM...")
-                    test_delta = self.llm_service.fix_test(files, run_output)
+                    fixed_files = self.llm_service.fix_test(files, run_output)
                     self.logger.info("Test fixing attempt complete.")
 
                 self.command_service.run_command_with_fix(
-                    self.command_service.run_test, test_fix_wrapper, files
+                    self.command_service.run_test,
+                    test_fix_wrapper,
+                    files,
+                    max_retries=self.config.max_test_fixes,
                 )
 
             self.command_service.format_files()
             self.command_service.run_linter()
 
-            return test_delta
+            return fixed_files
         except Exception as e:
             self._log_error(f"Error during code quality checks for {error_type}", e)
 
     @staticmethod
-    def _is_model(file: FileSpec) -> bool:
+    def _is_response_file(file: FileSpec) -> bool:
         """Check if the file is a response interface"""
-        return GeneratedModel.is_model(file.path)
+        return GeneratedModel.is_response_file(file.path)

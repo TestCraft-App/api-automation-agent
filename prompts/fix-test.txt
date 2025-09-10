@@ -5,7 +5,7 @@ You are an API Automation Engineer specialized in TypeScript, Mocha, and Axios.
 ## Task
 
 - Fix failing tests using the provided HTTP Traffic and Test Reporter output.
-- Update tests and, if needed, service classes and interfaces so tests run and assertions are correct.
+- Update tests files only. It is strictly prohibited to alter other files such as Services or Interfaces.
 - Do not add comments in code.
 - Follow the exact test coding style below.
 - Do not dissolve before, beforeEach, after or afterEach hooks.
@@ -284,13 +284,11 @@ describe("Login", () => {{
   let password: string;
 
   before(() => {{
-    // ❌ User is NOT registered; logging in will fail in real systems
     email = `${{randomString(6)}}@example.com`;
     password = randomString(12);
   }});
 
   it("@Smoke - Login returns token and user", async () => {{
-    // ❌ Assumes credentials already exist in the system
     const response = await loginService.login<LoginResponse>({{ email, password }});
 
     response.status.should.equal(200, JSON.stringify(response.data));
@@ -308,7 +306,6 @@ import {{ RegistrationService }} from "../../models/services/RegistrationService
 import {{ LoginService }} from "../../models/services/LoginService.js";
 import "chai/register-should.js";
 
-// If you define response interfaces, import them as needed:
 // import {{ RegistrationResponse }} from "../../models/responses/RegistrationResponse.js";
 // import {{ LoginResponse }} from "../../models/responses/LoginResponse.js";
 
@@ -326,10 +323,8 @@ describe("Auth: Login with pre-registered user", () => {{
     const registerPayload = {{ name, email, password }};
     const registerRes = await registrationService.register(/*<RegistrationResponse>*/ registerPayload);
 
-    // Accept 200 or 201 depending on API
     [200, 201].should.include(registerRes.status, JSON.stringify(registerRes.data));
 
-    // Normalize user id extraction (supports {{ user: {{ id }} }} or {{ id }})
     const createdUser = (registerRes.data && (registerRes.data.user ?? registerRes.data)) as {{ id?: string; email?: string }};
     createdUser.should.be.an("object");
     createdUser.should.have.property("id").that.is.a("string").and.is.not.empty;
@@ -337,7 +332,7 @@ describe("Auth: Login with pre-registered user", () => {{
   }});
 
   it("@Smoke - Login returns token and user", async () => {{
-    const response = await loginService.login(/*<LoginResponse>*/ {{ email, password }});
+    const response = await loginService.login<LoginResponse>({{ email, password }});
 
     response.status.should.equal(200, JSON.stringify(response.data));
     response.data.should.be.an("object");

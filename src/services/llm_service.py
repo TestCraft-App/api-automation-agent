@@ -253,7 +253,6 @@ class LLMService:
             {
                 "relevant_models": GeneratedModel.list_to_json(relevant_models),
                 "available_models": api_models_to_json(available_models),
-                "api_verb": api_verb,
             }
         )
         return convert_to_file_spec(result)
@@ -297,7 +296,7 @@ class LLMService:
             must_use_tool=True,
         ).invoke({"files": file_specs_to_json(files), "messages": messages})
 
-    def fix_test(self, files: List[FileSpec], run_output: List[str]) -> None:
+    def fix_test(self, files: List[FileSpec], run_output: List[str]) -> List[FileSpec]:
         """
         Improve test files based on run output.
 
@@ -305,12 +304,14 @@ class LLMService:
             files (List[FileSpec]): List of files to fix
             run_output (List[str]): HTTP activity/Reporter output
         """
-        self.logger.info("\nFixing Test & Models:")
+        self.logger.info("\nFixing Test file using the following context:")
         for file in files:
             self.logger.info(f"  - {file.path}")
 
-        self.create_ai_chain(
+        result = self.create_ai_chain(
             PromptConfig.FIX_TEST,
             tools=[FileCreationTool(self.config, self.file_service)],
             must_use_tool=True,
         ).invoke({"files": file_specs_to_json(files), "run_output": run_output})
+
+        return convert_to_file_spec(result)

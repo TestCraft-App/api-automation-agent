@@ -79,7 +79,6 @@ def main(
                 "data_source": data_source,
                 "use_existing_framework": args.use_existing_framework,
                 "list_endpoints": args.list_endpoints,
-                "protected_files": ["src/base/"],
             }
         )
 
