@@ -301,6 +301,7 @@ class FrameworkGenerator:
         """
         error_type = "models" if are_models else "tests"
         fixed_files: List[FileSpec] = []
+        fix_history: List[str] = []
 
         try:
 
@@ -320,9 +321,18 @@ class FrameworkGenerator:
 
                 def test_fix_wrapper(files: FileSpec, run_output: str):
                     nonlocal fixed_files
-                    self.logger.info("\nAttempting to fix Test errors with LLM...")
-                    fixed_files = self.llm_service.fix_test(files, run_output)
-                    self.logger.info("Test fixing attempt complete.")
+                    nonlocal fix_history
+                    self.logger.info("\nAttempting to fix Test errors with LLM...\n")
+                    fixed_files, changes = self.llm_service.fix_test_execution(
+                        files,
+                        run_output,
+                        fix_history,
+                    )
+                    fix_history.append(changes)
+                    self.logger.info(
+                        "🛠️  Fix history:\n" + "\n".join(f"🔧 - {change}" for change in fix_history)
+                    )
+                    self.logger.info("Fix attempt complete.")
 
                 self.command_service.run_command_with_fix(
                     self.command_service.run_test,

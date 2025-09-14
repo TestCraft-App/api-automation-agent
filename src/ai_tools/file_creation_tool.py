@@ -1,10 +1,13 @@
-import json
 import logging
-from typing import List, Optional, Type, Dict, Any
+from typing import List, Optional, Type, Dict
 
 import json_repair
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel
+
+from .models.test_fix_input import TestFixInput
+from .models.model_fix_input import ModelFixInput
+from .models.operation_types import FileOperation
 
 from .models.file_creation_input import FileCreationInput
 from .models.file_spec import FileSpec
@@ -22,41 +25,46 @@ class FileCreationTool(BaseTool):
     config: Config = None
     file_service: FileService = None
     logger: logging.Logger = None
-    are_models: bool = False
+    file_operation: FileOperation = None
 
-    def __init__(self, config: Config, file_service: FileService, are_models: bool = False):
+    def __init__(self, config: Config, file_service: FileService, operation: FileOperation):
         super().__init__()
         self.config = config
         self.file_service = file_service
         self.logger = Logger.get_logger(__name__)
-        self.are_models = are_models
+        self.file_operation = operation
+        self.args_schema = operation.value.input
+        self.name = operation.value.tool_name
+        self.description = operation.value.description
 
-        if are_models:
-            self.args_schema = ModelCreationInput
-            self.name = "create_models"
-            self.description = "Create models from a given API definition."
-
-    def _run(self, files: List[FileSpec | ModelFileSpec]) -> str:
+    def _run(
+        self, files: List[FileSpec | ModelFileSpec], changes: Optional[str] = None
+    ) -> ModelCreationInput | FileCreationInput | ModelFixInput | TestFixInput:
         try:
             created_files = self.file_service.create_files(
                 destination_folder=self.config.destination_folder, files=files
             )
-            self.logger.info(f"Successfully created {len(created_files)} files")
-            return json.dumps([file_spec.model_dump() for file_spec in files])
+            if self.file_operation in [FileOperation.CREATE_TEST, FileOperation.CREATE_MODELS]:
+                self.logger.info(f"Successfully created {len(created_files)} files")
+                return self.args_schema(files=files)
+            else:
+                self.logger.info(f"Successfully fixed {len(created_files)} files")
+                return self.args_schema(files=files, changes=changes)
+
         except Exception as e:
-            self.logger.error(f"Error creating files: {e}")
+            self.logger.error(f"Error writing to files: {e}")
             raise
 
     async def _arun(self, files: List[FileSpec | ModelFileSpec]) -> str:
         return self._run(files)
 
-    def _parse_input(self, tool_input: str | Dict, tool_call_id: Optional[str] = None) -> Dict[str, Any]:
+    def _parse_input(
+        self, tool_input: str | Dict, tool_call_id: Optional[str] = None
+    ) -> FileCreationInput | ModelCreationInput | ModelFixInput | TestFixInput:
         if isinstance(tool_input, str):
             data = json_repair.loads(tool_input)
         else:
             data = tool_input
-
-        self.logger.debug(f"Received data['files']: {data.get('files', 'Not found')}")
 
         if not isinstance(data, dict):
             return {"files": []}
@@ -69,14 +77,28 @@ class FileCreationTool(BaseTool):
         if not isinstance(files_data, list):
             return {"files": []}
 
-        # Filter out non-dictionary objects
         valid_files = [f for f in files_data if isinstance(f, dict)]
+
         if len(valid_files) != len(files_data):
             self.logger.info(f"Filtered out {len(files_data) - len(valid_files)} invalid file specifications")
 
-        spec_class = ModelFileSpec if self.are_models else FileSpec
-        file_specs = [spec_class(**file_spec) for file_spec in valid_files]
+        file_specs = [self.file_operation.value.output_spec(**file_spec) for file_spec in valid_files]
+
         for file_spec in file_specs:
             if file_spec.path.startswith("/"):
                 file_spec.path = f".{file_spec.path}"
-        return {"files": file_specs}
+
+        result = {"files": file_specs}
+
+        if self.file_operation in [
+            FileOperation.FIX_MODELS_COMPILATION,
+            FileOperation.FIX_TEST_COMPILATION,
+            FileOperation.FIX_TEST_EXECUTION,
+        ]:
+            changes_value = data.get("changes")
+            if isinstance(changes_value, str):
+                result["changes"] = changes_value
+            else:
+                result["changes"] = ""
+
+        return result
