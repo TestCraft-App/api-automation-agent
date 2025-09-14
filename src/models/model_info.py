@@ -19,7 +19,7 @@ class ModelInfo:
     def add_model(self, model: GeneratedModel) -> None:
         """Add a model to the list of models"""
         self.models.append(model)
-        self.files[model.path] = f"{model.path} - {model.summary}"
+        self.files.append(f"{model.path} - {model.summary}")
 
     def get_models_by_path(self, path: str) -> List[GeneratedModel]:
         """Get all models that match the given path"""
