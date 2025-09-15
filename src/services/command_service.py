@@ -231,36 +231,8 @@ class CommandService:
     ) -> Tuple[bool, str]:
         """Run TypeScript compiler for specific files"""
         self._log_message(f"Running TypeScript compiler for files: {[file.path for file in files]}")
-        compiler_command = self.build_typescript_compiler_command(files)
+        compiler_command = build_typescript_compiler_command(files)
         return self.run_command(compiler_command)
-
-    def build_typescript_compiler_command(self, files: List[FileSpec]) -> str:
-        """Build the TypeScript compiler command for specific files"""
-        file_paths = " ".join(file.path for file in files)
-        return (
-            f"npx tsc {file_paths} "
-            "--lib es2021 "
-            "--module NodeNext "
-            "--target ESNext "
-            "--strict "
-            "--esModuleInterop "
-            "--skipLibCheck "
-            "--forceConsistentCasingInFileNames "
-            "--moduleResolution nodenext "
-            "--allowUnusedLabels false "
-            "--allowUnreachableCode false "
-            "--noFallthroughCasesInSwitch "
-            "--noImplicitOverride "
-            "--noImplicitReturns "
-            "--noPropertyAccessFromIndexSignature "
-            "--noUncheckedIndexedAccess "
-            "--noUnusedLocals "
-            "--noUnusedParameters "
-            "--checkJs "
-            "--noEmit "
-            "--strictNullChecks false "
-            "--excludeDirectories node_modules"
-        )
 
     def run_test(self, test_files: List[FileSpec]):
         file_paths = " ".join(file.path for file in test_files)
@@ -281,3 +253,32 @@ class CommandService:
             cwd=self.config.destination_folder,
             env_vars=node_env_options,
         )
+
+
+def build_typescript_compiler_command(files: List[FileSpec]) -> str:
+    """Build the TypeScript compiler command for specific files"""
+    file_paths = " ".join(file.path for file in files)
+    return (
+        f"npx tsc {file_paths} "
+        "--lib es2021 "
+        "--module NodeNext "
+        "--target ESNext "
+        "--strict "
+        "--esModuleInterop "
+        "--skipLibCheck "
+        "--forceConsistentCasingInFileNames "
+        "--moduleResolution nodenext "
+        "--allowUnusedLabels false "
+        "--allowUnreachableCode false "
+        "--noFallthroughCasesInSwitch "
+        "--noImplicitOverride "
+        "--noImplicitReturns "
+        "--noPropertyAccessFromIndexSignature "
+        "--noUncheckedIndexedAccess "
+        "--noUnusedLocals "
+        "--noUnusedParameters "
+        "--checkJs "
+        "--noEmit "
+        "--strictNullChecks false "
+        "--excludeDirectories node_modules"
+    )

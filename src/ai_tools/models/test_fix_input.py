@@ -3,6 +3,7 @@ from .file_creation_input import FileCreationInput
 
 
 class TestFixInput(FileCreationInput):
+    __test__ = False
     changes: str = Field(
         description="A string describing the changes needed to fix issues in the provided files. Phrased it in 'Do not do X. Solution is Y'",
         examples=[
