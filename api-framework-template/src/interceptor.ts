@@ -1,29 +1,23 @@
-import { BatchInterceptor } from "@mswjs/interceptors";
-import { ClientRequestInterceptor } from "@mswjs/interceptors/ClientRequest";
-import { gunzipSync } from "node:zlib";
-import { Buffer } from "buffer";
+import axios from "axios";
 
-const interceptor = new BatchInterceptor({
-  name: "http-logger",
-  interceptors: [new ClientRequestInterceptor()],
-});
 
-interceptor.apply();
+axios.interceptors.request.use(
+  function (config) {
+    console.log("REQUEST:", config.method, config.url);
+    return config;
+  },
+  function (error) {
+    console.log("REQUEST ERROR:", error);
+  },
+  { synchronous: true, runWhen: () => true }
+);
 
-interceptor.on("request", ({ request }) => {
-  console.log("REQUEST:", request.method, request.url);
-});
-
-interceptor.on("response", async ({ response, request }) => {
-  const buf = Buffer.from(await response.arrayBuffer());
-
-  let body: unknown;
-  try {
-    const text = gunzipSync(buf).toString("utf8");
-    body = JSON.parse(text);
-  } catch {
-    body = buf.toString("utf8");
+axios.interceptors.response.use(
+  function onFulfilled(response) {
+    console.log("RESPONSE:", response.status, response.config.url, response.data);
+    return response;
+  },
+  function onRejected(error) {
+    console.log("RESPONSE ERROR:", error);
   }
-
-  console.log("RESPONSE:", response.status, request.url, body);
-});
+);
