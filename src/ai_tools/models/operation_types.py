@@ -25,7 +25,6 @@ class FileOperation(Enum):
         input=ModelCreationInput,
         output_spec=ModelFileSpec,
     )
-
     FIX_MODELS_COMPILATION = FileOperation(
         tool_name="fix_models_compilation",
         description="Fix compilation errors on Service files and Interfaces.",
