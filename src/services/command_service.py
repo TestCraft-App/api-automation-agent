@@ -242,9 +242,7 @@ class CommandService:
         file_paths = " ".join(file.path for file in test_files)
 
         command = (
-            "npx mocha --require mocha-suppress-logs --no-config "
-            "--extension ts "
-            "--file ./src/interceptor.ts "
+            "npx cross-env HTTP_DEBUG=true mocha --require mocha-suppress-logs --no-config "
             f"{file_paths} "
             "--reporter min --timeout 10000 --no-warnings"
         )
