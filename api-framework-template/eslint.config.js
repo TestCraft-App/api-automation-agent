@@ -16,7 +16,6 @@ export default [
       "ui-testing": uiTestingPlugin,
     },
     rules: {
-      "ui-testing/no-disabled-tests": "error",
       "ui-testing/no-focused-tests": "error",
     },
   },

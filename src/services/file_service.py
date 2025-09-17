@@ -71,10 +71,15 @@ class FileService:
                 path = path.lstrip("/")
                 updated_path = os.path.join(destination_folder, path)
                 os.makedirs(os.path.dirname(updated_path), exist_ok=True)
+
+                file_exists = os.path.exists(updated_path)
                 with open(updated_path, "w") as f:
                     f.write(content)
 
-                self.logger.info(f"Created file: {path}")
+                if file_exists:
+                    self.logger.info(f"Updated file: {path}")
+                else:
+                    self.logger.info(f"Created file: {path}")
                 created_files.append(updated_path)
             except Exception as e:
                 self.logger.error(f"Failed to create file {file_spec.path}: {e}")

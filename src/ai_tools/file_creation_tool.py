@@ -5,7 +5,7 @@ import json_repair
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel
 
-from .models.test_fix_input import TestFixInput
+from .models.test_fix_input import TestFixInput, FixStop
 from .models.model_fix_input import ModelFixInput
 from .models.operation_types import FileOperation
 
@@ -38,7 +38,10 @@ class FileCreationTool(BaseTool):
         self.description = operation.value.description
 
     def _run(
-        self, files: List[FileSpec | ModelFileSpec], changes: Optional[str] = None
+        self,
+        files: List[FileSpec | ModelFileSpec],
+        changes: Optional[str] = None,
+        stop: Optional[FixStop] = None,
     ) -> ModelCreationInput | FileCreationInput | ModelFixInput | TestFixInput:
         try:
             created_files = self.file_service.create_files(
@@ -48,8 +51,8 @@ class FileCreationTool(BaseTool):
                 self.logger.info(f"Successfully created {len(created_files)} files")
                 return self.args_schema(files=files)
             else:
-                self.logger.info(f"Successfully fixed {len(created_files)} files")
-                return self.args_schema(files=files, changes=changes)
+                self.logger.info(f"Fixes applied to {len(created_files)} files")
+                return self.args_schema(files=files, changes=changes, stop=stop)
 
         except Exception as e:
             self.logger.error(f"Error writing to files: {e}")
@@ -96,6 +99,13 @@ class FileCreationTool(BaseTool):
             FileOperation.FIX_TEST_EXECUTION,
         ]:
             changes_value = data.get("changes")
+            stop_value = data.get("stop")
+
+            if isinstance(stop_value, dict):
+                result["stop"] = FixStop(**stop_value)
+            else:
+                result["stop"] = None
+
             if isinstance(changes_value, str):
                 result["changes"] = changes_value
             else:

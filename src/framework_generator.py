@@ -15,6 +15,7 @@ from .services.file_service import FileService
 from .services.llm_service import LLMService
 from .utils.checkpoint import Checkpoint
 from .utils.logger import Logger
+import inspect
 
 
 class FrameworkGenerator:
@@ -300,7 +301,7 @@ class FrameworkGenerator:
             Exception: If any error occurs during the code quality checks, it is logged and the exception is raised.
         """
         error_type = "models" if are_models else "tests"
-        fixed_files: List[FileSpec] = []
+        fixed_files: List[FileSpec] = [file for file in files]
         fix_history: List[str] = []
 
         try:
@@ -319,15 +320,20 @@ class FrameworkGenerator:
 
             if not are_models:
 
-                def test_fix_wrapper(files: FileSpec, run_output: str):
+                def test_fix_wrapper(files: FileSpec, run_output: str) -> Optional[bool]:
                     nonlocal fixed_files
                     nonlocal fix_history
                     self.logger.info("\nAttempting to fix Test errors with LLM...\n")
-                    fixed_files, changes = self.llm_service.fix_test_execution(
+                    fixed_files, changes, stop = self.llm_service.fix_test_execution(
                         files,
                         run_output,
                         fix_history,
                     )
+                    if stop:
+                        self.logger.info(f"\n🛑 Stopping further fixes, reason: {stop.reason}\n")
+                        self.logger.info(f"📝 Details: {stop.content}")
+                        return True
+
                     fix_history.append(changes)
                     self.logger.info(
                         "🛠️  Fix history:\n" + "\n".join(f"🔧 - {change}" for change in fix_history)

@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import subprocess
@@ -148,10 +149,11 @@ class CommandService:
     ) -> Tuple[bool, str]:
         """
         Execute a command with retries and an optional fix function on failure.
+        Loops until max_retries is reached or fix_func returns True.
 
         Args:
             command_func (Callable): The function that runs the command
-            fix_func (Optional[Callable]): Function to invoke if the command fails
+            fix_func (Optional[Callable]) -> bool: Function to invoke if the command fails.
             files (Optional[List[Dict[str, str]]]): Files to pass to the command function
             max_retries (int): Max number of retries on failure
 
@@ -173,7 +175,9 @@ class CommandService:
 
             if fix_func:
                 self._log_message(f"Applying fix: {message}")
-                fix_func(files, message)
+                stop = fix_func(files, message)
+                if stop:
+                    return
 
             retry_count += 1
 
