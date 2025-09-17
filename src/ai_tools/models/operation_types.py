@@ -11,7 +11,7 @@ from .model_file_spec import ModelFileSpec
 
 
 @dataclass(frozen=True)
-class FileOperation:
+class OperationBase:
     tool_name: str
     description: str
     input: type
@@ -19,31 +19,31 @@ class FileOperation:
 
 
 class FileOperation(Enum):
-    CREATE_MODELS = FileOperation(
+    CREATE_MODELS = OperationBase(
         tool_name="create_models",
         description="Create models from a given API definition.",
         input=ModelCreationInput,
         output_spec=ModelFileSpec,
     )
-    FIX_MODELS_COMPILATION = FileOperation(
+    FIX_MODELS_COMPILATION = OperationBase(
         tool_name="fix_models_compilation",
         description="Fix compilation errors on Service files and Interfaces.",
         input=ModelFixInput,
         output_spec=ModelFileSpec,
     )
-    CREATE_TEST = FileOperation(
+    CREATE_TEST = OperationBase(
         tool_name="create_test",
         description="Create test files using various sources of data",
         input=FileCreationInput,
         output_spec=FileSpec,
     )
-    FIX_TEST_COMPILATION = FileOperation(
+    FIX_TEST_COMPILATION = OperationBase(
         tool_name="fix_test_compilation",
         description="Fix compilation errors in the test file.",
         input=TestFixInput,
         output_spec=FileSpec,
     )
-    FIX_TEST_EXECUTION = FileOperation(
+    FIX_TEST_EXECUTION = OperationBase(
         tool_name="fix_test_execution",
         description="Fix execution errors based on various sources of data",
         input=TestFixInput,

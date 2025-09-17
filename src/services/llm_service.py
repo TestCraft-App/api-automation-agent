@@ -328,4 +328,4 @@ class LLMService:
             must_use_tool=True,
         ).invoke({"files": file_specs_to_json(files), "run_output": run_output, "fix_history": fix_history})
 
-        return result.files, result.changes
+        return result.files, result.changes, result.stop
