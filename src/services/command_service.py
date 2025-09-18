@@ -145,8 +145,9 @@ class CommandService:
         command_func: Callable,
         fix_func: Optional[Callable] = None,
         files: Optional[List[FileSpec]] = None,
+        are_models: Optional[bool] = False,
         max_retries: int = 3,
-    ) -> Tuple[bool, str]:
+    ) -> Tuple[List[FileSpec], List[str]]:
         """
         Execute a command with retries and an optional fix function on failure.
         Loops until max_retries is reached or fix_func returns True.
@@ -160,8 +161,10 @@ class CommandService:
         Returns:
             Tuple[bool, str]: Success status and output or error message
         """
-        files = files or []
+        files = list(files) or []
         retry_count = 0
+        fix_history: List[str] = []
+
         while retry_count < max_retries:
             if retry_count > 0:
                 self._log_message(f"\nAttempt {retry_count + 1}/{max_retries}.")
@@ -171,23 +174,33 @@ class CommandService:
             success, message = command_func(files)
 
             if success:
-                return success, message
+                return files
 
             if fix_func:
                 self._log_message(f"Applying fix: {message}")
-                stop = fix_func(files, message)
+                fixed_files, changes, stop = fix_func(
+                    files=files, messages=message, fix_history=fix_history, are_models=are_models
+                )
+
+                files_dict = {f.path: f for f in files}
+                for fixed in fixed_files:
+                    files_dict[fixed.path] = fixed
+                files = list(files_dict.values())
+
+                if changes:
+                    fix_history.append(changes)
                 if stop:
-                    return
+                    return files
 
             retry_count += 1
 
         success, message = command_func(files)
 
         if success:
-            return success, message
+            return files
 
         self._log_message(f"Command failed after {max_retries} attempts.", is_error=True)
-        return False, message
+        return files
 
     def install_dependencies(self) -> Tuple[bool, str]:
         """Install npm dependencies"""

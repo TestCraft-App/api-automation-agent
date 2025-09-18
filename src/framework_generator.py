@@ -3,6 +3,8 @@ import sys
 import traceback
 from typing import List, Dict, Optional, cast
 
+from src.models.fix_result import FixResult
+
 from .ai_tools.models.file_spec import FileSpec
 from .configuration.config import Config, GenerationOptions
 from .configuration.data_sources import DataSource
@@ -300,49 +302,21 @@ class FrameworkGenerator:
             Exception: If any error occurs during the code quality checks, it is logged and the exception is raised.
         """
         error_type = "models" if are_models else "tests"
-        fixed_files: List[FileSpec] = [file for file in files]
-        fix_history: List[str] = []
+        fixed_files: List[FileSpec] = list(files or [])
 
         try:
-
-            def typescript_fix_wrapper(problematic_files: List[FileSpec], messages):
-                nonlocal fixed_files
-                self.logger.info("\nAttempting to fix TypeScript errors with LLM...")
-                fixed_files = self.llm_service.fix_typescript(problematic_files, messages, are_models)
-                self.logger.info("TypeScript fixing attempt complete.")
-
-            self.command_service.run_command_with_fix(
-                self.command_service.run_typescript_compiler_for_files,
-                typescript_fix_wrapper,
-                files,
+            fixed_files = self.command_service.run_command_with_fix(
+                command_func=self.command_service.run_typescript_compiler_for_files,
+                fix_func=self._typescript_fix_wrapper,
+                files=fixed_files,
+                are_models=are_models,
             )
 
             if not are_models:
-
-                def test_fix_wrapper(files: FileSpec, run_output: str) -> Optional[bool]:
-                    nonlocal fixed_files
-                    nonlocal fix_history
-                    self.logger.info("\nAttempting to fix Test errors with LLM...\n")
-                    fixed_files, changes, stop = self.llm_service.fix_test_execution(
-                        files,
-                        run_output,
-                        fix_history,
-                    )
-                    if stop:
-                        self.logger.info(f"\n🛑 Stopping further fixes, reason: {stop.reason}\n")
-                        self.logger.info(f"📝 Details: {stop.content}")
-                        return True
-
-                    fix_history.append(changes)
-                    self.logger.info(
-                        "🛠️  Fix history:\n" + "\n".join(f"🔧 - {change}" for change in fix_history)
-                    )
-                    self.logger.info("Fix attempt complete.")
-
-                self.command_service.run_command_with_fix(
-                    self.command_service.run_test,
-                    test_fix_wrapper,
-                    files,
+                fixed_files = self.command_service.run_command_with_fix(
+                    command_func=self.command_service.run_test,
+                    fix_func=self._test_fix_wrapper,
+                    files=fixed_files,
                     max_retries=self.config.max_test_fixes,
                 )
 
@@ -352,6 +326,37 @@ class FrameworkGenerator:
             return fixed_files
         except Exception as e:
             self._log_error(f"Error during code quality checks for {error_type}", e)
+
+    def _test_fix_wrapper(
+        self, files: List[FileSpec], messages: str, fix_history: List[str], are_models: bool
+    ) -> FixResult:
+        self.logger.info("\nAttempting to fix Test errors with LLM...\n")
+        fixed_files, changes, stop = self.llm_service.fix_test_execution(
+            files,
+            messages,
+            fix_history,
+        )
+        all_fixes = list(fix_history)
+        if changes:
+            all_fixes.append(changes)
+
+        self.logger.info("🛠️  Fix history:\n" + "\n".join(f"🔧 - {change}" for change in all_fixes))
+        self.logger.info("Fix attempt complete.")
+
+        if stop:
+            self.logger.info(f"\n🛑 Stopping further fixes, reason: {stop.reason}\n")
+            self.logger.info(f"📝 Details: {stop.content}")
+            return fixed_files, changes, True
+
+        return fixed_files, changes, False
+
+    def _typescript_fix_wrapper(
+        self, files: List[FileSpec], messages: str, fix_history: List[str], are_models: bool
+    ) -> FixResult:
+        self.logger.info("\nAttempting to fix TypeScript errors with LLM...")
+        fixed_files = self.llm_service.fix_typescript(files, messages, are_models)
+        self.logger.info("TypeScript fixing attempt complete.")
+        return fixed_files, None, False
 
     @staticmethod
     def _is_response_file(file: FileSpec) -> bool:

@@ -300,11 +300,13 @@ class LLMService:
         else:
             operation = FileOperation.FIX_TEST_COMPILATION
 
-        self.create_ai_chain(  # later we should return something so that we track changes
+        result = self.create_ai_chain(  # later we should return something so that we track changes
             PromptConfig.FIX_TYPESCRIPT,
             tools=[FileCreationTool(self.config, self.file_service, operation)],
             must_use_tool=True,
         ).invoke({"files": file_specs_to_json(files), "messages": messages})
+
+        return result.files
 
     def fix_test_execution(
         self, files: List[FileSpec], run_output: List[str], fix_history: List[str]
