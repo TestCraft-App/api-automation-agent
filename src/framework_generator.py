@@ -297,7 +297,7 @@ class FrameworkGenerator:
             files (List[FileSpec]): A list of file specifications to check and fix.
             are_models (bool, optional): Indicates whether the files are models or tests. Defaults to False.
         Returns:
-            List[FileSpec]: A list of files that were created or modified by the automatic quality checks.
+            List[FileSpec]: The input list of files, potentially modified after fixes.
         Raises:
             Exception: If any error occurs during the code quality checks, it is logged and the exception is raised.
         """
@@ -340,7 +340,7 @@ class FrameworkGenerator:
         if changes:
             all_fixes.append(changes)
 
-        self.logger.info("🛠️  Fix history:\n" + "\n".join(f"🔧 - {change}" for change in all_fixes))
+        self.logger.info("\n🛠️  Fix history:\n" + "\n".join(f"🔧 - {change}" for change in all_fixes))
         self.logger.info("Fix attempt complete.")
 
         if stop:
