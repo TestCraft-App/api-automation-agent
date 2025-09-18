@@ -147,7 +147,7 @@ class CommandService:
         files: Optional[List[FileSpec]] = None,
         are_models: Optional[bool] = False,
         max_retries: int = 3,
-    ) -> Tuple[List[FileSpec], List[str]]:
+    ) -> List[FileSpec]:
         """
         Execute a command with retries and an optional fix function on failure.
         Loops until max_retries is reached or fix_func returns True.
@@ -159,7 +159,7 @@ class CommandService:
             max_retries (int): Max number of retries on failure
 
         Returns:
-            Tuple[bool, str]: Success status and output or error message
+            List[FileSpec]: A list of updated files containing file path and content
         """
         files = list(files) or []
         retry_count = 0
