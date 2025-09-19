@@ -2,7 +2,10 @@ import json
 import logging
 import os
 import subprocess
-from typing import List, Dict, Tuple, Optional, Callable
+from typing import List, Dict, Tuple, Optional, Callable, Union
+
+from src.ai_tools.models.model_file_spec import ModelFileSpec
+from src.models.generated_model import GeneratedModel
 
 from ..ai_tools.models.file_spec import FileSpec
 from ..configuration.config import Config
@@ -144,7 +147,7 @@ class CommandService:
         self,
         command_func: Callable,
         fix_func: Optional[Callable] = None,
-        files: Optional[List[FileSpec]] = None,
+        files: Optional[List[Union[FileSpec, ModelFileSpec]]] = None,
         are_models: Optional[bool] = False,
         max_retries: int = 3,
     ) -> List[FileSpec]:
@@ -161,9 +164,15 @@ class CommandService:
         Returns:
             List[FileSpec]: A list of updated files containing file path and content
         """
-        files = list(files) or []
         retry_count = 0
         fix_history: List[str] = []
+        last_fix: List[Union[FileSpec, ModelFileSpec]] = []
+
+        for file in files:
+            if are_models and isinstance(file, ModelFileSpec):
+                last_fix.append(file)
+            elif not are_models and isinstance(file, FileSpec):
+                last_fix.append(file)
 
         while retry_count < max_retries:
             if retry_count > 0:
@@ -174,33 +183,34 @@ class CommandService:
             success, message = command_func(files)
 
             if success:
-                return files
+                return last_fix
 
             if fix_func:
                 self._log_message(f"Applying fix: {message}")
                 fixed_files, changes, stop = fix_func(
                     files=files, messages=message, fix_history=fix_history, are_models=are_models
                 )
-
                 files_dict = {f.path: f for f in files}
                 for fixed in fixed_files:
                     files_dict[fixed.path] = fixed
                 files = list(files_dict.values())
 
+                last_fix = fixed_files
+
                 if changes:
                     fix_history.append(changes)
                 if stop:
-                    return files
+                    return last_fix
 
             retry_count += 1
 
         success, message = command_func(files)
 
         if success:
-            return files
+            return last_fix
 
         self._log_message(f"Command failed after {max_retries} attempts.", is_error=True)
-        return files
+        return last_fix
 
     def install_dependencies(self) -> Tuple[bool, str]:
         """Install npm dependencies"""

@@ -3,6 +3,7 @@ import sys
 import traceback
 from typing import List, Dict, Optional, cast
 
+from src.ai_tools.models.model_file_spec import ModelFileSpec
 from src.models.fix_result import FixResult
 
 from .ai_tools.models.file_spec import FileSpec
@@ -243,7 +244,10 @@ class FrameworkGenerator:
             if tests_result:
                 self.test_files_count += len(tests_result)
                 self.save_state()
-                model_file_specs = [FileSpec(path=m.path, fileContent=m.fileContent) for m in relevant_models]
+                model_file_specs = [
+                    ModelFileSpec(path=m.path, fileContent=m.fileContent, summary=m.summary)
+                    for m in relevant_models
+                ]
                 fixed_tests = self._run_code_quality_checks(tests_result + model_file_specs)
                 if generate_tests == GenerationOptions.MODELS_AND_TESTS:
                     additional_tests_result = self._generate_additional_tests(
