@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 import json
 import pydantic
 from langchain_anthropic import ChatAnthropic
@@ -310,13 +310,13 @@ class LLMService:
         return result.files
 
     def fix_test_execution(
-        self, files: List[FileSpec], run_output: List[str], fix_history: List[str]
+        self, files: List[Union[FileSpec, ModelFileSpec]], run_output: List[str], fix_history: List[str]
     ) -> TestFixInput:
         """
         Improve test files based on run output.
 
         Args:
-            files (List[FileSpec]): List of files to fix
+            files (List[Union[FileSpec, ModelFileSpec]]): List of files to fix
             run_output (List[str]): HTTP activity/Reporter output
         """
         self.logger.info("\nFixing Test file using the following context:")

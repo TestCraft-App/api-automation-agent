@@ -1,7 +1,7 @@
 import signal
 import sys
 import traceback
-from typing import List, Dict, Optional, cast
+from typing import List, Dict, Optional, Union, cast
 
 from src.ai_tools.models.model_file_spec import ModelFileSpec
 from src.models.fix_result import FixResult
@@ -252,7 +252,7 @@ class FrameworkGenerator:
                 if generate_tests == GenerationOptions.MODELS_AND_TESTS:
                     additional_tests_result = self._generate_additional_tests(
                         fixed_tests,
-                        relevant_models,
+                        model_file_specs,
                         api_verb,
                     )
                     return additional_tests_result
@@ -268,7 +268,7 @@ class FrameworkGenerator:
     def _generate_additional_tests(
         self,
         tests: List[FileSpec],
-        models: List[GeneratedModel | str],
+        models: List[ModelFileSpec],
         api_definition: APIVerb,
     ) -> Optional[List[FileSpec]]:
         """Generate additional tests based on the initial test and models"""
@@ -294,7 +294,9 @@ class FrameworkGenerator:
             )
             return tests
 
-    def _run_code_quality_checks(self, files: List[FileSpec], are_models: bool = False) -> List[FileSpec]:
+    def _run_code_quality_checks(
+        self, files: List[Union[FileSpec, ModelFileSpec]], are_models: bool = False
+    ) -> List[FileSpec]:
         """
         Runs code quality checks on the provided files, including TypeScript compilation, execution check, linting, and formatting.
         Args:
@@ -306,7 +308,7 @@ class FrameworkGenerator:
             Exception: If any error occurs during the code quality checks, it is logged and the exception is raised.
         """
         error_type = "models" if are_models else "tests"
-        fixed_files: List[FileSpec] = list(files or [])
+        fixed_files: List[Union[FileSpec, ModelFileSpec]] = list(files or [])
 
         try:
             fixed_files = self.command_service.run_command_with_fix(
