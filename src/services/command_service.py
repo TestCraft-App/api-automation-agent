@@ -163,13 +163,16 @@ class CommandService:
 
         Returns:
             List[FileSpec]: A list of updated files containing file path and content
+            If are_models, an updated copy of files is returned, else only the fixed
+            files are returned
         """
         retry_count = 0
+        all_files: List[Union[FileSpec, ModelFileSpec]] = list(files)
         fix_history: List[str] = []
         last_fix: List[Union[FileSpec, ModelFileSpec]] = []
 
         for file in files:
-            if are_models and isinstance(file, ModelFileSpec):
+            if are_models and isinstance(file, ModelFileSpec):  # fallback files for last_fix
                 last_fix.append(file)
             elif not are_models and isinstance(file, FileSpec):
                 last_fix.append(file)
@@ -180,7 +183,7 @@ class CommandService:
             elif retry_count == 0:
                 self._log_message("")
 
-            success, message = command_func(files)
+            success, message = command_func(all_files)
 
             if success:
                 return last_fix
@@ -188,29 +191,39 @@ class CommandService:
             if fix_func:
                 self._log_message(f"Applying fix: {message}")
                 fixed_files, changes, stop = fix_func(
-                    files=files, messages=message, fix_history=fix_history, are_models=are_models
+                    files=all_files, messages=message, fix_history=fix_history, are_models=are_models
                 )
-                files_dict = {f.path: f for f in files}
+
+                files_dict = {f.path: f for f in all_files}
                 for fixed in fixed_files:
                     files_dict[fixed.path] = fixed
-                files = list(files_dict.values())
+                all_files = list(files_dict.values())
 
                 last_fix = fixed_files
 
                 if changes:
                     fix_history.append(changes)
                 if stop:
-                    return last_fix
+                    if are_models:
+                        return all_files
+                    else:
+                        return last_fix
 
             retry_count += 1
 
         success, message = command_func(files)
 
         if success:
-            return last_fix
+            if are_models:
+                return all_files
+            else:
+                return last_fix
 
         self._log_message(f"Command failed after {max_retries} attempts.", is_error=True)
-        return last_fix
+        if are_models:
+            return all_files
+        else:
+            return last_fix
 
     def install_dependencies(self) -> Tuple[bool, str]:
         """Install npm dependencies"""

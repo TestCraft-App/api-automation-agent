@@ -5,7 +5,8 @@ from .file_creation_input import FileCreationInput
 
 class FixStop(BaseModel):
     reason: str = Field(
-        description="Enum value indicating the reason for stopping further fixes.", enum=["bug", "auth"]
+        description="Enum value indicating the reason for stopping further fixes.",
+        json_schema_extra={"enum": ["bug", "auth"]},
     )
     content: List[str] = Field(
         description="Content in natural language documenting the reason for stopping further fixes.",
@@ -28,6 +29,4 @@ class TestFixInput(FileCreationInput):
             "Don't expect a string in the 'Create new Order' Test, use AddOrderReponse[] as the response generic type and expect a single item array.",
         ],
     )
-    stop: Optional[FixStop] = Field(
-        default=None, description="Documents the reason to stop further fixes"
-    )
+    stop: Optional[FixStop] = Field(default=None, description="Documents the reason to stop further fixes")
