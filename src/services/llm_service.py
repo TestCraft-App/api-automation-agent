@@ -270,7 +270,7 @@ class LLMService:
         definition_content: str,
     ) -> List[FileSpec]:
         """Generate additional tests based on the initial test and models."""
-        return self.create_ai_chain(
+        result = self.create_ai_chain(
             PromptConfig.ADDITIONAL_TESTS,
             tools=[FileCreationTool(self.config, self.file_service, operation=FileOperation.CREATE_TEST)],
             must_use_tool=True,
@@ -281,6 +281,7 @@ class LLMService:
                 "api_definition": definition_content,
             }
         )
+        return result.files
 
     def fix_typescript(self, files: List[FileSpec], messages: List[str], are_models: bool = False) -> None:
         """
