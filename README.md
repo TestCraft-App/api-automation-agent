@@ -2,6 +2,27 @@
 
 An open-source AI Agent that automatically generates an automation framework from your OpenAPI/Swagger specification or Postman collection, based on the api-framework-ts-mocha template (https://github.com/damianpereira86/api-framework-ts-mocha).
 
+## 🚀 Quick Start
+
+**Don't want to install Python?** Download the standalone executable:
+
+### Windows Users
+
+1. Go to [Releases](https://github.com/TestCraft-App/api-automation-agent/releases)
+2. Download `api-automation-agent-windows.zip`
+3. Extract and follow the included `USAGE-GUIDE.md`
+
+**Requirements:** Windows 7+, API key (OpenAI or Anthropic), Node.js 18+
+
+### Mac Users
+
+1. Go to [Releases](https://github.com/TestCraft-App/api-automation-agent/releases)
+2. Download `api-automation-agent-macos.tar.gz`
+3. Extract and follow the included `USAGE-GUIDE.md`
+4. Make the executable runnable: `chmod +x api-automation-agent`
+
+**Requirements:** macOS 10.14+, API key (OpenAI or Anthropic), Node.js 18+
+
 ## Features
 
 - Generates type-safe service and data models
@@ -13,7 +34,6 @@ An open-source AI Agent that automatically generates an automation framework fro
 
 ## Prerequisites
 
-- Python 3.8 or higher
 - Node.js 18 or higher
 - OpenAI API key or Anthropic API key (Anthropic API key required by default)
 
@@ -246,17 +266,20 @@ The project includes a comprehensive test suite to ensure code quality and funct
 ### Running the Test Suite
 
 1. Install test dependencies:
+
    ```bash
    pip install -r requirements.txt
    pip install -r requirements-test.txt  # Additional test dependencies
    ```
 
 2. Run all tests:
+
    ```bash
    pytest
    ```
 
 3. Run specific test categories:
+
    ```bash
    pytest tests/unit/  # Run only unit tests
    pytest tests/integration/  # Run only integration tests
@@ -443,3 +466,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - OpenAI and Anthropic for their AI models
 - All contributors who have helped build and improve this project
+# Testing date-based versioning workflow

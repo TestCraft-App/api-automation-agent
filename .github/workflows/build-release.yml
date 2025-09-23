@@ -1,0 +1,258 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main, agent-cli]
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update version in version.py
+        shell: pwsh
+        run: |
+          # Determine version based on trigger type
+          if ($env:GITHUB_REF.StartsWith("refs/tags/v")) {
+            # For tag pushes, use the tag name (remove 'v' prefix)
+            $version = $env:GITHUB_REF.Replace("refs/tags/v", "")
+          } else {
+            # For branch pushes, use date-based build format
+            $dateString = Get-Date -Format "yyyyMMdd-HHmm" -AsUTC
+            $version = "build-$dateString"
+          }
+
+          # Update version.py
+          $content = Get-Content "src/version.py" -Raw
+          $content = $content -replace '__version__ = "[^"]*"', "__version__ = `"$version`""
+          Set-Content "src/version.py" $content
+
+          Write-Host "Updated version to: $version"
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build executable with PyInstaller
+        run: |
+          pyinstaller --clean --noconfirm --log-level WARN api-automation-agent.spec
+
+      - name: Verify executable
+        run: |
+          if (Test-Path "dist\api-automation-agent.exe") {
+            Write-Host "✅ Executable built successfully"
+            $size = (Get-Item "dist\api-automation-agent.exe").Length
+            Write-Host "📏 Size: $($size / 1MB) MB"
+          } else {
+            Write-Host "❌ Build failed - executable not found"
+            exit 1
+          }
+
+      - name: Create distribution package
+        run: |
+          # Create clean distribution folder
+          New-Item -ItemType Directory -Path "api-automation-agent-windows" -Force
+
+          # Copy essential files
+          Copy-Item "dist\api-automation-agent.exe" "api-automation-agent-windows\"
+          Copy-Item "example.env" "api-automation-agent-windows\"
+          Copy-Item "README.md" "api-automation-agent-windows\"
+          Copy-Item "USAGE-GUIDE.md" "api-automation-agent-windows\" -ErrorAction SilentlyContinue
+          Copy-Item "USAGE-GUIDE.txt" "api-automation-agent-windows\" -ErrorAction SilentlyContinue
+
+      - name: Create ZIP archive
+        run: |
+          Compress-Archive -Path "api-automation-agent-windows\*" -DestinationPath "api-automation-agent-windows.zip"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-automation-agent-windows
+          path: api-automation-agent-windows.zip
+
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update version in version.py
+        run: |
+          # Determine version based on trigger type
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            # For tag pushes, use the tag name (remove 'v' prefix)
+            version=${GITHUB_REF#refs/tags/v}
+          else
+            # For branch pushes, use date-based build format
+            dateString=$(date -u +"%Y%m%d-%H%M")
+            version="build-$dateString"
+          fi
+
+          # Update version.py
+          sed -i.bak "s/__version__ = \"[^\"]*\"/__version__ = \"$version\"/" src/version.py
+
+          echo "Updated version to: $version"
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build executable with PyInstaller
+        run: |
+          pyinstaller --clean --noconfirm --log-level WARN api-automation-agent.spec
+
+      - name: Verify executable
+        run: |
+          if [ -f "dist/api-automation-agent" ]; then
+            echo "✅ Executable built successfully"
+            file_size=$(stat -f%z "dist/api-automation-agent" 2>/dev/null || stat -c%s "dist/api-automation-agent" 2>/dev/null)
+            echo "📏 Size: $file_size bytes"
+          else
+            echo "❌ Build failed - executable not found"
+            exit 1
+          fi
+
+      - name: Create distribution package
+        run: |
+          # Create clean distribution folder
+          mkdir -p api-automation-agent-macos
+
+          # Copy essential files
+          cp dist/api-automation-agent api-automation-agent-macos/
+          cp example.env api-automation-agent-macos/
+          cp README.md api-automation-agent-macos/
+          cp USAGE-GUIDE.md api-automation-agent-macos/
+          cp USAGE-GUIDE.txt api-automation-agent-macos/
+
+      - name: Create TAR.GZ archive
+        run: |
+          tar -czf api-automation-agent-macos.tar.gz -C . api-automation-agent-macos
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-automation-agent-macos
+          path: api-automation-agent-macos.tar.gz
+
+  # Consolidated release job that runs after both builds complete
+  create-release:
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/agent-cli' || startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Generate date string
+        id: date
+        run: echo "date=$(date -u +%Y%m%d-%H%M)" >> $GITHUB_OUTPUT
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: api-automation-agent-windows
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: api-automation-agent-macos
+
+      # Create latest release on main or agent-cli branch push
+      - name: Create Latest Release
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/agent-cli'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: api-automation-agent-build-${{ steps.date.outputs.date }}-${{ github.ref_name }}
+
+          name: 'API Automation Agent — Build ${{ steps.date.outputs.date }} (${{ github.ref_name }})'
+
+          body: |
+            ## 🚀 API Automation Agent
+
+            **Auto-generated from commit**
+
+            ### Download Options
+            - **Windows**: `api-automation-agent-windows.zip`
+            - **macOS**: `api-automation-agent-macos.tar.gz`
+
+            ### Quick Start
+            1. Download the package for your platform
+            2. Create a `.env` file with your API key
+            3. Run: `api-automation-agent.exe --help` (Windows) or `./api-automation-agent --help` (macOS)
+
+            ### Requirements
+            - Windows 7+ or macOS 10.14+
+            - Node.js (for generated framework execution)
+            - Internet connection
+            - API key (OpenAI or Anthropic)
+
+            **Build:** ${{ steps.date.outputs.date }}  
+            **Branch:** ${{ github.ref_name }}  
+            **Commit:** ${{ github.sha }}  
+            **Date:** ${{ github.event.head_commit.timestamp }}
+
+            For detailed usage instructions, see the included documentation.
+          files: |
+            api-automation-agent-windows.zip
+            api-automation-agent-macos.tar.gz
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Create versioned release on tag push
+      - name: Create Versioned Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            api-automation-agent-windows.zip
+            api-automation-agent-macos.tar.gz
+          body: |
+            ## 🚀 API Automation Agent Release
+
+            ### What's New
+            - Standalone executables for Windows and macOS
+            - No Python installation required
+            - Includes all dependencies
+
+            ### Download Options
+            - **Windows**: `api-automation-agent-windows.zip`
+            - **macOS**: `api-automation-agent-macos.tar.gz`
+
+            ### Quick Start
+            1. Download the package for your platform
+            2. Create a `.env` file with your API key  
+            3. Run: `api-automation-agent.exe --help` (Windows) or `./api-automation-agent --help` (macOS)
+
+            ### Requirements
+            - Windows 7+ or macOS 10.14+
+            - Node.js (for generated framework execution)
+            - Internet connection
+            - API key (OpenAI or Anthropic)
+
+            For detailed usage instructions, see the included documentation.
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,10 +1,21 @@
 import ast
 import os
 import shutil
+import sys
 from typing import List, Optional
 
 from ..ai_tools.models.file_spec import FileSpec
 from ..utils.logger import Logger
+
+
+def get_resource_path(relative_path: str) -> str:
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 
 class FileService:
@@ -28,7 +39,7 @@ class FileService:
         Returns:
             Optional[str]: The destination folder if successful, None otherwise
         """
-        src_folder = "./api-framework-template"
+        src_folder = get_resource_path("api-framework-template")
         self.logger.info("Generating new framework...")
         try:
             # For dirs_exist_ok=True, dst must be a directory.

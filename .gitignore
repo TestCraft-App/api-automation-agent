@@ -2,6 +2,8 @@
 .env
 /generated-framework_*/
 /benchmarks/reports/*
+# Windows distribution folder
+/api-automation-agent-windows/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -34,6 +36,8 @@ pip-wheel-metadata/
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
+# Exception: Keep our main spec file
+!api-automation-agent.spec
 
 # Installer logs
 pip-log.txt

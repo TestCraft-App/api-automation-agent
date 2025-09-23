@@ -1,0 +1,185 @@
+================================================================================================================================================================
+
+                    API Automation Agent - Quick Start Guide                    API Automation Agent - Usage Guide
+
+================================================================================================================================================================
+
+
+
+PREREQUISITESQUICK START FOR WINDOWS
+
+- Windows 7+ or macOS 10.14+
+
+- Node.js (download from https://nodejs.org/)Prerequisites:
+
+- API key (OpenAI or Anthropic)- Windows computer with internet connection
+
+- Internet connection- API key for OpenAI or Anthropic (Claude)
+
+
+
+================================================================================================================================================================
+
+SETUP (Choose your platform)SETUP STEPS
+
+================================================================================================================================================================
+
+
+
+WINDOWS:1. Download the files:
+
+1. Extract api-automation-agent-windows.zip   - api-automation-agent.exe (the main executable)
+
+2. Open Command Prompt or PowerShell in the extracted folder   - example.env (configuration template)
+
+3. Copy example.env to .env:
+
+   copy example.env .env2. Configure your API keys:
+
+4. Edit .env in Notepad and add your API key:   - Copy "example.env" to ".env" in the same folder as the executable
+
+   OPENAI_API_KEY=your_key_here   - Open ".env" in Notepad
+
+   OR   - Add your API key:
+
+   ANTHROPIC_API_KEY=your_key_here
+
+     For OpenAI (ChatGPT):
+
+MACOS:     OPENAI_API_KEY=your_openai_api_key_here
+
+1. Extract the tar.gz file:
+
+   tar -xzf api-automation-agent-macos.tar.gz     OR for Anthropic (Claude):
+
+   cd api-automation-agent-macos     ANTHROPIC_API_KEY=your_anthropic_api_key_here
+
+2. Copy example.env to .env:
+
+   cp example.env .env3. Open Command Prompt or PowerShell in the folder containing the executable
+
+3. Edit .env with any text editor and add your API key:
+
+   OPENAI_API_KEY=your_key_here================================================================================
+
+   ORBASIC USAGE
+
+   ANTHROPIC_API_KEY=your_key_here================================================================================
+
+4. Make executable (if needed):
+
+   chmod +x api-automation-agentSee all options:
+
+    api-automation-agent.exe --help
+
+================================================================================
+
+BASIC USAGEList available endpoints from an API:
+
+================================================================================    api-automation-agent.exe --list-endpoints
+
+
+
+WINDOWS:Generate a basic framework:
+
+- Show help: api-automation-agent.exe --help    api-automation-agent.exe --destination-folder my-api-framework
+
+- Generate framework: api-automation-agent.exe swagger.json
+
+- Custom folder: api-automation-agent.exe swagger.json --destination-folder my-testsGenerate framework for specific endpoints:
+
+    api-automation-agent.exe --destination-folder my-framework --endpoints /pets /users
+
+MACOS:
+
+- Show help: ./api-automation-agent --helpGenerate with different options:
+
+- Generate framework: ./api-automation-agent swagger.json
+
+- Custom folder: ./api-automation-agent swagger.json --destination-folder my-tests    Models only:
+
+    api-automation-agent.exe --generate models --destination-folder my-framework
+
+================================================================================
+
+RUNNING GENERATED TESTS    Models and first test:
+
+================================================================================    api-automation-agent.exe --generate models_and_first_test --destination-folder my-framework
+
+
+
+After generation, navigate to the created folder:    Models and all tests:
+
+1. cd generated-framework_*    api-automation-agent.exe --generate models_and_tests --destination-folder my-framework
+
+2. npm install
+
+3. npm test================================================================================
+
+EXAMPLE COMPLETE COMMAND
+
+================================================================================================================================================================
+
+TROUBLESHOOTING
+
+================================================================================api-automation-agent.exe --destination-folder my-pet-store-tests --endpoints /pets /store --generate models_and_tests
+
+
+
+Node.js not found:================================================================================
+
+- Install Node.js from https://nodejs.org/TROUBLESHOOTING
+
+- Restart your terminal================================================================================
+
+- Verify: node --version
+
+1. "Missing API key" error:
+
+Permission denied (macOS):   - Make sure you have a ".env" file in the same folder as the executable
+
+- Run: chmod +x api-automation-agent   - Check that your API key is correctly formatted in the ".env" file
+
+
+
+API key issues:2. "Internet connection" error:
+
+- Check .env file has correct key without extra spaces   - The tool requires internet to communicate with AI APIs
+
+- Ensure API key has sufficient permissions/credits   - Check your internet connection
+
+
+
+================================================================================3. "Permission denied" error:
+
+SUPPORT   - Make sure you're running the command prompt as an administrator
+
+================================================================================   - Or try running from a folder where you have write permissions
+
+
+
+GitHub: https://github.com/TestCraft-App/api-automation-agent================================================================================
+
+Issues: Report bugs or request features on GitHubFILE STRUCTURE AFTER GENERATION
+
+================================================================================
+
+Happy Testing! 🧪✨
+your-folder/
+├── api-automation-agent.exe
+├── .env
+└── my-api-framework/          (generated framework)
+    ├── package.json
+    ├── src/
+    ├── tests/
+    └── ...
+
+================================================================================
+NEED HELP?
+================================================================================
+
+Run "api-automation-agent.exe --help" for all available options and parameters.
+
+For more detailed information with formatting, see USAGE-GUIDE.md
+
+================================================================================

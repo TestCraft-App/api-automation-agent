@@ -1,6 +1,7 @@
 from argparse import Namespace
 import logging
 import os
+import sys
 import time
 import traceback
 
@@ -15,6 +16,8 @@ from src.container import Container
 from src.test_controller import TestController
 from src.utils.checkpoint import Checkpoint
 from src.utils.logger import Logger
+from src.utils.system_check import SystemCheck
+from src.utils.version_checker import check_for_updates
 from src.processors.swagger.endpoint_lister import EndpointLister
 from src.configuration.data_sources import DataSource, get_processor_for_data_source
 from src.processors.api_processor import APIProcessor
@@ -28,9 +31,16 @@ def main(
 ):
     """Main function to orchestrate the API framework generation process."""
     try:
-        logger.info("🚀 Starting the API Framework Generation Process! 🌟")
-
         args = CLIArgumentParser.parse_arguments()
+
+        print("🔍 Checking system requirements...")
+        if not SystemCheck.perform_system_checks():
+            print("❌ System requirements not met. Please install the required software and try again.")
+            sys.exit(1)
+
+        check_for_updates()
+
+        logger.info("🚀 Starting the API Framework Generation Process! 🌟")
 
         checkpoint = Checkpoint()
 

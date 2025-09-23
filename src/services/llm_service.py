@@ -1,3 +1,5 @@
+import sys
+import os
 from typing import Any, List, Optional
 
 import pydantic
@@ -7,7 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
 from langchain_openai import ChatOpenAI
 
-from .file_service import FileService
+from .file_service import FileService, get_resource_path
 from ..ai_tools.file_creation_tool import FileCreationTool
 from ..ai_tools.file_reading_tool import FileReadingTool
 from ..ai_tools.models.file_spec import FileSpec, file_specs_to_json, convert_to_file_spec
@@ -26,15 +28,15 @@ UsageMetadataPayload = LLMCallUsageData
 class PromptConfig:
     """Configuration for prompt file paths."""
 
-    DOT_ENV = "./prompts/create-dot-env.txt"
-    MODELS = "./prompts/create-models.txt"
-    FIRST_TEST = "./prompts/create-first-test.txt"
-    FIRST_TEST_POSTMAN = "./prompts/create-first-test-postman.txt"
-    TESTS = "./prompts/create-tests.txt"
-    FIX_TYPESCRIPT = "./prompts/fix-typescript.txt"
-    SUMMARY = "./prompts/generate-model-summary.txt"
-    ADD_INFO = "./prompts/add-models-context.txt"
-    ADDITIONAL_TESTS = "./prompts/create-additional-tests.txt"
+    DOT_ENV = get_resource_path("prompts/create-dot-env.txt")
+    MODELS = get_resource_path("prompts/create-models.txt")
+    FIRST_TEST = get_resource_path("prompts/create-first-test.txt")
+    FIRST_TEST_POSTMAN = get_resource_path("prompts/create-first-test-postman.txt")
+    TESTS = get_resource_path("prompts/create-tests.txt")
+    FIX_TYPESCRIPT = get_resource_path("prompts/fix-typescript.txt")
+    SUMMARY = get_resource_path("prompts/generate-model-summary.txt")
+    ADD_INFO = get_resource_path("prompts/add-models-context.txt")
+    ADDITIONAL_TESTS = get_resource_path("prompts/create-additional-tests.txt")
 
 
 class LLMService:
