@@ -339,58 +339,6 @@ def test_run_cmd_w_fix_models_single_retry(tmp_path):
     assert all_files_updated == fixed_files
 
 
-def test_run_cmd_w_fix_models_max_retries_reached(tmp_path):
-    input_files = [
-        ModelFileSpec(path="model1.ts", fileContent="content1", summary="summary1"),
-        ModelFileSpec(path="model2.ts", fileContent="content2", summary="summary2"),
-    ]
-    fixed_files = [
-        ModelFileSpec(path="model1.ts", fileContent="fixed_content1", summary="summary1"),
-        ModelFileSpec(path="model2.ts", fileContent="content2", summary="summary2"),
-    ]
-    changes = "Fixed model1.ts"
-    config = Config(destination_folder=str(tmp_path))
-    service = CommandService(config, logger=logging.getLogger(__name__))
-    max_retries = config.max_test_fixes
-
-
-"""
-    input files are models
-    error on 1 model
-    not able to fix
-    should return all models, with fixed applied to the one with error
-"""
-"""
-    input files are both models and tests
-    no errors
-    should return only tests
-"""
-"""
-    input files are both models and tests
-    errors on test
-    fixed on first fix try
-    should return tests only (last_fix)
-"""
-"""
-    input files are both models and tests
-    errors on test
-    fixed on on second fix try
-    should return tests only (last_fix)
-"""
-"""
-    input files are tests and models
-    errors on test and 1 model
-    should fix first try
-    should return tests only (last_fix)
-"""
-"""b
-    input files are tests and models
-    errors on test and 1 model
-    should trigger stop condition
-    should return tests only (last_fix)
-"""
-
-
 def test_install_dependencies(tmp_path):
     """This test verifies that install_dependencies correctly:
     - Executes npm install command
