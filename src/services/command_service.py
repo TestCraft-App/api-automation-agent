@@ -183,43 +183,42 @@ class CommandService:
             elif retry_count == 0:
                 self._log_message("")
 
-            success, message = command_func(all_files)
+            success, message = command_func(all_files)  # mock this one
 
             if success:
-                return last_fix
+                if are_models:
+                    return all_files
+                else:
+                    return last_fix
 
             if fix_func:
                 self._log_message(f"Applying fix: {message}")
-                fixed_files, changes, stop = fix_func(
-                    files=all_files, messages=message, fix_history=fix_history, are_models=are_models
+                fixed_files, changes, stop = fix_func(  # mock this one
+                    files=all_files, messages=message, fix_history=fix_history.copy(), are_models=are_models
                 )
-
-                files_dict = {f.path: f for f in all_files}
-                for fixed in fixed_files:
-                    files_dict[fixed.path] = fixed
-                all_files = list(files_dict.values())
-
-                last_fix = fixed_files
 
                 if changes:
                     fix_history.append(changes)
+
+                files_dict = {f.path: f for f in all_files}
+
+                for fixed in fixed_files:
+                    files_dict[fixed.path] = fixed
+
+                all_files = list(files_dict.values())
+
+                last_fix = fixed_files.copy()
+
                 if stop:
-                    if are_models:
-                        return all_files
-                    else:
-                        return last_fix
+                    return last_fix
 
             retry_count += 1
 
-        success, message = command_func(files)
+        success, message = command_func(files)  # mock this
 
-        if success:
-            if are_models:
-                return all_files
-            else:
-                return last_fix
+        if not success:
+            self._log_message(f"Command failed after {max_retries} attempts.", is_error=True)
 
-        self._log_message(f"Command failed after {max_retries} attempts.", is_error=True)
         if are_models:
             return all_files
         else:

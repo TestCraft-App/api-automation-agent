@@ -1,7 +1,9 @@
+from email import message
 import logging
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, Mock, patch, call
 import subprocess
 
+from src.ai_tools.models.model_file_spec import ModelFileSpec
 from src.configuration.config import Config
 from src.ai_tools.models.file_spec import FileSpec
 from src.services.command_service import CommandService, build_typescript_compiler_command
@@ -225,116 +227,168 @@ def test_run_command_silently_with_stderr_warning(tmp_path):
             assert output == "test output"
 
 
-def test_run_command_with_fix_success_first_try(tmp_path):
-    """This test verifies that run_command_with_fix correctly:
-    - Executes a command successfully on first try
-    - Returns success status and output
-    - Does not attempt retries when successful
-    """
+def test_run_cmd_w_fix_models_no_errors(tmp_path):
+    input_files = [
+        ModelFileSpec(path="model1.ts", fileContent="content1", summary="summary1"),
+        ModelFileSpec(path="model2.ts", fileContent="content2", summary="summary2"),
+    ]
     config = Config(destination_folder=str(tmp_path))
     service = CommandService(config, logger=logging.getLogger(__name__))
 
-    def mock_command_func(files):
-        return True, "success output"
+    mock_command_func = Mock(return_value=(True, "No errors"))
+    mock_fix_func = Mock(return_value=(input_files, None, False))
 
-    success, output = service.run_command_with_fix(mock_command_func)
-    assert success is True
-    assert output == "success output"
+    all_files_updated = service.run_command_with_fix(
+        command_func=mock_command_func,
+        fix_func=mock_fix_func,
+        files=input_files,
+        are_models=True,
+    )
+
+    mock_command_func.assert_called_once_with(input_files)
+    mock_fix_func.assert_not_called()
+
+    assert all_files_updated == input_files
 
 
-def test_run_command_with_fix_retry_success(tmp_path):
-    """This test verifies that run_command_with_fix correctly:
-    - Retries failed commands up to max_retries
-    - Applies fix function between retries
-    - Returns success when command eventually succeeds
-    """
+def test_run_cmd_w_fix_models_single_retry(tmp_path):
+    input_files = [
+        ModelFileSpec(path="model1.ts", fileContent="content1", summary="summary1"),
+        ModelFileSpec(path="model2.ts", fileContent="content2", summary="summary2"),
+    ]
+    fixed_files = [
+        ModelFileSpec(path="model1.ts", fileContent="fixed_content1", summary="summary1"),
+        ModelFileSpec(path="model2.ts", fileContent="content2", summary="summary2"),
+    ]
+    changes = "Fixed model1.ts"
     config = Config(destination_folder=str(tmp_path))
     service = CommandService(config, logger=logging.getLogger(__name__))
 
-    attempt_count = 0
+    mock_command_func = Mock()
+    mock_command_func.side_effect = [
+        (False, "Errors found!"),
+        (True, "No errors"),
+    ]
+    mock_fix_func = Mock(return_value=(fixed_files, changes, False))
 
-    def mock_command_func(files):
-        nonlocal attempt_count
-        attempt_count += 1
-        if attempt_count == 1:
-            return False, "first failure"
-        return True, "success after retry"
+    all_files_updated = service.run_command_with_fix(
+        command_func=mock_command_func,
+        fix_func=mock_fix_func,
+        files=input_files,
+        are_models=True,
+    )
 
-    def mock_fix_func(files, message):
-        pass  # Simulate fix attempt
+    mock_command_func.assert_has_calls(
+        [
+            call(input_files),
+            call(fixed_files),
+        ]
+    )
 
-    success, output = service.run_command_with_fix(mock_command_func, fix_func=mock_fix_func, max_retries=3)
-    assert success is True
-    assert output == "success after retry"
-    assert attempt_count == 2
+    mock_fix_func.assert_called_once_with(
+        files=input_files, messages="Errors found!", fix_history=[changes], are_models=True
+    )
+
+    assert all_files_updated == fixed_files
 
 
-def test_run_command_with_fix_max_retries_exceeded(tmp_path):
-    """This test verifies that run_command_with_fix correctly:
-    - Stops after max_retries attempts
-    - Applies fix function between each retry
-    - Returns failure status when max retries exceeded
-    """
+def test_run_cmd_w_fix_models_single_retry(tmp_path):
+    input_files = [
+        ModelFileSpec(path="model1.ts", fileContent="content1", summary="summary1"),
+        ModelFileSpec(path="model2.ts", fileContent="content2", summary="summary2"),
+    ]
+    fixed_files = [
+        ModelFileSpec(path="model1.ts", fileContent="fixed_content1", summary="summary1"),
+        ModelFileSpec(path="model2.ts", fileContent="content2", summary="summary2"),
+    ]
+    changes = "Fixed model1.ts"
     config = Config(destination_folder=str(tmp_path))
     service = CommandService(config, logger=logging.getLogger(__name__))
 
-    attempt_count = 0
+    mock_command_func = Mock()
+    mock_command_func.side_effect = [
+        (False, "Errors found!"),
+        (False, "Errors found again!"),
+        (True, "No errors"),
+    ]
+    mock_fix_func = Mock()
+    mock_fix_func.side_effect = [(fixed_files, changes, False), (fixed_files, changes, False)]
 
-    def mock_command_func(files):
-        nonlocal attempt_count
-        attempt_count += 1
-        return False, f"failure attempt {attempt_count}"
+    all_files_updated = service.run_command_with_fix(
+        command_func=mock_command_func,
+        fix_func=mock_fix_func,
+        files=input_files,
+        are_models=True,
+    )
 
-    fix_attempts = []
+    mock_command_func.assert_has_calls(
+        [
+            call(input_files),
+            call(fixed_files),
+            call(fixed_files),
+        ]
+    )
 
-    def mock_fix_func(files, message):
-        fix_attempts.append(message)
+    mock_fix_func.assert_has_calls(
+        [
+            call(files=input_files, messages="Errors found!", fix_history=[], are_models=True),
+            call(files=fixed_files, messages="Errors found again!", fix_history=[changes], are_models=True),
+        ]
+    )
 
-    success, output = service.run_command_with_fix(mock_command_func, fix_func=mock_fix_func, max_retries=2)
-    assert success is False
-    assert output == "failure attempt 3"
-    assert attempt_count == 3
-    assert len(fix_attempts) == 2
+    assert all_files_updated == fixed_files
 
 
-def test_run_command_with_fix_without_fix_func(tmp_path):
-    """This test verifies that run_command_with_fix correctly:
-    - Handles retries without a fix function
-    - Continues retrying until max_retries
-    - Returns failure status when max retries exceeded
-    """
+def test_run_cmd_w_fix_models_max_retries_reached(tmp_path):
+    input_files = [
+        ModelFileSpec(path="model1.ts", fileContent="content1", summary="summary1"),
+        ModelFileSpec(path="model2.ts", fileContent="content2", summary="summary2"),
+    ]
+    fixed_files = [
+        ModelFileSpec(path="model1.ts", fileContent="fixed_content1", summary="summary1"),
+        ModelFileSpec(path="model2.ts", fileContent="content2", summary="summary2"),
+    ]
+    changes = "Fixed model1.ts"
     config = Config(destination_folder=str(tmp_path))
     service = CommandService(config, logger=logging.getLogger(__name__))
-
-    attempt_count = 0
-
-    def mock_command_func(files):
-        nonlocal attempt_count
-        attempt_count += 1
-        return False, f"failure attempt {attempt_count}"
-
-    success, output = service.run_command_with_fix(mock_command_func, max_retries=2)
-    assert success is False
-    assert output == "failure attempt 3"
-    assert attempt_count == 3
+    max_retries = config.max_test_fixes
 
 
-def test_run_command_with_fix_with_none_files(tmp_path):
-    """This test verifies that run_command_with_fix correctly:
-    - Handles None files parameter
-    - Converts None to empty list
-    - Executes command successfully
-    """
-    config = Config(destination_folder=str(tmp_path))
-    service = CommandService(config, logger=logging.getLogger(__name__))
-
-    def mock_command_func(files):
-        assert files == []  # Verify files is converted to empty list
-        return True, "success output"
-
-    success, output = service.run_command_with_fix(mock_command_func, files=None)
-    assert success is True
-    assert output == "success output"
+"""
+    input files are models
+    error on 1 model
+    not able to fix
+    should return all models, with fixed applied to the one with error
+"""
+"""
+    input files are both models and tests
+    no errors
+    should return only tests
+"""
+"""
+    input files are both models and tests
+    errors on test
+    fixed on first fix try
+    should return tests only (last_fix)
+"""
+"""
+    input files are both models and tests
+    errors on test
+    fixed on on second fix try
+    should return tests only (last_fix)
+"""
+"""
+    input files are tests and models
+    errors on test and 1 model
+    should fix first try
+    should return tests only (last_fix)
+"""
+"""b
+    input files are tests and models
+    errors on test and 1 model
+    should trigger stop condition
+    should return tests only (last_fix)
+"""
 
 
 def test_install_dependencies(tmp_path):

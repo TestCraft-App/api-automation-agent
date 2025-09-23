@@ -342,7 +342,7 @@ class FrameworkGenerator:
             messages,
             fix_history,
         )
-        all_fixes = list(fix_history)
+        all_fixes = [fix for fix in fix_history]
         if changes:
             all_fixes.append(changes)
 
