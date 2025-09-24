@@ -35,12 +35,9 @@ if [ -f "dist/api-automation-agent" ]; then
     fi
     mkdir "api-automation-agent-macos"
     
-    cp "dist/api-automation-agent" "api-automation-agent-macos/"
-    cp "example.env" "api-automation-agent-macos/"
-    cp "USAGE-GUIDE.md" "api-automation-agent-macos/"
-    cp "USAGE-GUIDE.txt" "api-automation-agent-macos/"
-    
-    echo "✅ Distribution package created: api-automation-agent-macos/"
+cp "dist/api-automation-agent" "api-automation-agent-macos/"
+cp "example.env" "api-automation-agent-macos/"
+cp "USAGE-GUIDE.txt" "api-automation-agent-macos/"    echo "✅ Distribution package created: api-automation-agent-macos/"
 else
     echo "❌ Build failed!"
     exit 1

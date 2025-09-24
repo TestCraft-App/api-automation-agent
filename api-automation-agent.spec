@@ -6,7 +6,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('prompts', 'prompts'), ('api-framework-template', 'api-framework-template'), ('example.env', '.'), ('README.md', '.'), (certifi.where(), 'certifi')],
+    datas=[('prompts', 'prompts'), ('api-framework-template', 'api-framework-template'), ('example.env', '.'), (certifi.where(), 'certifi')],
     hiddenimports=['six', 'dependency_injector.errors', 'anthropic', 'openai', 'langchain_anthropic', 'langchain_openai', 'langchain_core', 'tiktoken', 'json_repair', 'yaml', 'dotenv', 'tabulate', 'certifi'],
     hookspath=[],
     hooksconfig={},

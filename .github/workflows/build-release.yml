@@ -69,8 +69,6 @@ jobs:
           # Copy essential files
           Copy-Item "dist\api-automation-agent.exe" "api-automation-agent-windows\"
           Copy-Item "example.env" "api-automation-agent-windows\"
-          Copy-Item "README.md" "api-automation-agent-windows\"
-          Copy-Item "USAGE-GUIDE.md" "api-automation-agent-windows\" -ErrorAction SilentlyContinue
           Copy-Item "USAGE-GUIDE.txt" "api-automation-agent-windows\" -ErrorAction SilentlyContinue
 
       - name: Create ZIP archive
@@ -140,8 +138,6 @@ jobs:
           # Copy essential files
           cp dist/api-automation-agent api-automation-agent-macos/
           cp example.env api-automation-agent-macos/
-          cp README.md api-automation-agent-macos/
-          cp USAGE-GUIDE.md api-automation-agent-macos/
           cp USAGE-GUIDE.txt api-automation-agent-macos/
 
       - name: Create TAR.GZ archive

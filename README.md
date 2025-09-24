@@ -10,7 +10,7 @@ An open-source AI Agent that automatically generates an automation framework fro
 
 1. Go to [Releases](https://github.com/TestCraft-App/api-automation-agent/releases)
 2. Download `api-automation-agent-windows.zip`
-3. Extract and follow the included `USAGE-GUIDE.md`
+3. Extract and follow the included `USAGE-GUIDE.txt`
 
 **Requirements:** Windows 7+, API key (OpenAI or Anthropic), Node.js 18+
 
@@ -18,7 +18,7 @@ An open-source AI Agent that automatically generates an automation framework fro
 
 1. Go to [Releases](https://github.com/TestCraft-App/api-automation-agent/releases)
 2. Download `api-automation-agent-macos.tar.gz`
-3. Extract and follow the included `USAGE-GUIDE.md`
+3. Extract and follow the included `USAGE-GUIDE.txt`
 4. Make the executable runnable: `chmod +x api-automation-agent`
 
 **Requirements:** macOS 10.14+, API key (OpenAI or Anthropic), Node.js 18+
@@ -466,4 +466,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - OpenAI and Anthropic for their AI models
 - All contributors who have helped build and improve this project
+
 # Testing date-based versioning workflow

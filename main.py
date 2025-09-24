@@ -15,6 +15,7 @@ from src.configuration.config import Config, GenerationOptions, Envs
 from src.container import Container
 from src.test_controller import TestController
 from src.utils.checkpoint import Checkpoint
+from src.utils.interactive_setup import InteractiveSetup
 from src.utils.logger import Logger
 from src.utils.system_check import SystemCheck
 from src.utils.version_checker import check_for_updates
@@ -39,6 +40,16 @@ def main(
             sys.exit(1)
 
         check_for_updates()
+
+        needs_api_access = not args.list_endpoints
+
+        if needs_api_access:
+            if not InteractiveSetup.check_env_file():
+                print("\n📝 Configuration required for API generation...")
+                if not InteractiveSetup.run_interactive_setup():
+                    print("❌ Setup failed. Cannot continue without proper configuration.")
+                    sys.exit(1)
+                load_dotenv(override=True)
 
         logger.info("🚀 Starting the API Framework Generation Process! 🌟")
 

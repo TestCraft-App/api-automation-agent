@@ -21,7 +21,6 @@ if exist "dist\api-automation-agent.exe" (
     
     copy "dist\api-automation-agent.exe" "api-automation-agent-windows\"
     copy "example.env" "api-automation-agent-windows\"
-    copy "USAGE-GUIDE.md" "api-automation-agent-windows\"
     copy "USAGE-GUIDE.txt" "api-automation-agent-windows\"
     
     echo ✅ Distribution package created: api-automation-agent-windows\
