@@ -9,7 +9,17 @@ permissions:
   contents: write
 
 jobs:
+  generate-timestamp:
+    runs-on: ubuntu-latest
+    outputs:
+      timestamp: ${{ steps.date.outputs.timestamp }}
+    steps:
+      - name: Generate timestamp
+        id: date
+        run: echo "timestamp=$(date -u +%Y%m%d-%H%M)" >> $GITHUB_OUTPUT
+
   build-windows:
+    needs: generate-timestamp
     runs-on: windows-latest
 
     steps:
@@ -73,15 +83,18 @@ jobs:
 
       - name: Create ZIP archive
         run: |
-          Compress-Archive -Path "api-automation-agent-windows\*" -DestinationPath "api-automation-agent-windows.zip"
+          $timestamp = "${{ needs.generate-timestamp.outputs.timestamp }}"
+          $archiveName = "api-automation-agent-windows-$timestamp.zip"
+          Compress-Archive -Path "api-automation-agent-windows\*" -DestinationPath $archiveName
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: api-automation-agent-windows
-          path: api-automation-agent-windows.zip
+          path: api-automation-agent-windows-${{ needs.generate-timestamp.outputs.timestamp }}.zip
 
   build-macos:
+    needs: generate-timestamp
     runs-on: macos-latest
 
     steps:
@@ -142,24 +155,23 @@ jobs:
 
       - name: Create TAR.GZ archive
         run: |
-          tar -czf api-automation-agent-macos.tar.gz -C . api-automation-agent-macos
+          timestamp="${{ needs.generate-timestamp.outputs.timestamp }}"
+          archive_name="api-automation-agent-macos-$timestamp.tar.gz"
+          tar -czf "$archive_name" -C . api-automation-agent-macos
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: api-automation-agent-macos
-          path: api-automation-agent-macos.tar.gz
+          path: api-automation-agent-macos-${{ needs.generate-timestamp.outputs.timestamp }}.tar.gz
 
   # Consolidated release job that runs after both builds complete
   create-release:
-    needs: [build-windows, build-macos]
+    needs: [generate-timestamp, build-windows, build-macos]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/agent-cli' || startsWith(github.ref, 'refs/tags/v')
 
     steps:
-      - name: Generate date string
-        id: date
-        run: echo "date=$(date -u +%Y%m%d-%H%M)" >> $GITHUB_OUTPUT
 
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
@@ -176,9 +188,9 @@ jobs:
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/agent-cli'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: api-automation-agent-build-${{ steps.date.outputs.date }}-${{ github.ref_name }}
+          tag_name: api-automation-agent-build-${{ needs.generate-timestamp.outputs.timestamp }}-${{ github.ref_name }}
 
-          name: 'API Automation Agent — Build ${{ steps.date.outputs.date }} (${{ github.ref_name }})'
+          name: 'API Automation Agent — Build ${{ needs.generate-timestamp.outputs.timestamp }} (${{ github.ref_name }})'
 
           body: |
             ## 🚀 API Automation Agent
@@ -186,8 +198,8 @@ jobs:
             **Auto-generated from commit**
 
             ### Download Options
-            - **Windows**: `api-automation-agent-windows.zip`
-            - **macOS**: `api-automation-agent-macos.tar.gz`
+            - **Windows**: `api-automation-agent-windows-${{ needs.generate-timestamp.outputs.timestamp }}.zip`
+            - **macOS**: `api-automation-agent-macos-${{ needs.generate-timestamp.outputs.timestamp }}.tar.gz`
 
             ### Quick Start
             1. Download the package for your platform
@@ -200,15 +212,15 @@ jobs:
             - Internet connection
             - API key (OpenAI or Anthropic)
 
-            **Build:** ${{ steps.date.outputs.date }}  
+            **Build:** ${{ needs.generate-timestamp.outputs.timestamp }}  
             **Branch:** ${{ github.ref_name }}  
             **Commit:** ${{ github.sha }}  
             **Date:** ${{ github.event.head_commit.timestamp }}
 
             For detailed usage instructions, see the included documentation.
           files: |
-            api-automation-agent-windows.zip
-            api-automation-agent-macos.tar.gz
+            api-automation-agent-windows-${{ needs.generate-timestamp.outputs.timestamp }}.zip
+            api-automation-agent-macos-${{ needs.generate-timestamp.outputs.timestamp }}.tar.gz
           draft: false
           prerelease: false
           generate_release_notes: false
@@ -221,8 +233,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            api-automation-agent-windows.zip
-            api-automation-agent-macos.tar.gz
+            api-automation-agent-windows-${{ needs.generate-timestamp.outputs.timestamp }}.zip
+            api-automation-agent-macos-${{ needs.generate-timestamp.outputs.timestamp }}.tar.gz
           body: |
             ## 🚀 API Automation Agent Release
 
@@ -232,8 +244,8 @@ jobs:
             - Includes all dependencies
 
             ### Download Options
-            - **Windows**: `api-automation-agent-windows.zip`
-            - **macOS**: `api-automation-agent-macos.tar.gz`
+            - **Windows**: `api-automation-agent-windows-${{ needs.generate-timestamp.outputs.timestamp }}.zip`
+            - **macOS**: `api-automation-agent-macos-${{ needs.generate-timestamp.outputs.timestamp }}.tar.gz`
 
             ### Quick Start
             1. Download the package for your platform
