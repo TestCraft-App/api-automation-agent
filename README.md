@@ -466,5 +466,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - OpenAI and Anthropic for their AI models
 - All contributors who have helped build and improve this project
-
-# Testing date-based versioning workflow
