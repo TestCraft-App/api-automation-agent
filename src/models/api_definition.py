@@ -1,10 +1,11 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict
-
+from typing import Any
 from src.models.api_def import APIDef
 from src.models.api_path import APIPath
 from src.models.api_verb import APIVerb
 from src.processors.postman.models import RequestData
+import yaml
 
 
 @dataclass
@@ -15,6 +16,8 @@ class APIDefinition:
     endpoints: Optional[List[str]] = None
     variables: List[Dict[str, str]] = field(default_factory=list)
     base_yaml: Optional[str] = None
+    info: Dict[str, Any] = field(default_factory=dict)   # 👈 add info field
+    paths: List[APIPath] = field(default_factory=list) 
 
     def add_definition(self, definition: APIDef) -> None:
         """Add a definition to the list"""
@@ -62,3 +65,58 @@ class APIDefinition:
             "variables": self.variables,
             "base_yaml": self.base_yaml,
         }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "APIDefinition":
+        """
+        Convert a dictionary (parsed from YAML/JSON) into an APIDefinition instance.
+        Supports both Swagger 2.x (definitions) and OpenAPI 3.x (components).
+        """
+        definitions = []
+
+        # --- Process schema definitions ---
+        if "definitions" in data:  # Swagger 2.x
+            for name, schema in data["definitions"].items():
+                try:
+                    definitions.append(APIDef.from_dict({name: schema}))
+                except Exception:
+                    definitions.append({name: schema})
+
+        if "components" in data and "schemas" in data["components"]:  # OpenAPI 3.x
+            for name, schema in data["components"]["schemas"].items():
+                try:
+                    definitions.append(APIDef.from_dict({name: schema}))
+                except Exception:
+                    definitions.append({name: schema})
+
+        # --- Process paths/endpoints ---
+        if "paths" in data:
+            for path, verbs in data["paths"].items():
+                # Store the path (dump dict → YAML string for safe storage)
+                api_path = APIPath(
+                    path=path,
+                    yaml=yaml.dump(verbs) if isinstance(verbs, dict) else str(verbs),
+                )
+                definitions.append(api_path)
+
+                # Store verbs under this path
+                for verb, verb_content in verbs.items():
+                    if verb.lower() in ["get", "post", "put", "delete", "patch", "options", "head"]:
+                        api_verb = APIVerb(
+                            verb=verb.upper(),
+                            path=path,
+                            root_path=APIPath.normalize_path(path),
+                            yaml=yaml.dump(verb_content) if isinstance(verb_content, dict) else str(verb_content),
+                        )
+                        definitions.append(api_verb)
+
+        # --- Extract info (title, version, etc.) ---
+        info = data.get("info", {})
+
+        return cls(
+            definitions=definitions,
+            endpoints=data.get("endpoints"),
+            variables=data.get("variables", []),
+            base_yaml=data.get("base_yaml"),
+            info=info,
+        )

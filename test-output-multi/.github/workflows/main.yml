@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  BASEURL: ${{ vars.BASEURL }}
+  USER: ${{ secrets.USER }}
+  PASSWORD: ${{ secrets.PASSWORD }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Test
+        uses: actions/setup-node@v1
+        with:
+          node-version: "18.x"
+      - run: npm install
+      - run: npm run lint
+      - run: npm test

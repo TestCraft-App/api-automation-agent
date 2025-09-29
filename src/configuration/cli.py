@@ -7,8 +7,9 @@ class CLIArgumentParser:
     def parse_arguments():
         parser = argparse.ArgumentParser(description="API Framework Generation Tool")
         parser.add_argument(
-            "api_definition",
-            help="The path of the API definition file or the URL to the API definition.",
+            "api_definitions",
+            nargs="+",
+            help="One or more API definition files or URLs (space separated). Example: file1.yaml file2.json",
         )
         parser.add_argument(
             "--destination-folder",
