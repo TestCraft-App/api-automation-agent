@@ -103,8 +103,7 @@ RUNNING GENERATED TESTS
 
 After generation, navigate to the created folder:
 1. cd generated-framework_*
-2. npm install
-3. npm test
+2. npm test
 
 ================================================================================================
 FILE STRUCTURE AFTER GENERATION

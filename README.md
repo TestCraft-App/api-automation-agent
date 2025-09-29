@@ -4,7 +4,7 @@ An open-source AI Agent that automatically generates an automation framework fro
 
 ## 🚀 Quick Start
 
-**Don't want to install Python?** Download the standalone executable:
+Download the standalone executable:
 
 ### Windows Users
 

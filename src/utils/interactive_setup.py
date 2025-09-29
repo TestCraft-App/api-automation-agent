@@ -1,5 +1,6 @@
 """Interactive setup for API key and model configuration."""
 
+import getpass
 import os
 import shutil
 from typing import Optional, Tuple
@@ -54,12 +55,9 @@ class InteractiveSetup:
     @staticmethod
     def display_provider_menu():
         """Display the provider selection menu."""
-        print("\n" + "=" * 60)
-        print("🤖 SELECT AI PROVIDER")
-        print("=" * 60)
+        print("\n🤖 SELECT AI PROVIDER")
         for key, provider in InteractiveSetup.SUPPORTED_PROVIDERS.items():
             print(f"{key}. {provider['name']}")
-        print("=" * 60)
 
     @staticmethod
     def get_provider_choice() -> Optional[dict]:
@@ -77,11 +75,9 @@ class InteractiveSetup:
     def display_model_menu(provider: dict):
         """Display the model selection menu for a provider."""
         print(f"\n🧠 SELECT {provider['name'].upper()} MODEL")
-        print("=" * 60)
         for i, model in enumerate(provider["models"], 1):
             default_marker = " (recommended)" if model == provider["default_model"] else ""
             print(f"{i}. {model}{default_marker}")
-        print("=" * 60)
 
     @staticmethod
     def get_model_choice(provider: dict) -> str:
@@ -108,20 +104,23 @@ class InteractiveSetup:
     def get_api_key(provider: dict) -> str:
         """Get API key from user."""
         print(f"\n🔑 ENTER {provider['name'].upper()} API KEY")
-        print("=" * 60)
         print(f"Get your API key from:")
         if provider["name"] == "OpenAI":
             print("https://platform.openai.com/api-keys")
         else:
             print("https://console.anthropic.com/")
-        print("=" * 60)
+        print("⚠️  Your API key will be stored securely in the .env file")
 
         while True:
-            api_key = input("Enter your API key: ").strip()
-            if api_key:
-                return api_key
-            else:
-                print("❌ API key cannot be empty.")
+            try:
+                api_key = getpass.getpass("Enter your API key: ").strip()
+                if api_key:
+                    return api_key
+                else:
+                    print("❌ API key cannot be empty.")
+            except KeyboardInterrupt:
+                print("\n❌ Setup cancelled by user.")
+                return ""
 
     @staticmethod
     def update_env_file(provider: dict, model: str, api_key: str) -> bool:
@@ -161,7 +160,14 @@ class InteractiveSetup:
             print(f"✅ Configuration saved to .env file")
             print(f"   Provider: {provider['name']}")
             print(f"   Model: {model}")
-            print(f"   API Key: {'*' * (len(api_key) - 4)}{api_key[-4:]}")
+            # Securely display API key with most characters hidden
+            if len(api_key) > 12:
+                masked_key = f"{api_key[:8]}{'*' * (len(api_key) - 12)}{api_key[-4:]}"
+            elif len(api_key) > 8:
+                masked_key = f"{api_key[:4]}{'*' * (len(api_key) - 8)}{api_key[-4:]}"
+            else:
+                masked_key = "*" * len(api_key)
+            print(f"   API Key: {masked_key}")
             return True
 
         except Exception as e:
@@ -172,7 +178,6 @@ class InteractiveSetup:
     def run_interactive_setup() -> bool:
         """Run the complete interactive setup process."""
         print("\n🚀 API AUTOMATION AGENT - FIRST TIME SETUP")
-        print("=" * 60)
         print("Welcome! Let's configure your AI provider and API key.")
         print("This will create a .env file with your configuration.")
 
