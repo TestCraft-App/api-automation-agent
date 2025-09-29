@@ -1,0 +1,41 @@
+{
+  "name": "example",
+  "version": "1.0.0",
+  "description": "TypeScript API automation framework that does its job in a simple but effective way",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha src/**/*.spec.ts --timeout 10000",
+    "test:parallel": "mocha src/**/*.spec.ts --timeout 10000 --parallel",
+    "smoke": "mocha src/**/*.spec.ts --grep @Smoke --timeout 10000",
+    "regression": "mocha src/**/*.spec.ts --grep @Regression --timeout 10000",
+    "lint": "npx eslint src",
+    "lint:fix": "npx eslint src --fix",
+    "prettier:check": "prettier --check src",
+    "prettify": "prettier --write src"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/chai": "^5.2.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/parser": "^8.17.0",
+    "axios": "^1.7.9",
+    "axios-logger": "^2.6.0",
+    "chai": "^5.2.0",
+    "eslint": "^9.16.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-ui-testing": "^2.0.1",
+    "mocha": "11.6.0",
+    "mocha-suppress-logs": "^0.5.1",
+    "prettier": "^3.4.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0"
+  },
+  "type": "module"
+}

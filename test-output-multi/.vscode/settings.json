@@ -1,0 +1,27 @@
+{
+  "cSpell.words": [
+    "additionalneeds",
+    "bookingdates",
+    "bookingid",
+    "checkin",
+    "depositpaid",
+    "firstname",
+    "lastname",
+    "totalprice"
+  ],
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.formatOnSave": true,
+  "todohighlight.keywords": [
+    "BUG:",
+    {
+        "text": "BUG:",
+        "color": "white",
+        "backgroundColor": "red"
+    }
+  ],
+}

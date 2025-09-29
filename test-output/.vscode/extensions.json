@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+      "esbenp.prettier-vscode",
+      "jgclark.vscode-todo-highlight",
+      "dbaeumer.vscode-eslint"
+    ]
+  }
+  

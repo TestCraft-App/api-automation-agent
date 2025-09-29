@@ -1,0 +1,16 @@
+openapi: 3.0.0
+info:
+  title: API Three
+  version: 1.0.0
+paths:
+  /orders:
+    get:
+      summary: Get all orders
+      responses:
+        '200':
+          description: A list of orders
+    delete:
+      summary: Delete all orders
+      responses:
+        '204':
+          description: Orders deleted
