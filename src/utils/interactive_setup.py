@@ -101,7 +101,7 @@ class InteractiveSetup:
                 print("❌ Please enter a number.")
 
     @staticmethod
-    def get_api_key(provider: dict) -> str:
+    def get_api_key(provider: dict, input_func=None) -> str:
         """Get API key from user."""
         print(f"\n🔑 ENTER {provider['name'].upper()} API KEY")
         print(f"Get your API key from:")
@@ -111,9 +111,12 @@ class InteractiveSetup:
             print("https://console.anthropic.com/")
         print("⚠️  Your API key will be stored securely in the .env file")
 
+        if input_func is None:
+            input_func = lambda prompt: getpass.getpass("Enter your API key: ")
+
         while True:
             try:
-                api_key = getpass.getpass("Enter your API key: ").strip()
+                api_key = input_func("Enter your API key: ").strip()
                 if api_key:
                     return api_key
                 else:
@@ -160,7 +163,7 @@ class InteractiveSetup:
             print(f"✅ Configuration saved to .env file")
             print(f"   Provider: {provider['name']}")
             print(f"   Model: {model}")
-            # Securely display API key with most characters hidden
+
             if len(api_key) > 12:
                 masked_key = f"{api_key[:8]}{'*' * (len(api_key) - 12)}{api_key[-4:]}"
             elif len(api_key) > 8:
@@ -175,7 +178,7 @@ class InteractiveSetup:
             return False
 
     @staticmethod
-    def run_interactive_setup() -> bool:
+    def run_interactive_setup(input_func=None) -> bool:
         """Run the complete interactive setup process."""
         print("\n🚀 API AUTOMATION AGENT - FIRST TIME SETUP")
         print("Welcome! Let's configure your AI provider and API key.")
@@ -190,7 +193,7 @@ class InteractiveSetup:
 
         model = InteractiveSetup.get_model_choice(provider)
 
-        api_key = InteractiveSetup.get_api_key(provider)
+        api_key = InteractiveSetup.get_api_key(provider, input_func)
 
         if InteractiveSetup.update_env_file(provider, model, api_key):
             print("\n🎉 Setup completed successfully!")

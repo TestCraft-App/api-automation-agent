@@ -154,9 +154,12 @@ DEBUG=False
         """Test complete setup flow for OpenAI provider."""
         mock_get_dir.return_value = self.test_dir
 
-        with patch("builtins.input", side_effect=["1", "", "sk-test-openai-key"]):
+        def mock_api_key_input(prompt):
+            return "sk-test-openai-key"
+
+        with patch("builtins.input", side_effect=["1", ""]):  # For provider and model choice
             with patch("builtins.print"):
-                result = InteractiveSetup.run_interactive_setup()
+                result = InteractiveSetup.run_interactive_setup(input_func=mock_api_key_input)
 
         assert result is True
         assert self.env_file.exists()
@@ -170,9 +173,12 @@ DEBUG=False
         """Test complete setup flow for Anthropic provider."""
         mock_get_dir.return_value = self.test_dir
 
-        with patch("builtins.input", side_effect=["2", "1", "sk-ant-test-key"]):
+        def mock_api_key_input(prompt):
+            return "sk-ant-test-key"
+
+        with patch("builtins.input", side_effect=["2", "1"]):  # For provider and model choice
             with patch("builtins.print"):
-                result = InteractiveSetup.run_interactive_setup()
+                result = InteractiveSetup.run_interactive_setup(input_func=mock_api_key_input)
 
         assert result is True
         assert self.env_file.exists()
@@ -186,9 +192,14 @@ DEBUG=False
         """Test setup flow with invalid provider input then valid input."""
         mock_get_dir.return_value = self.test_dir
 
-        with patch("builtins.input", side_effect=["3", "1", "", "sk-test-key"]):
+        def mock_api_key_input(prompt):
+            return "sk-test-key"
+
+        with patch(
+            "builtins.input", side_effect=["3", "1", ""]
+        ):  # For invalid provider, valid provider, model choice
             with patch("builtins.print"):
-                result = InteractiveSetup.run_interactive_setup()
+                result = InteractiveSetup.run_interactive_setup(input_func=mock_api_key_input)
 
         assert result is True
         content = self.env_file.read_text()
