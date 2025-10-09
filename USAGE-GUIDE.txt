@@ -20,17 +20,17 @@ When you run the CLI for the first time, it will automatically guide you through
 The CLI will create a .env file automatically.
 
 SUPPORTED MODELS:
+Anthropic Models:
+- claude-sonnet-4-20250514 (recommended)
+- claude-3-5-sonnet-latest
+- claude-3-7-sonnet-latest
+
 OpenAI Models:
 - gpt-4o (recommended)
 - gpt-4.1  
 - gpt-5
 - o3
 - o4-mini
-
-Anthropic Models:
-- claude-sonnet-4-20250514 (recommended)
-- claude-3-5-sonnet-latest
-- claude-3-7-sonnet-latest
 
 MANUAL SETUP (ALTERNATIVE):
 

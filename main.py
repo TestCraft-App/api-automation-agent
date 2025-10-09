@@ -34,7 +34,7 @@ def main(
     try:
         check_for_updates()
 
-        logger.info("🚀 Starting the API Framework Generation Process! 🌟")
+        logger.info("\n🚀 Starting the API Framework Generation Process! 🌟")
 
         checkpoint = Checkpoint()
 

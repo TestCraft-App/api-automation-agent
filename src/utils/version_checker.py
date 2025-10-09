@@ -25,10 +25,10 @@ from src.version import __version__, __app_name__, GITHUB_REPO_OWNER, GITHUB_REP
 def _fetch(url: str) -> Optional[dict]:
     """
     Fetch JSON data from URL with proper SSL certificate validation.
-    
+
     Args:
         url: URL to fetch data from
-        
+
     Returns:
         Parsed JSON data if successful, None if failed
     """
@@ -68,37 +68,37 @@ def _fetch(url: str) -> Optional[dict]:
 def _normalize_version(tag_name: str) -> str:
     """
     Normalize a GitHub release tag to version string.
-    
+
     Args:
         tag_name: Raw tag name from GitHub API
-        
+
     Returns:
         Normalized version string
     """
     # Handle semantic version tags (v1.2.3 → 1.2.3)
     if tag_name.startswith("v") and re.match(r"v\d+\.\d+\.\d+", tag_name):
         return tag_name[1:]
-    
+
     # Handle date-based build tags (api-automation-agent-build-20250923-1425-main → build-20250923-1425)
     build_match = re.search(r"build-(\d{8}-\d{4})", tag_name)
     if build_match:
         return f"build-{build_match.group(1)}"
-    
+
     # Handle legacy build tags (api-automation-agent-build-25-main → build-25)
     legacy_match = re.search(r"build-(\d+)", tag_name)
     if legacy_match:
         return f"build-{legacy_match.group(1)}"
-    
+
     return tag_name
 
 
 def _is_build(version: str) -> bool:
     """
     Check if version is a build version.
-    
+
     Args:
         version: Version string to check
-        
+
     Returns:
         True if version is a build version, False otherwise
     """
@@ -108,23 +108,23 @@ def _is_build(version: str) -> bool:
 def _parse_build_dt(version: str) -> Optional[datetime]:
     """
     Parse date-based build version to datetime.
-    
+
     Args:
         version: Build version string (e.g., "build-20250923-1425")
-        
+
     Returns:
         Parsed datetime if valid, None otherwise
     """
     if not _is_build(version):
         return None
-    
+
     # Extract date-time part
     match = re.match(r"build-(\d{8})-(\d{4})", version)
     if not match:
         return None
-    
+
     date_part, time_part = match.groups()
-    
+
     try:
         # Parse YYYYMMDD-HHMM format
         dt_str = f"{date_part}{time_part}"
@@ -136,10 +136,10 @@ def _parse_build_dt(version: str) -> Optional[datetime]:
 def _parse_semver(version: str) -> Optional[Tuple[int, int, int]]:
     """
     Parse semantic version to tuple.
-    
+
     Args:
         version: Semantic version string (e.g., "1.2.3")
-        
+
     Returns:
         Tuple of (major, minor, patch) if valid, None otherwise
     """
@@ -152,40 +152,40 @@ def _parse_semver(version: str) -> Optional[Tuple[int, int, int]]:
 def compare_versions(local_version: str, remote_version: str) -> bool:
     """
     Compare local vs remote version with support for mixed version types.
-    
+
     Args:
         local_version: Current local version
         remote_version: Latest remote version
-        
+
     Returns:
         True if remote version is newer, False otherwise
     """
     local_is_build = _is_build(local_version)
     remote_is_build = _is_build(remote_version)
-    
+
     # Both are date-based builds
     if local_is_build and remote_is_build:
         local_dt = _parse_build_dt(local_version)
         remote_dt = _parse_build_dt(remote_version)
-        
+
         if local_dt and remote_dt:
             return remote_dt > local_dt
-        
+
         # Fallback to legacy build number comparison
         local_match = re.search(r"build-(\d+)$", local_version)
         remote_match = re.search(r"build-(\d+)$", remote_version)
-        
+
         if local_match and remote_match:
             return int(remote_match.group(1)) > int(local_match.group(1))
-    
+
     # Both are semantic versions
     if not local_is_build and not remote_is_build:
         local_semver = _parse_semver(local_version)
         remote_semver = _parse_semver(remote_version)
-        
+
         if local_semver and remote_semver:
             return remote_semver > local_semver
-    
+
     # Mixed types or fallback - use string comparison
     return remote_version != local_version and remote_version > local_version
 
@@ -198,16 +198,17 @@ def get_latest_release_version() -> Optional[str]:
         Latest version string if successful, None if failed.
     """
     url = f"https://api.github.com/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/releases/latest"
-    
+
     data = _fetch(url)
     if not data:
         return None
-    
+
     tag_name = data.get("tag_name", "")
     if not tag_name:
         return None
-    
+
     return _normalize_version(tag_name)
+
 
 def is_newer_version_available() -> Tuple[bool, Optional[str]]:
     """
@@ -247,6 +248,7 @@ def check_for_updates() -> None:
             print(f"")
         else:
             print(f"✅ You're running the latest version ({__version__})")
+            print()
 
     except Exception as e:
         print(f"⚠️ Version check failed: {e}")

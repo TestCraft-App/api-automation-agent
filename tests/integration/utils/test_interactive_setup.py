@@ -157,7 +157,7 @@ DEBUG=False
         def mock_api_key_input(prompt):
             return "sk-test-openai-key"
 
-        with patch("builtins.input", side_effect=["1", ""]):  # For provider and model choice
+        with patch("builtins.input", side_effect=["2", ""]):  # For provider and model choice
             with patch("builtins.print"):
                 result = InteractiveSetup.run_interactive_setup(input_func=mock_api_key_input)
 
@@ -176,7 +176,7 @@ DEBUG=False
         def mock_api_key_input(prompt):
             return "sk-ant-test-key"
 
-        with patch("builtins.input", side_effect=["2", "1"]):  # For provider and model choice
+        with patch("builtins.input", side_effect=["1", "1"]):  # For provider and model choice
             with patch("builtins.print"):
                 result = InteractiveSetup.run_interactive_setup(input_func=mock_api_key_input)
 
@@ -185,7 +185,7 @@ DEBUG=False
 
         content = self.env_file.read_text()
         assert "ANTHROPIC_API_KEY=sk-ant-test-key" in content
-        assert "MODEL=claude-3-5-sonnet-latest" in content
+        assert "MODEL=claude-sonnet-4-20250514" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_invalid_provider_then_valid(self, mock_get_dir):
@@ -203,7 +203,7 @@ DEBUG=False
 
         assert result is True
         content = self.env_file.read_text()
-        assert "OPENAI_API_KEY=sk-test-key" in content
+        assert "ANTHROPIC_API_KEY=sk-test-key" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_setup_failure_no_example_env(self, mock_get_dir):

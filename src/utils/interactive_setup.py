@@ -12,16 +12,16 @@ class InteractiveSetup:
 
     SUPPORTED_PROVIDERS = {
         "1": {
+            "name": "Anthropic (recommended)",
+            "env_key": "ANTHROPIC_API_KEY",
+            "models": ["claude-sonnet-4-20250514", "claude-3-5-sonnet-latest", "claude-3-7-sonnet-latest"],
+            "default_model": "claude-sonnet-4-20250514",
+        },
+        "2": {
             "name": "OpenAI",
             "env_key": "OPENAI_API_KEY",
             "models": ["gpt-4o", "gpt-4.1", "gpt-5", "o3", "o4-mini"],
             "default_model": "gpt-4o",
-        },
-        "2": {
-            "name": "Anthropic",
-            "env_key": "ANTHROPIC_API_KEY",
-            "models": ["claude-3-5-sonnet-latest", "claude-3-7-sonnet-latest", "claude-sonnet-4-20250514"],
-            "default_model": "claude-sonnet-4-20250514",
         },
     }
 

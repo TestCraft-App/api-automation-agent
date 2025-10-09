@@ -2,27 +2,6 @@
 
 An open-source AI Agent that automatically generates an automation framework from your OpenAPI/Swagger specification or Postman collection, based on the api-framework-ts-mocha template (https://github.com/damianpereira86/api-framework-ts-mocha).
 
-## 🚀 Quick Start
-
-Download the standalone executable:
-
-### Windows Users
-
-1. Go to [Releases](https://github.com/TestCraft-App/api-automation-agent/releases)
-2. Download `api-automation-agent-windows.zip`
-3. Extract and follow the included `USAGE-GUIDE.txt`
-
-**Requirements:** Windows 7+, API key (OpenAI or Anthropic), Node.js 18+
-
-### Mac Users
-
-1. Go to [Releases](https://github.com/TestCraft-App/api-automation-agent/releases)
-2. Download `api-automation-agent-macos.tar.gz`
-3. Extract and follow the included `USAGE-GUIDE.txt`
-4. Make the executable runnable: `chmod +x api-automation-agent`
-
-**Requirements:** macOS 10.14+, API key (OpenAI or Anthropic), Node.js 18+
-
 ## Features
 
 - Generates type-safe service and data models
@@ -32,12 +11,40 @@ Download the standalone executable:
 - Runs tests with detailed reporting and assertions
 - Migrates Postman collections to an open source automation framework, mantaining test structure and run order.
 
-## Prerequisites
+## Usage
+
+### Standalone Installer
+
+Download the standalone executable:
+
+#### Prerequisites
+
+- Windows 7+ or macOS 10.14+
+- API key (OpenAI or Anthropic)
+- Node.js 18+
+
+#### Windows Users
+
+1. Go to [Releases](https://github.com/TestCraft-App/api-automation-agent/releases)
+2. Download `api-automation-agent-windows.zip`
+3. Extract and follow the included `USAGE-GUIDE.txt`
+
+#### Mac Users
+
+1. Go to [Releases](https://github.com/TestCraft-App/api-automation-agent/releases)
+2. Download `api-automation-agent-macos.tar.gz`
+3. Extract and follow the included `USAGE-GUIDE.txt`
+4. Make the executable runnable: `chmod +x api-automation-agent`
+
+### Manual Installation (for development)
+
+#### Prerequisites
 
 - Node.js 18 or higher
+- Python 3.8 or higher
 - OpenAI API key or Anthropic API key (Anthropic API key required by default)
 
-## Installation
+#### Installation Steps
 
 1. Clone the repository:
 
@@ -80,9 +87,9 @@ This project supports both Anthropic and OpenAI language models:
 
 **Anthropic**
 
-- Claude 4 Sonnet (claude-sonnet-4-20250514)
-- Claude 3.7 Sonnet (claude-3-7-sonnet-latest)
+- Claude 4 Sonnet (claude-sonnet-4-20250514) - **Recommended**
 - Claude 3.5 Sonnet (claude-3-5-sonnet-latest)
+- Claude 3.7 Sonnet (claude-3-7-sonnet-latest)
 
 **OpenAI**
 
@@ -100,7 +107,7 @@ MODEL=o4-mini
 
 > **Important**: Before using any model, please check the current pricing and costs on the respective provider's website (Anthropic or OpenAI). Model costs can vary significantly and may impact your usage budget.
 
-## Usage
+## Running the Agent
 
 Run the agent using the following command:
 
