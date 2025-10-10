@@ -15,8 +15,5 @@ export default [
       prettier: prettierPlugin,
       "ui-testing": uiTestingPlugin,
     },
-    rules: {
-      "ui-testing/no-focused-tests": "error",
-    },
   },
 ];

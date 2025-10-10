@@ -33,6 +33,7 @@ class Config:
     list_endpoints: bool = False
     tsc_max_passes: int = 4
     max_test_fixes: int = 4
+    fix_tests: bool = False
 
     def update(self, updates: dict[str, Any]):
         for key, value in updates.items():

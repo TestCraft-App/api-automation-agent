@@ -1,11 +1,10 @@
-import json
 import logging
 import os
 import subprocess
 from typing import List, Dict, Tuple, Optional, Callable, Union
 
 from src.ai_tools.models.model_file_spec import ModelFileSpec
-from src.models.generated_model import GeneratedModel
+from src.ai_tools.models.test_fix_input import FixStop
 
 from ..ai_tools.models.file_spec import FileSpec
 from ..configuration.config import Config
@@ -150,7 +149,7 @@ class CommandService:
         files: Optional[List[Union[FileSpec, ModelFileSpec]]] = None,
         are_models: Optional[bool] = False,
         max_retries: int = 3,
-    ) -> List[FileSpec]:
+    ) -> Tuple[List[Union[FileSpec, ModelFileSpec]], Optional[FixStop]]:
         """
         Execute a command with retries and an optional fix function on failure.
         Loops until max_retries is reached or fix_func returns True.
@@ -162,9 +161,9 @@ class CommandService:
             max_retries (int): Max number of retries on failure
 
         Returns:
-            List[FileSpec]: A list of updated files containing file path and content
-            If are_models, an updated copy of files is returned, else only the fixed
-            files are returned
+            Tuple[List[Union[FileSpec, ModelFileSpec]], Optional[str]]:
+                A tuple of (files, stop_reason). 'files' is the last set of files (fixed or original).
+                A FixStop object detailing why fixing stopped, or None if the command eventually succeeded.
         """
         retry_count = 0
         all_files: List[Union[FileSpec, ModelFileSpec]] = list(files)
@@ -172,7 +171,7 @@ class CommandService:
         last_fix: List[Union[FileSpec, ModelFileSpec]] = []
 
         for file in files:
-            if are_models and isinstance(file, ModelFileSpec):  # fallback files for last_fix
+            if are_models and isinstance(file, ModelFileSpec):
                 last_fix.append(file)
             elif not are_models and isinstance(file, FileSpec):
                 last_fix.append(file)
@@ -183,17 +182,17 @@ class CommandService:
             elif retry_count == 0:
                 self._log_message("")
 
-            success, message = command_func(all_files)  # mock this one
+            success, message = command_func(all_files)
 
             if success:
                 if are_models:
-                    return all_files
+                    return all_files, None
                 else:
-                    return last_fix
+                    return last_fix, None
 
             if fix_func:
                 self._log_message(f"Applying fix: {message}")
-                fixed_files, changes, stop = fix_func(  # mock this one
+                fixed_files, changes, stop = fix_func(
                     files=all_files, messages=message, fix_history=fix_history.copy(), are_models=are_models
                 )
 
@@ -210,8 +209,7 @@ class CommandService:
                 last_fix = fixed_files.copy()
 
                 if stop:
-                    return last_fix
-
+                    return last_fix, stop
             retry_count += 1
 
         success, message = command_func(files)  # mock this
@@ -220,9 +218,9 @@ class CommandService:
             self._log_message(f"Command failed after {max_retries} attempts.", is_error=True)
 
         if are_models:
-            return all_files
+            return all_files, None
         else:
-            return last_fix
+            return last_fix, None
 
     def install_dependencies(self) -> Tuple[bool, str]:
         """Install npm dependencies"""

@@ -1,12 +1,17 @@
+from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from .file_creation_input import FileCreationInput
 
 
+class StopReason(str, Enum):
+    BUG = "bug"
+    AUTH = "auth"
+
+
 class FixStop(BaseModel):
-    reason: str = Field(
+    reason: StopReason = Field(
         description="Enum value indicating the reason for stopping further fixes.",
-        json_schema_extra={"enum": ["bug", "auth"]},
     )
     content: List[str] = Field(
         description="Content in natural language documenting the reason for stopping further fixes.",
