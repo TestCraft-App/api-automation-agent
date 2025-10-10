@@ -9,7 +9,7 @@ class ModelInfo:
     """Represents information about generated models"""
 
     path: str
-    files: List[str] = field(default_factory=list)
+    files: Dict[str, str] = field(default_factory=dict)
     models: List[GeneratedModel] = field(default_factory=list)
 
     def to_json(self) -> Dict[str, Any]:

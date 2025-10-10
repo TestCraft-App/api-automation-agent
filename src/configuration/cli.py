@@ -46,4 +46,9 @@ class CLIArgumentParser:
             help="List the endpoints that can be used with the --endpoints flag.",
             action="store_true",
         )
+        parser.add_argument(
+            "--fix-tests",
+            action="store_true",
+            help="Attemmpts to fix test execution if set. Off by default.",
+        )
         return parser.parse_args()

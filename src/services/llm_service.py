@@ -1,5 +1,5 @@
-from typing import Any, List, Optional
-
+from typing import Any, List, Optional, Union
+import json
 import pydantic
 from langchain_anthropic import ChatAnthropic
 from langchain_core.language_models import BaseLanguageModel
@@ -7,8 +7,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
 from langchain_openai import ChatOpenAI
 
+from ..ai_tools.models.test_fix_input import TestFixInput
+
 from .file_service import FileService
-from ..ai_tools.file_creation_tool import FileCreationTool
+from ..ai_tools.file_creation_tool import FileCreationTool, FileOperation
 from ..ai_tools.file_reading_tool import FileReadingTool
 from ..ai_tools.models.file_spec import FileSpec, file_specs_to_json, convert_to_file_spec
 from ..ai_tools.models.model_file_spec import convert_to_model_file_spec, ModelFileSpec
@@ -35,6 +37,7 @@ class PromptConfig:
     SUMMARY = "./prompts/generate-model-summary.txt"
     ADD_INFO = "./prompts/add-models-context.txt"
     ADDITIONAL_TESTS = "./prompts/create-additional-tests.txt"
+    FIX_TEST = "./prompts/fix-test.txt"
 
 
 class LLMService:
@@ -184,11 +187,12 @@ class LLMService:
                 tool_map = {tool.name.lower(): tool for tool in all_tools}
 
                 if response.tool_calls:
-                    tool_call = response.tool_calls[0]
-                    selected_tool = tool_map.get(tool_call["name"].lower())
-
-                    if selected_tool:
-                        return selected_tool.invoke(tool_call["args"])
+                    for tool_call in response.tool_calls:
+                        all_tool_results = [tool_map.get(tool_call["name"].lower()).invoke(tool_call["args"])]
+                        if len(all_tool_results):
+                            return all_tool_results[0]
+                        else:
+                            return all_tool_results
 
                 return response.content
 
@@ -211,10 +215,13 @@ class LLMService:
         try:
             result = self.create_ai_chain(
                 PromptConfig.MODELS,
-                tools=[FileCreationTool(self.config, self.file_service, are_models=True)],
+                tools=[
+                    FileCreationTool(self.config, self.file_service, operation=FileOperation.CREATE_MODELS)
+                ],
                 must_use_tool=True,
             ).invoke({"api_definition": definition_content})
-            return convert_to_model_file_spec(result)
+            return result.files
+
         except Exception as e:
             self.logger.error(f"Error generating models: {str(e)}")
             return []
@@ -229,18 +236,18 @@ class LLMService:
             )
             result = self.create_ai_chain(
                 prompt,
-                tools=[FileCreationTool(self.config, self.file_service)],
+                tools=[FileCreationTool(self.config, self.file_service, operation=FileOperation.CREATE_TEST)],
                 must_use_tool=True,
             ).invoke({"api_definition": definition_content, "models": GeneratedModel.list_to_json(models)})
-            return convert_to_file_spec(result)
+
+            return result.files
+
         except Exception as e:
             self.logger.error(f"Error generating test: {e}")
             return []
 
     def get_additional_models(
-        self,
-        relevant_models: List[GeneratedModel],
-        available_models: List[APIModel],
+        self, relevant_models: List[GeneratedModel], available_models: List[APIModel]
     ) -> List[FileSpec]:
         """Trigger read file tool to decide what additional model info is needed"""
         self.logger.info("\nGetting additional models...")
@@ -265,7 +272,7 @@ class LLMService:
         """Generate additional tests based on the initial test and models."""
         result = self.create_ai_chain(
             PromptConfig.ADDITIONAL_TESTS,
-            tools=[FileCreationTool(self.config, self.file_service)],
+            tools=[FileCreationTool(self.config, self.file_service, operation=FileOperation.CREATE_TEST)],
             must_use_tool=True,
         ).invoke(
             {
@@ -274,7 +281,7 @@ class LLMService:
                 "api_definition": definition_content,
             }
         )
-        return convert_to_file_spec(result)
+        return result.files
 
     def fix_typescript(self, files: List[FileSpec], messages: List[str], are_models: bool = False) -> None:
         """
@@ -289,8 +296,39 @@ class LLMService:
         for file in files:
             self.logger.info(f"  - {file.path}")
 
-        self.create_ai_chain(
+        if are_models:
+            operation = FileOperation.FIX_MODELS_COMPILATION
+        else:
+            operation = FileOperation.FIX_TEST_COMPILATION
+
+        result = self.create_ai_chain(  # later we should return something so that we track changes
             PromptConfig.FIX_TYPESCRIPT,
-            tools=[FileCreationTool(self.config, self.file_service, are_models=are_models)],
+            tools=[FileCreationTool(self.config, self.file_service, operation)],
             must_use_tool=True,
         ).invoke({"files": file_specs_to_json(files), "messages": messages})
+
+        return result.files
+
+    def fix_test_execution(
+        self, files: List[Union[FileSpec, ModelFileSpec]], run_output: List[str], fix_history: List[str]
+    ) -> TestFixInput:
+        """
+        Improve test files based on run output.
+
+        Args:
+            files (List[Union[FileSpec, ModelFileSpec]]): List of files to fix
+            run_output (List[str]): HTTP activity/Reporter output
+        """
+        self.logger.info("\nFixing Test file using the following context:")
+        for file in files:
+            self.logger.info(f"  - {file.path}")
+
+        result: TestFixInput = self.create_ai_chain(
+            PromptConfig.FIX_TEST,
+            tools=[
+                FileCreationTool(self.config, self.file_service, operation=FileOperation.FIX_TEST_EXECUTION)
+            ],
+            must_use_tool=True,
+        ).invoke({"files": file_specs_to_json(files), "run_output": run_output, "fix_history": fix_history})
+
+        return result.files, result.changes, result.stop

@@ -1,7 +1,10 @@
 import logging
 import os
 import subprocess
-from typing import List, Dict, Tuple, Optional, Callable
+from typing import List, Dict, Tuple, Optional, Callable, Union
+
+from src.ai_tools.models.model_file_spec import ModelFileSpec
+from src.ai_tools.models.test_fix_input import FixStop
 
 from ..ai_tools.models.file_spec import FileSpec
 from ..configuration.config import Config
@@ -34,19 +37,39 @@ class CommandService:
         log_method = self.logger.error if is_error else self.logger.info
         log_method(message)
 
-    def run_command(self, command: str, cwd: Optional[str] = None) -> Tuple[bool, str]:
+    def run_command(
+        self,
+        command: str,
+        cwd: Optional[str] = None,
+        env_vars: Optional[Dict[str, str]] = None,
+    ) -> Tuple[bool, str]:
         """
         Run a shell command with real-time output and error handling.
 
         Args:
             command (str): Command to execute
             cwd (Optional[str]): Working directory for command execution
+            env_vars (Optional[Dict[str, str]]): Additional environment variables
 
         Returns:
             Tuple[bool, str]: Success status and command output
         """
         try:
             self.logger.debug(f"Running command: {command}")
+
+            process_env = os.environ.copy()
+            process_env.update(
+                {
+                    "PYTHONUNBUFFERED": "1",
+                    "FORCE_COLOR": "true",
+                    "TERM": "xterm-256color",
+                    "LANG": "en_US.UTF-8",
+                    "LC_ALL": "en_US.UTF-8",
+                }
+            )
+            if env_vars:
+                process_env.update(env_vars)
+
             process = subprocess.Popen(
                 command,
                 cwd=cwd or self.config.destination_folder,
@@ -56,14 +79,7 @@ class CommandService:
                 bufsize=0,
                 universal_newlines=True,
                 encoding="utf-8",
-                env={
-                    **os.environ,
-                    "PYTHONUNBUFFERED": "1",
-                    "FORCE_COLOR": "true",
-                    "TERM": "xterm-256color",
-                    "LANG": "en_US.UTF-8",
-                    "LC_ALL": "en_US.UTF-8",
-                },
+                env=process_env,
             )
 
             output_lines = []
@@ -130,47 +146,81 @@ class CommandService:
         self,
         command_func: Callable,
         fix_func: Optional[Callable] = None,
-        files: Optional[List[FileSpec]] = None,
+        files: Optional[List[Union[FileSpec, ModelFileSpec]]] = None,
+        are_models: Optional[bool] = False,
         max_retries: int = 3,
-    ) -> Tuple[bool, str]:
+    ) -> Tuple[List[Union[FileSpec, ModelFileSpec]], Optional[FixStop]]:
         """
         Execute a command with retries and an optional fix function on failure.
+        Loops until max_retries is reached or fix_func returns True.
 
         Args:
             command_func (Callable): The function that runs the command
-            fix_func (Optional[Callable]): Function to invoke if the command fails
+            fix_func (Optional[Callable]) -> bool: Function to invoke if the command fails.
             files (Optional[List[Dict[str, str]]]): Files to pass to the command function
             max_retries (int): Max number of retries on failure
 
         Returns:
-            Tuple[bool, str]: Success status and output or error message
+            Tuple[List[Union[FileSpec, ModelFileSpec]], Optional[str]]:
+                A tuple of (files, stop_reason). 'files' is the last set of files (fixed or original).
+                A FixStop object detailing why fixing stopped, or None if the command eventually succeeded.
         """
-        files = files or []
         retry_count = 0
+        all_files: List[Union[FileSpec, ModelFileSpec]] = list(files)
+        fix_history: List[str] = []
+        last_fix: List[Union[FileSpec, ModelFileSpec]] = []
+
+        for file in files:
+            if are_models and isinstance(file, ModelFileSpec):
+                last_fix.append(file)
+            elif not are_models and isinstance(file, FileSpec):
+                last_fix.append(file)
+
         while retry_count < max_retries:
             if retry_count > 0:
                 self._log_message(f"\nAttempt {retry_count + 1}/{max_retries}.")
             elif retry_count == 0:
                 self._log_message("")
 
-            success, message = command_func(files)
+            success, message = command_func(all_files)
 
             if success:
-                return success, message
+                if are_models:
+                    return all_files, None
+                else:
+                    return last_fix, None
 
             if fix_func:
                 self._log_message(f"Applying fix: {message}")
-                fix_func(files, message)
+                fixed_files, changes, stop = fix_func(
+                    files=all_files, messages=message, fix_history=fix_history.copy(), are_models=are_models
+                )
 
+                if changes:
+                    fix_history.append(changes)
+
+                files_dict = {f.path: f for f in all_files}
+
+                for fixed in fixed_files:
+                    files_dict[fixed.path] = fixed
+
+                all_files = list(files_dict.values())
+
+                last_fix = fixed_files.copy()
+
+                if stop:
+                    return last_fix, stop
             retry_count += 1
 
-        success, message = command_func(files)
+        success, message = command_func(files)  # mock this
 
-        if success:
-            return success, message
+        if not success:
+            self._log_message(f"Command failed after {max_retries} attempts.", is_error=True)
 
-        self._log_message(f"Command failed after {max_retries} attempts.", is_error=True)
-        return False, message
+        if are_models:
+            return all_files, None
+        else:
+            return last_fix, None
 
     def install_dependencies(self) -> Tuple[bool, str]:
         """Install npm dependencies"""
@@ -220,6 +270,24 @@ class CommandService:
         self._log_message(f"Running TypeScript compiler for files: {[file.path for file in files]}")
         compiler_command = build_typescript_compiler_command(files)
         return self.run_command(compiler_command)
+
+    def run_test(self, test_files: List[FileSpec]):
+        file_paths = " ".join(file.path for file in test_files)
+
+        command = (
+            "npx cross-env HTTP_DEBUG=true mocha --require mocha-suppress-logs --no-config "
+            f"{file_paths} "
+            "--reporter min --timeout 10000 --no-warnings"
+        )
+        node_env_options = {
+            "NODE_OPTIONS": "--loader ts-node/esm --no-warnings=ExperimentalWarning --no-deprecation"
+        }
+
+        return self.run_command(
+            command,
+            cwd=self.config.destination_folder,
+            env_vars=node_env_options,
+        )
 
 
 def build_typescript_compiler_command(files: List[FileSpec]) -> str:

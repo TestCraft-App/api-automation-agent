@@ -1,13 +1,18 @@
 import signal
 import sys
 import traceback
-from typing import List, Dict, Optional, cast
+from typing import List, Dict, Optional, Union, cast
 
+from tree_sitter import Language, Parser
+import tree_sitter_typescript
 from .ai_tools.models.file_spec import FileSpec
+from .ai_tools.models.model_file_spec import ModelFileSpec
+from .ai_tools.models.test_fix_input import StopReason
 from .configuration.config import Config, GenerationOptions
 from .configuration.data_sources import DataSource
 from .models import APIDefinition, APIPath, APIVerb, ModelInfo, GeneratedModel
 from .models.usage_data import AggregatedUsageMetadata
+from .models.fix_result import FixResult
 from .processors.api_processor import APIProcessor
 from .processors.postman_processor import PostmanProcessor
 from .services.command_service import CommandService
@@ -153,7 +158,6 @@ class FrameworkGenerator:
                                 model.models.append(
                                     GeneratedModel(path=file.path, fileContent=file.fileContent, summary="")
                                 )
-
                     verb_path_for_debug = self.api_processor.get_api_verb_path(verb)
                     verb_name_for_debug = self.api_processor.get_api_verb_name(verb)
                     self.logger.debug(
@@ -198,9 +202,9 @@ class FrameworkGenerator:
                 return None
 
             self.models_count += len(models_result)
-            self._run_code_quality_checks(models_result, are_models=True)
+            fixed = self._run_code_quality_checks(models=models_result)
             self.logger.info(f"Generated {len(models_result)} models for {path_name}")
-            return GeneratedModel.from_model_file_specs(models_result)
+            return GeneratedModel.from_model_file_specs(fixed)
 
         except Exception as e:
             self.logger.error(f"Error generating models: {str(e)}")
@@ -242,17 +246,20 @@ class FrameworkGenerator:
             if tests_result:
                 self.test_files_count += len(tests_result)
                 self.save_state()
-
-                self._run_code_quality_checks(tests_result)
+                model_file_specs = [
+                    ModelFileSpec(path=m.path, fileContent=m.fileContent, summary=m.summary)
+                    for m in relevant_models
+                ]
+                fixed_tests = self._run_code_quality_checks(tests=tests_result, models=model_file_specs)
                 if generate_tests == GenerationOptions.MODELS_AND_TESTS:
                     additional_tests_result = self._generate_additional_tests(
-                        tests_result,
-                        relevant_models,
+                        fixed_tests,
+                        model_file_specs,
                         api_verb,
                     )
                     return additional_tests_result
 
-                return tests_result
+                return fixed_tests
             else:
                 self.logger.warning(f"No tests generated for {verb_path} - {verb_name}")
                 return None
@@ -263,7 +270,7 @@ class FrameworkGenerator:
     def _generate_additional_tests(
         self,
         tests: List[FileSpec],
-        models: List[GeneratedModel | str],
+        models: List[ModelFileSpec],
         api_definition: APIVerb,
     ) -> Optional[List[FileSpec]]:
         """Generate additional tests based on the initial test and models"""
@@ -279,8 +286,8 @@ class FrameworkGenerator:
                     self.test_files_count += len(additional_tests_result) - len(tests)
 
                 self.save_state()
-                self._run_code_quality_checks(additional_tests_result)
-                return additional_tests_result
+                fixed_tests = self._run_code_quality_checks(tests=additional_tests_result, models=models)
+                return fixed_tests
             return tests
         except Exception as e:
             self._log_error(
@@ -289,25 +296,208 @@ class FrameworkGenerator:
             )
             return tests
 
-    def _run_code_quality_checks(self, files: List[FileSpec], are_models: bool = False):
-        """Run code quality checks including TypeScript compilation, linting, and formatting"""
-        error_type = "models" if are_models else "tests"
-        try:
+    def _run_code_quality_checks(
+        self, tests: Optional[List[FileSpec]] = [], models: Optional[List[ModelFileSpec]] = []
+    ) -> List[FileSpec]:
+        """
+        Runs code quality checks on the provided files, including TypeScript compilation, execution check, linting, and formatting.
+        Args:
+            files (List[FileSpec]): A list of file specifications to check and fix.
+            are_models (bool, optional): Indicates whether the files are models or tests. Defaults to False.
+        Returns:
+            List[FileSpec]: The input list of files, potentially modified after fixes.
+        Raises:
+            Exception: If any error occurs during the code quality checks, it is logged and the exception is raised.
+        """
+        are_models = not tests and models
 
-            def typescript_fix_wrapper(problematic_files: List[FileSpec], messages):
-                self.logger.info("\nAttempting to fix TypeScript errors with LLM...")
-                self.llm_service.fix_typescript(problematic_files, messages, are_models)
-                self.logger.info("TypeScript fixing attempt complete.")
+        to_fix: List[Union[FileSpec, ModelFileSpec]] = models.copy() + tests.copy()
+        test_paths = [test.path for test in tests]
+        fixed_files, _ = self.command_service.run_command_with_fix(
+            command_func=self.command_service.run_typescript_compiler_for_files,
+            fix_func=self._typescript_fix_wrapper,
+            files=to_fix,
+            are_models=are_models,
+        )
 
-            self.command_service.run_command_with_fix(
-                self.command_service.run_typescript_compiler_for_files,
-                typescript_fix_wrapper,
-                files,
-            )
-            self.command_service.format_files()
-            self.command_service.run_linter()
-        except Exception as e:
-            self._log_error(f"Error during code quality checks for {error_type}", e)
+        if not are_models:
+            fixed_files = [file for file in fixed_files if file.path in test_paths]
+
+            if self.config.fix_tests:
+                test = fixed_files[0]
+                content = test.fileContent
+                cases = self._get_test_cases(content)
+
+                for i in range(len(cases)):
+                    focused_test = self._focus_test_case(test, i)
+                    focused_test_and_models = self._update_files([focused_test], (models + [test]))
+                    fixed_files, stop = self.command_service.run_command_with_fix(
+                        command_func=self.command_service.run_test,
+                        fix_func=self._test_fix_wrapper,
+                        files=(focused_test_and_models),
+                        max_retries=self.config.max_test_fixes,
+                    )
+                    fixed_tests = [file for file in fixed_files if file.path in test_paths]
+                    test = (self._unfocus_tests(fixed_tests))[0]
+                    fixed_files = [f for f in fixed_tests]
+
+                    if stop and stop.reason == StopReason.AUTH.value:
+                        return fixed_files
+
+        self.command_service.format_files()
+        self.command_service.run_linter()
+
+        return fixed_files
+
+    def _update_files(self, source: List[FileSpec], destination: List[FileSpec]) -> List[FileSpec]:
+        """
+        Update the destination list of files with the source list, replacing files with the same path.
+        Args:
+            source (List[FileSpec]): The list of files to add or update.
+            destination (List[FileSpec]): The original list of files to be updated.
+        Returns:
+            List[FileSpec]: The updated list of files.
+        """
+        files_dict = {f.path: f for f in destination}
+        for file in source:
+            files_dict[file.path] = file
+
+        return list(files_dict.values())
+
+    # TODO: Move to LanguageManager
+    def _unfocus_tests(self, files: List[FileSpec]) -> List[FileSpec]:
+        """
+        Remove 'it.only' from test cases to unfocus them.
+        Args:
+            files (List[FileSpec]): A list of file specifications to unfocus.
+        Returns:
+            List[FileSpec]: The input list of files with 'it.only' removed.
+        """
+        result = []
+        for file in files:
+            updated_content = file.fileContent.replace("it.only(", "it(")
+            updated_spec = FileSpec(fileContent=updated_content, path=file.path)
+            self.file_service.create_files(self.config.destination_folder, [updated_spec])
+            result.append(updated_spec)
+
+        return result
+
+    # TODO: Move to LanguageManager
+    def _focus_test_case(self, file: FileSpec, case_index: int) -> FileSpec:
+        """
+        Focus on a specific test case by index by adding 'it.only' to it.
+        Args:
+            file (FileSpec): The file specification containing the test cases.
+            case_index (int): The index of the test case to focus on.
+        Returns:
+            FileSpec: The updated file specification with the focused test case.
+        """
+        cases = self._get_test_cases(file.fileContent)
+        updated_content = file.fileContent.replace(cases[case_index], self._add_only(cases[case_index]))
+        updated_spec = FileSpec(fileContent=updated_content, path=file.path)
+        self.file_service.create_files(self.config.destination_folder, [updated_spec])
+
+        return updated_spec
+
+    # TODO: Move to TypeScriptManager(LanguageManager)
+    def _get_test_cases(self, code: str) -> list[str]:
+        """
+        Extract individual test cases from the provided TypeScript code using tree-sitter.
+        Args:
+            code (str): The TypeScript code containing test cases.
+        Returns:
+            list[str]: A list of extracted test case strings.
+        """
+        TSX_LANGUAGE = Language(tree_sitter_typescript.language_typescript())
+        parser = Parser(TSX_LANGUAGE)
+        tree = parser.parse(bytes(code, "utf8"))
+        root = tree.root_node
+        cases = []
+
+        def walk(node):
+            if node.type == "call_expression" and node.child_count > 0:
+                first_child = node.child(0)
+
+                if first_child.type == "member_expression":
+                    object_node = first_child.child(0)
+                    if object_node and object_node.text.decode() == "it":
+                        start = node.start_byte
+                        end = node.end_byte
+                        cases.append(code[start:end])
+
+                elif first_child.text.decode() == "it":
+                    start = node.start_byte
+                    end = node.end_byte
+                    cases.append(code[start:end])
+
+            for child in node.children:
+                walk(child)
+
+        walk(root)
+        return cases
+
+    # TODO: Move to TypeScriptManager(LanguageManager)
+    def _add_only(self, test: str) -> str:
+        """
+        Add 'only' to the test case to focus on it.
+        Args:
+            test (str): The test case string.
+        Returns:
+            str: The updated test case string with 'it.only'.
+        """
+        return test.replace("it(", "it.only(", 1)
+
+    def _test_fix_wrapper(
+        self, files: List[FileSpec], messages: str, fix_history: List[str], are_models: bool
+    ) -> FixResult:
+        """
+         Wrapper for fixing test files using LLM service.
+        Args:
+            files (List[FileSpec]): A list of file specifications to be fixed.
+            messages (str): The error messages or issues to be addressed.
+            fix_history (List[str]): A history of previous fixes applied.
+            are_models (bool): Indicates whether the files are models or tests.
+        Returns:
+            FixResult: A tuple containing the fixed files, changes made, and an optional stop reason.
+        """
+        self.logger.info("\nAttempting to fix Test errors with LLM...\n")
+        fixed_files, changes, stop = self.llm_service.fix_test_execution(
+            files,
+            messages,
+            fix_history,
+        )
+
+        all_fixes = [fix for fix in fix_history]
+        if changes:
+            all_fixes.append(changes)
+
+        self.logger.info("\n🛠️  Fix history:\n" + "\n".join(f"🔧 - {change}" for change in all_fixes))
+        self.logger.info("Fix attempt complete.")
+
+        if stop:
+            self.logger.info(f"\n🛑 Stopping further fixes, reason: {stop.reason}\n")
+            self.logger.info(f"📝 Details: {stop.content}")
+            return fixed_files, changes, stop
+
+        return fixed_files, changes, None
+
+    def _typescript_fix_wrapper(
+        self, files: List[FileSpec], messages: str, fix_history: List[str], are_models: bool
+    ) -> FixResult:
+        """
+        Wrapper for fixing TypeScript files using LLM service.
+        Args:
+            files (List[FileSpec]): A list of file specifications to be fixed.
+            messages (str): The error messages or issues to be addressed.
+            fix_history (List[str]): A history of previous fixes applied.
+            are_models (bool): Indicates whether the files are models or tests.
+        Returns:
+            FixResult: A tuple containing the fixed files, changes made, and an optional stop reason.
+        """
+        self.logger.info("\nAttempting to fix TypeScript errors with LLM...")
+        fixed_files = self.llm_service.fix_typescript(files, messages, are_models)
+        self.logger.info("TypeScript fixing attempt complete.")
+        return fixed_files, None, None
 
     @staticmethod
     def _is_response_file(file: FileSpec) -> bool:

@@ -1,7 +1,9 @@
+from email import message
 import logging
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, Mock, patch, call
 import subprocess
 
+from src.ai_tools.models.model_file_spec import ModelFileSpec
 from src.configuration.config import Config
 from src.ai_tools.models.file_spec import FileSpec
 from src.services.command_service import CommandService, build_typescript_compiler_command
@@ -223,118 +225,6 @@ def test_run_command_silently_with_stderr_warning(tmp_path):
             mock_debug.assert_called_once()
             assert "warning message" in mock_debug.call_args[0][0]
             assert output == "test output"
-
-
-def test_run_command_with_fix_success_first_try(tmp_path):
-    """This test verifies that run_command_with_fix correctly:
-    - Executes a command successfully on first try
-    - Returns success status and output
-    - Does not attempt retries when successful
-    """
-    config = Config(destination_folder=str(tmp_path))
-    service = CommandService(config, logger=logging.getLogger(__name__))
-
-    def mock_command_func(files):
-        return True, "success output"
-
-    success, output = service.run_command_with_fix(mock_command_func)
-    assert success is True
-    assert output == "success output"
-
-
-def test_run_command_with_fix_retry_success(tmp_path):
-    """This test verifies that run_command_with_fix correctly:
-    - Retries failed commands up to max_retries
-    - Applies fix function between retries
-    - Returns success when command eventually succeeds
-    """
-    config = Config(destination_folder=str(tmp_path))
-    service = CommandService(config, logger=logging.getLogger(__name__))
-
-    attempt_count = 0
-
-    def mock_command_func(files):
-        nonlocal attempt_count
-        attempt_count += 1
-        if attempt_count == 1:
-            return False, "first failure"
-        return True, "success after retry"
-
-    def mock_fix_func(files, message):
-        pass  # Simulate fix attempt
-
-    success, output = service.run_command_with_fix(mock_command_func, fix_func=mock_fix_func, max_retries=3)
-    assert success is True
-    assert output == "success after retry"
-    assert attempt_count == 2
-
-
-def test_run_command_with_fix_max_retries_exceeded(tmp_path):
-    """This test verifies that run_command_with_fix correctly:
-    - Stops after max_retries attempts
-    - Applies fix function between each retry
-    - Returns failure status when max retries exceeded
-    """
-    config = Config(destination_folder=str(tmp_path))
-    service = CommandService(config, logger=logging.getLogger(__name__))
-
-    attempt_count = 0
-
-    def mock_command_func(files):
-        nonlocal attempt_count
-        attempt_count += 1
-        return False, f"failure attempt {attempt_count}"
-
-    fix_attempts = []
-
-    def mock_fix_func(files, message):
-        fix_attempts.append(message)
-
-    success, output = service.run_command_with_fix(mock_command_func, fix_func=mock_fix_func, max_retries=2)
-    assert success is False
-    assert output == "failure attempt 3"
-    assert attempt_count == 3
-    assert len(fix_attempts) == 2
-
-
-def test_run_command_with_fix_without_fix_func(tmp_path):
-    """This test verifies that run_command_with_fix correctly:
-    - Handles retries without a fix function
-    - Continues retrying until max_retries
-    - Returns failure status when max retries exceeded
-    """
-    config = Config(destination_folder=str(tmp_path))
-    service = CommandService(config, logger=logging.getLogger(__name__))
-
-    attempt_count = 0
-
-    def mock_command_func(files):
-        nonlocal attempt_count
-        attempt_count += 1
-        return False, f"failure attempt {attempt_count}"
-
-    success, output = service.run_command_with_fix(mock_command_func, max_retries=2)
-    assert success is False
-    assert output == "failure attempt 3"
-    assert attempt_count == 3
-
-
-def test_run_command_with_fix_with_none_files(tmp_path):
-    """This test verifies that run_command_with_fix correctly:
-    - Handles None files parameter
-    - Converts None to empty list
-    - Executes command successfully
-    """
-    config = Config(destination_folder=str(tmp_path))
-    service = CommandService(config, logger=logging.getLogger(__name__))
-
-    def mock_command_func(files):
-        assert files == []  # Verify files is converted to empty list
-        return True, "success output"
-
-    success, output = service.run_command_with_fix(mock_command_func, files=None)
-    assert success is True
-    assert output == "success output"
 
 
 def test_install_dependencies(tmp_path):

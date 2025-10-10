@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha src/**/*.spec.ts --timeout 10000",
+    "test:debug": "cross-env HTTP_DEBUG=true mocha src/**/*.spec.ts --timeout 10000",
     "test:parallel": "mocha src/**/*.spec.ts --timeout 10000 --parallel",
     "smoke": "mocha src/**/*.spec.ts --grep @Smoke --timeout 10000",
     "regression": "mocha src/**/*.spec.ts --grep @Regression --timeout 10000",
@@ -24,6 +25,7 @@
     "axios": "^1.7.9",
     "axios-logger": "^2.6.0",
     "chai": "^5.2.0",
+    "cross-env": "^10.0.0",
     "eslint": "^9.16.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",

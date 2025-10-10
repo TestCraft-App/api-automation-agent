@@ -103,6 +103,7 @@ The agent accepts either:
   - `models_and_first_test`: Generate data models and the first test for each endpoint
   - `models_and_tests`: Generate data models and complete test suites
 - `--list-endpoints`: List the endpoints that can be used with the --endpoints flag
+- `--fix-tests`: Enable a retry-based test execution fix process. **(Experimental)**
 
 > **Note**: The `--endpoints`, `--generate`, `--list-endpoints`, and `--use-existing-framework` options are only available when using Swagger/OpenAPI specifications. When using Postman collections, only the `--destination-folder` parameter is fully supported.
 
