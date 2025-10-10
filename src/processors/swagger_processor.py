@@ -89,7 +89,15 @@ class SwaggerProcessor(APIProcessor):
                 if isinstance(definition, APIVerb):
                     self.logger.debug(f"Verb: {definition.verb}")
 
-            self.logger.info("Successfully processed API definition.")
+            if not result.definitions:
+                if self.config.endpoints:
+                    self.logger.error(
+                        f"\n❌ The API definition does not contain any of the provided endpoints: {', '.join(self.config.endpoints)}"
+                    )
+                else:
+                    self.logger.error("❌ No endpoints were found in the API definition.")
+            else:
+                self.logger.info(f"Successfully processed {len(result.definitions)} API definitions.")
             return result
         except Exception as e:
             self.logger.error(f"Error processing API definition: {e}")
