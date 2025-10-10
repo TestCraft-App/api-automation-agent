@@ -107,6 +107,14 @@ def main(
             framework_generator.restore_state(last_namespace)
 
         api_definition = framework_generator.process_api_definition()
+        if not api_definition.definitions:
+            if config.endpoints:
+                logger.error(
+                    f"\n❌ The API definition does not contain any of the provided endpoints: {', '.join(config.endpoints)}"
+                )
+            else:
+                logger.error("❌ No endpoints were found in the API definition.")
+            return
 
         if config.list_endpoints:
             EndpointLister.list_endpoints(api_definition.definitions)
