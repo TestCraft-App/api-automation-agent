@@ -23,7 +23,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='api-automation-agent',
+    name='api-agent',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

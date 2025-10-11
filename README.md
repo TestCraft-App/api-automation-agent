@@ -26,15 +26,15 @@ Download the standalone executable:
 #### Windows Users
 
 1. Go to [Releases](https://github.com/TestCraft-App/api-automation-agent/releases)
-2. Download `api-automation-agent-windows.zip`
+2. Download `api-agent-windows.zip`
 3. Extract and follow the included `USAGE-GUIDE.txt`
 
 #### Mac Users
 
 1. Go to [Releases](https://github.com/TestCraft-App/api-automation-agent/releases)
-2. Download `api-automation-agent-macos.tar.gz`
+2. Download `api-agent-macos.tar.gz`
 3. Extract and follow the included `USAGE-GUIDE.txt`
-4. Make the executable runnable: `chmod +x api-automation-agent`
+4. Make the executable runnable: `chmod +x api-agent`
 
 ### Manual Installation (for development)
 
@@ -109,7 +109,17 @@ MODEL=o4-mini
 
 ## Running the Agent
 
-Run the agent using the following command:
+### Standalone Executable
+
+If you downloaded the standalone executable:
+
+```bash
+./api-agent <path_or_url_to_openapi_definition>
+```
+
+### Manual Installation
+
+If you installed manually for development:
 
 ```bash
 python ./main.py <path_or_url_to_openapi_definition>
@@ -135,43 +145,49 @@ The agent accepts either:
 
 ### Examples
 
-```bash
+````bash
 # Generate framework from a local file
+./api-agent api-spec.yaml
 python ./main.py api-spec.yaml
-```
 
 ```bash
 # Generate framework from a URL
+./api-agent https://api.example.com/swagger.json
 python ./main.py https://api.example.com/swagger.json
-```
+````
 
 ```bash
 # Generate list root endpoints
+./api-agent api-spec.yaml --list-endpoints
 python ./main.py api-spec.yaml --list-endpoints
 ```
 
 ```bash
 # Generate complete framework with all endpoints
+./api-agent api-spec.yaml
 python ./main.py api-spec.yaml
 ```
 
 ```bash
 # Generate models and tests for specific endpoints using an existing framework
+./api-agent api-spec.yaml --use-existing-framework --destination-folder ./my-api-framework --endpoints /user /store
 python ./main.py api-spec.yaml --use-existing-framework --destination-folder ./my-api-framework --endpoints /user /store
 ```
 
-```bash
+````bash
 # Generate only data and service models for all endpoints
+./api-agent api-spec.yaml --generate models
 python ./main.py api-spec.yaml --generate models
-```
 
 ```bash
 # Generate models and first test for each endpoint in a custom folder
+./api-agent api-spec.yaml --generate models_and_first_test --destination-folder ./quick-tests
 python ./main.py api-spec.yaml --generate models_and_first_test --destination-folder ./quick-tests
-```
+````
 
 ```bash
 # Combine options to generate specific endpoints with first test only
+./api-agent api-spec.yaml --endpoints /store --generate models_and_first_test
 python ./main.py api-spec.yaml --endpoints /store --generate models_and_first_test
 ```
 
@@ -217,10 +233,10 @@ The migration works best with well-structured APIs where:
 
 ### Usage
 
-```bash
+````bash
 # Migrate a Postman collection to TypeScript test framework
+./api-agent path/to/postman_collection.json --destination-folder ./my-api-tests
 python ./main.py path/to/postman_collection.json --destination-folder ./my-api-tests
-```
 
 ## Testing the Agent
 
@@ -235,13 +251,15 @@ To try out the agent without using your own API specification, you can use one o
 
 ```bash
 # /adopters endpoints
+./api-agent http://localhost:3000/swagger.json --endpoints /adopters
 python ./main.py http://localhost:3000/swagger.json --endpoints /adopters
-```
+````
 
 **Pet Store**
 
 ```bash
 # /store endpoints
+./api-agent https://petstore.swagger.io/v2/swagger.json --endpoints /store
 python ./main.py https://petstore.swagger.io/v2/swagger.json --endpoints /store
 ```
 
@@ -251,12 +269,14 @@ Estimated cost (with claude-sonnet-4-20250514) to run each example above: US$ ~0
 You can combine endpoints to test larger scenarios.:
 
 ```bash
+./api-agent http://localhost:3000/swagger.json --endpoints /adopters /pet
 python ./main.py http://localhost:3000/swagger.json --endpoints /adopters /pet
 ```
 
 Or simply run it for the whole API
 
 ```bash
+./api-agent http://localhost:3000/swagger.json
 python ./main.py http://localhost:3000/swagger.json
 ```
 

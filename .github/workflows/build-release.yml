@@ -2,7 +2,7 @@ name: Build and Release
 
 on:
   push:
-    branches: [main, agent-cli]
+    branches: [main]
     tags: ['v*']
 
 permissions:
@@ -62,9 +62,9 @@ jobs:
 
       - name: Verify executable
         run: |
-          if (Test-Path "dist\api-automation-agent.exe") {
+          if (Test-Path "dist\api-agent.exe") {
             Write-Host "✅ Executable built successfully"
-            $size = (Get-Item "dist\api-automation-agent.exe").Length
+            $size = (Get-Item "dist\api-agent.exe").Length
             Write-Host "📏 Size: $($size / 1MB) MB"
           } else {
             Write-Host "❌ Build failed - executable not found"
@@ -74,24 +74,24 @@ jobs:
       - name: Create distribution package
         run: |
           # Create clean distribution folder
-          New-Item -ItemType Directory -Path "api-automation-agent-windows" -Force
+          New-Item -ItemType Directory -Path "api-agent-windows" -Force
 
           # Copy essential files
-          Copy-Item "dist\api-automation-agent.exe" "api-automation-agent-windows\"
-          Copy-Item "example.env" "api-automation-agent-windows\"
-          Copy-Item "USAGE-GUIDE.txt" "api-automation-agent-windows\" -ErrorAction SilentlyContinue
+          Copy-Item "dist\api-agent.exe" "api-agent-windows\"
+          Copy-Item "example.env" "api-agent-windows\"
+          Copy-Item "USAGE-GUIDE.txt" "api-agent-windows\" -ErrorAction SilentlyContinue
 
       - name: Create ZIP archive
         run: |
           $timestamp = "${{ needs.generate-timestamp.outputs.timestamp }}"
-          $archiveName = "api-automation-agent-windows-$timestamp.zip"
-          Compress-Archive -Path "api-automation-agent-windows\*" -DestinationPath $archiveName
+          $archiveName = "api-agent-windows-$timestamp.zip"
+          Compress-Archive -Path "api-agent-windows\*" -DestinationPath $archiveName
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: api-automation-agent-windows
-          path: api-automation-agent-windows-${{ needs.generate-timestamp.outputs.timestamp }}.zip
+          name: api-agent-windows
+          path: api-agent-windows-${{ needs.generate-timestamp.outputs.timestamp }}.zip
 
   build-macos:
     needs: generate-timestamp
@@ -134,9 +134,9 @@ jobs:
 
       - name: Verify executable
         run: |
-          if [ -f "dist/api-automation-agent" ]; then
+          if [ -f "dist/api-agent" ]; then
             echo "✅ Executable built successfully"
-            file_size=$(stat -f%z "dist/api-automation-agent" 2>/dev/null || stat -c%s "dist/api-automation-agent" 2>/dev/null)
+            file_size=$(stat -f%z "dist/api-agent" 2>/dev/null || stat -c%s "dist/api-agent" 2>/dev/null)
             echo "📏 Size: $file_size bytes"
           else
             echo "❌ Build failed - executable not found"
@@ -146,46 +146,45 @@ jobs:
       - name: Create distribution package
         run: |
           # Create clean distribution folder
-          mkdir -p api-automation-agent-macos
+          mkdir -p api-agent-macos
 
           # Copy essential files
-          cp dist/api-automation-agent api-automation-agent-macos/
-          cp example.env api-automation-agent-macos/
-          cp USAGE-GUIDE.txt api-automation-agent-macos/
+          cp dist/api-agent api-agent-macos/
+          cp example.env api-agent-macos/
+          cp USAGE-GUIDE.txt api-agent-macos/
 
       - name: Create TAR.GZ archive
         run: |
           timestamp="${{ needs.generate-timestamp.outputs.timestamp }}"
-          archive_name="api-automation-agent-macos-$timestamp.tar.gz"
-          tar -czf "$archive_name" -C . api-automation-agent-macos
+          archive_name="api-agent-macos-$timestamp.tar.gz"
+          tar -czf "$archive_name" -C . api-agent-macos
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: api-automation-agent-macos
-          path: api-automation-agent-macos-${{ needs.generate-timestamp.outputs.timestamp }}.tar.gz
+          name: api-agent-macos
+          path: api-agent-macos-${{ needs.generate-timestamp.outputs.timestamp }}.tar.gz
 
   # Consolidated release job that runs after both builds complete
   create-release:
     needs: [generate-timestamp, build-windows, build-macos]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/agent-cli' || startsWith(github.ref, 'refs/tags/v')
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
 
     steps:
-
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
-          name: api-automation-agent-windows
+          name: api-agent-windows
 
       - name: Download macOS artifact
         uses: actions/download-artifact@v4
         with:
-          name: api-automation-agent-macos
+          name: api-agent-macos
 
-      # Create latest release on main or agent-cli branch push
+      # Create latest release on main branch push
       - name: Create Latest Release
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/agent-cli'
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: api-automation-agent-build-${{ needs.generate-timestamp.outputs.timestamp }}-${{ github.ref_name }}
@@ -198,13 +197,13 @@ jobs:
             **Auto-generated from commit**
 
             ### Download Options
-            - **Windows**: `api-automation-agent-windows-${{ needs.generate-timestamp.outputs.timestamp }}.zip`
-            - **macOS**: `api-automation-agent-macos-${{ needs.generate-timestamp.outputs.timestamp }}.tar.gz`
+            - **Windows**: `api-agent-windows-${{ needs.generate-timestamp.outputs.timestamp }}.zip`
+            - **macOS**: `api-agent-macos-${{ needs.generate-timestamp.outputs.timestamp }}.tar.gz`
 
             ### Quick Start
             1. Download the package for your platform
             2. Create a `.env` file with your API key
-            3. Run: `api-automation-agent.exe --help` (Windows) or `./api-automation-agent --help` (macOS)
+            3. Run: `./api-agent --help` (Windows & macOS)
 
             ### Requirements
             - Windows 7+ or macOS 10.14+
@@ -219,8 +218,8 @@ jobs:
 
             For detailed usage instructions, see the included documentation.
           files: |
-            api-automation-agent-windows-${{ needs.generate-timestamp.outputs.timestamp }}.zip
-            api-automation-agent-macos-${{ needs.generate-timestamp.outputs.timestamp }}.tar.gz
+            api-agent-windows-${{ needs.generate-timestamp.outputs.timestamp }}.zip
+            api-agent-macos-${{ needs.generate-timestamp.outputs.timestamp }}.tar.gz
           draft: false
           prerelease: false
           generate_release_notes: false
@@ -233,8 +232,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            api-automation-agent-windows-${{ needs.generate-timestamp.outputs.timestamp }}.zip
-            api-automation-agent-macos-${{ needs.generate-timestamp.outputs.timestamp }}.tar.gz
+            api-agent-windows-${{ needs.generate-timestamp.outputs.timestamp }}.zip
+            api-agent-macos-${{ needs.generate-timestamp.outputs.timestamp }}.tar.gz
           body: |
             ## 🚀 API Automation Agent Release
 
@@ -244,13 +243,13 @@ jobs:
             - Includes all dependencies
 
             ### Download Options
-            - **Windows**: `api-automation-agent-windows-${{ needs.generate-timestamp.outputs.timestamp }}.zip`
-            - **macOS**: `api-automation-agent-macos-${{ needs.generate-timestamp.outputs.timestamp }}.tar.gz`
+            - **Windows**: `api-agent-windows-${{ needs.generate-timestamp.outputs.timestamp }}.zip`
+            - **macOS**: `api-agent-macos-${{ needs.generate-timestamp.outputs.timestamp }}.tar.gz`
 
             ### Quick Start
             1. Download the package for your platform
             2. Create a `.env` file with your API key  
-            3. Run: `api-automation-agent.exe --help` (Windows) or `./api-automation-agent --help` (macOS)
+            3. Run: `./api-agent --help` (Windows & macOS)
 
             ### Requirements
             - Windows 7+ or macOS 10.14+

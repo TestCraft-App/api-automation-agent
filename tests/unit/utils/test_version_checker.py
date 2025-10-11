@@ -25,14 +25,12 @@ from src.utils.version_checker import (
         ("build-15", "build-10", False),
         ("build-15", "build-15", False),
         ("build-1", "build-100", True),
-        
         # Date-based build comparisons
         ("build-20250920-1200", "build-20250920-1300", True),
         ("build-20250920-1300", "build-20250920-1200", False),
         ("build-20250920-1200", "build-20250921-1200", True),
         ("build-20250921-1200", "build-20250920-1200", False),
         ("build-20250920-1200", "build-20250920-1200", False),
-        
         # Semantic version comparisons
         ("1.0.0", "1.1.0", True),
         ("1.1.0", "1.0.0", False),
@@ -41,11 +39,9 @@ from src.utils.version_checker import (
         ("2.0.0", "1.0.0", False),
         ("1.0.0", "1.0.1", True),
         ("1.0.1", "1.0.0", False),
-        
         # Mixed type comparisons (fallback to string comparison)
         ("1.0.0", "build-20250920-1200", True),
         ("build-20250920-1200", "1.5.0", False),
-        
         # Edge cases
         ("", "1.0.0", True),
         ("1.0.0", "", False),
@@ -63,16 +59,13 @@ def test_compare_versions(local_version, remote_version, expected):
         # Semantic version tags
         ("v1.2.3", "1.2.3"),
         ("v2.0.0", "2.0.0"),
-        
         # Date-based build tags
         ("api-automation-agent-build-20250920-1200-main", "build-20250920-1200"),
         ("api-automation-agent-build-20250923-1425-agent-cli", "build-20250923-1425"),
-        
         # Legacy build tags
         ("api-automation-agent-build-15-main", "build-15"),
         ("api-automation-agent-build-100-agent-cli", "build-100"),
         ("build-25", "build-25"),
-        
         # Other formats
         ("1.0.0", "1.0.0"),
         ("release-v1.0.0", "release-v1.0.0"),
@@ -188,7 +181,7 @@ def test_check_for_updates_newer_available(mock_print, mock_is_newer):
 
     check_for_updates()
 
-    print_calls = [call.args[0] for call in mock_print.call_args_list]
+    print_calls = [call.args[0] for call in mock_print.call_args_list if call.args]
     assert any("🆕 A newer version (build-25) is available!" in call for call in print_calls)
     assert any("Current version: 1.0.0" in call for call in print_calls)
 
@@ -201,7 +194,7 @@ def test_check_for_updates_up_to_date(mock_print, mock_is_newer):
 
     check_for_updates()
 
-    print_calls = [call.args[0] for call in mock_print.call_args_list]
+    print_calls = [call.args[0] for call in mock_print.call_args_list if call.args]
     assert any("✅ You're running the latest version (build-25)" in call for call in print_calls)
 
 
@@ -212,7 +205,7 @@ def test_check_for_updates_exception_handling(mock_print, mock_is_newer):
 
     check_for_updates()
 
-    print_calls = [call.args[0] for call in mock_print.call_args_list]
+    print_calls = [call.args[0] for call in mock_print.call_args_list if call.args]
     assert any("⚠️ Version check failed:" in call for call in print_calls)
 
 
@@ -323,7 +316,7 @@ def test_fetch_success(mock_urlopen):
     mock_response = mock_urlopen.return_value.__enter__.return_value
     mock_response.status = 200
     mock_response.read.return_value.decode.return_value = json.dumps(expected_data)
-    
+
     result = _fetch("https://api.github.com/test")
     assert result == expected_data
 
@@ -331,7 +324,7 @@ def test_fetch_success(mock_urlopen):
 @patch("urllib.request.urlopen")
 def test_fetch_network_error(mock_urlopen):
     mock_urlopen.side_effect = URLError("Network error")
-    
+
     result = _fetch("https://api.github.com/test")
     assert result is None
 
@@ -340,7 +333,7 @@ def test_fetch_network_error(mock_urlopen):
 def test_fetch_http_error(mock_urlopen):
     mock_response = mock_urlopen.return_value.__enter__.return_value
     mock_response.status = 404
-    
+
     result = _fetch("https://api.github.com/test")
     assert result is None
 
@@ -350,6 +343,6 @@ def test_fetch_invalid_json(mock_urlopen):
     mock_response = mock_urlopen.return_value.__enter__.return_value
     mock_response.status = 200
     mock_response.read.return_value.decode.return_value = "invalid json"
-    
+
     result = _fetch("https://api.github.com/test")
     assert result is None

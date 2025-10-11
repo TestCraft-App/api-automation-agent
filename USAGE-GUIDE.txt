@@ -35,7 +35,7 @@ OpenAI Models:
 MANUAL SETUP (ALTERNATIVE):
 
 WINDOWS:
-1. Extract api-automation-agent-windows.zip
+1. Extract api-agent-windows.zip
 2. Open Command Prompt or PowerShell in the extracted folder
 3. Copy example.env to .env:
    copy example.env .env
@@ -46,8 +46,8 @@ WINDOWS:
 
 MACOS:
 1. Extract the tar.gz file:
-   tar -xzf api-automation-agent-macos.tar.gz
-   cd api-automation-agent-macos
+   tar -xzf api-agent-macos.tar.gz
+   cd api-agent-macos
 2. Copy example.env to .env:
    cp example.env .env
 3. Edit .env with any text editor and add your API key:
@@ -55,47 +55,47 @@ MACOS:
    OR
    ANTHROPIC_API_KEY=your_key_here
 4. Make executable (if needed):
-   chmod +x api-automation-agent
+   chmod +x api-agent
 
 ================================================================================================
 BASIC USAGE
 ================================================================================================
 
 WINDOWS:
-- Show help: api-automation-agent.exe --help
-- Generate framework: api-automation-agent.exe swagger.json
-- Custom folder: api-automation-agent.exe swagger.json --destination-folder my-tests
+- Show help: ./api-agent --help
+- Generate framework: ./api-agent swagger.json
+- Custom folder: ./api-agent swagger.json --destination-folder my-tests
 
 MACOS:
-- Show help: ./api-automation-agent --help
-- Generate framework: ./api-automation-agent swagger.json
-- Custom folder: ./api-automation-agent swagger.json --destination-folder my-tests
+- Show help: ./api-agent --help
+- Generate framework: ./api-agent swagger.json
+- Custom folder: ./api-agent swagger.json --destination-folder my-tests
 
 ================================================================================================
 ADVANCED USAGE
 ================================================================================================
 
 List available endpoints:
-    api-automation-agent.exe --list-endpoints
+    ./api-agent --list-endpoints
 
 Generate framework for specific endpoints:
-    api-automation-agent.exe --destination-folder my-framework --endpoints /pets /users
+    ./api-agent --destination-folder my-framework --endpoints /pets /users
 
 Generate with different options:
     Models only:
-    api-automation-agent.exe --generate models --destination-folder my-framework
+    ./api-agent --generate models --destination-folder my-framework
 
     Models and first test:
-    api-automation-agent.exe --generate models_and_first_test --destination-folder my-framework
+    ./api-agent --generate models_and_first_test --destination-folder my-framework
 
     Models and all tests:
-    api-automation-agent.exe --generate models_and_tests --destination-folder my-framework
+    ./api-agent --generate models_and_tests --destination-folder my-framework
 
 ================================================================================================
 EXAMPLE COMPLETE COMMAND
 ================================================================================================
 
-api-automation-agent.exe --destination-folder my-pet-store-tests --endpoints /pets /store --generate models_and_tests
+./api-agent --destination-folder my-pet-store-tests --endpoints /pets /store --generate models_and_tests
 
 ================================================================================================
 RUNNING GENERATED TESTS
@@ -110,7 +110,7 @@ FILE STRUCTURE AFTER GENERATION
 ================================================================================================
 
 your-folder/
-├── api-automation-agent.exe
+├── api-agent.exe
 ├── .env
 └── my-api-framework/          (generated framework)
     ├── package.json
@@ -140,7 +140,7 @@ TROUBLESHOOTING
    - Verify: node --version
 
 5. Permission denied (macOS):
-   - Run: chmod +x api-automation-agent
+   - Run: chmod +x api-agent
 
 6. API key issues:
    - Check .env file has correct key without extra spaces
@@ -153,6 +153,6 @@ SUPPORT
 GitHub: https://github.com/TestCraft-App/api-automation-agent
 Issues: Report bugs or request features on GitHub
 
-Run "api-automation-agent.exe --help" for all available options and parameters.
+Run "./api-agent --help" for all available options and parameters.
 
 Happy Testing! 🧪✨

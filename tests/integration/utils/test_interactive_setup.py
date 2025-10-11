@@ -101,7 +101,7 @@ LANGCHAIN_DEBUG=False
     def test_update_env_file_new_file(self, mock_get_dir):
         """Test updating env file when file doesn't exist."""
         mock_get_dir.return_value = self.test_dir
-        provider = InteractiveSetup.SUPPORTED_PROVIDERS["1"]
+        provider = InteractiveSetup.SUPPORTED_PROVIDERS["2"]
 
         with patch("builtins.print"):
             result = InteractiveSetup.update_env_file(provider, "gpt-4o", "test-key")
@@ -123,7 +123,7 @@ DEBUG=False
 """
         )
 
-        provider = InteractiveSetup.SUPPORTED_PROVIDERS["1"]
+        provider = InteractiveSetup.SUPPORTED_PROVIDERS["2"]
 
         with patch("builtins.print"):
             result = InteractiveSetup.update_env_file(provider, "gpt-4o", "new-key")
@@ -139,7 +139,7 @@ DEBUG=False
     def test_update_env_file_anthropic_provider(self, mock_get_dir):
         """Test updating env file with Anthropic provider."""
         mock_get_dir.return_value = self.test_dir
-        provider = InteractiveSetup.SUPPORTED_PROVIDERS["2"]
+        provider = InteractiveSetup.SUPPORTED_PROVIDERS["1"]
 
         with patch("builtins.print"):
             result = InteractiveSetup.update_env_file(provider, "claude-sonnet-4-20250514", "sk-ant-key")
@@ -157,7 +157,7 @@ DEBUG=False
         def mock_api_key_input(prompt):
             return "sk-test-openai-key"
 
-        with patch("builtins.input", side_effect=["2", ""]):  # For provider and model choice
+        with patch("builtins.input", side_effect=["2", ""]):
             with patch("builtins.print"):
                 result = InteractiveSetup.run_interactive_setup(input_func=mock_api_key_input)
 
@@ -176,7 +176,7 @@ DEBUG=False
         def mock_api_key_input(prompt):
             return "sk-ant-test-key"
 
-        with patch("builtins.input", side_effect=["1", "1"]):  # For provider and model choice
+        with patch("builtins.input", side_effect=["1", "1"]):
             with patch("builtins.print"):
                 result = InteractiveSetup.run_interactive_setup(input_func=mock_api_key_input)
 
@@ -195,9 +195,7 @@ DEBUG=False
         def mock_api_key_input(prompt):
             return "sk-test-key"
 
-        with patch(
-            "builtins.input", side_effect=["3", "1", ""]
-        ):  # For invalid provider, valid provider, model choice
+        with patch("builtins.input", side_effect=["3", "1", ""]):
             with patch("builtins.print"):
                 result = InteractiveSetup.run_interactive_setup(input_func=mock_api_key_input)
 
@@ -234,7 +232,7 @@ class TestInteractiveSetupConfiguration:
 
     def test_openai_provider_configuration(self):
         """Test OpenAI provider configuration."""
-        openai_config = InteractiveSetup.SUPPORTED_PROVIDERS["1"]
+        openai_config = InteractiveSetup.SUPPORTED_PROVIDERS["2"]
 
         assert openai_config["name"] == "OpenAI"
         assert openai_config["env_key"] == "OPENAI_API_KEY"
@@ -244,9 +242,9 @@ class TestInteractiveSetupConfiguration:
 
     def test_anthropic_provider_configuration(self):
         """Test Anthropic provider configuration."""
-        anthropic_config = InteractiveSetup.SUPPORTED_PROVIDERS["2"]
+        anthropic_config = InteractiveSetup.SUPPORTED_PROVIDERS["1"]
 
-        assert anthropic_config["name"] == "Anthropic"
+        assert anthropic_config["name"] == "Anthropic (recommended)"
         assert anthropic_config["env_key"] == "ANTHROPIC_API_KEY"
         assert len(anthropic_config["models"]) > 0
         assert anthropic_config["default_model"] in anthropic_config["models"]

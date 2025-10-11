@@ -2,8 +2,9 @@
 .env
 /generated-framework_*/
 /benchmarks/reports/*
-# Windows distribution folder
-/api-automation-agent-windows/
+# Distribution folders
+/api-agent-windows/
+/api-agent-macos/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

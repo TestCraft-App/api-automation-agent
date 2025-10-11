@@ -22,22 +22,22 @@ fi
 
 pyinstaller --clean --noconfirm --log-level WARN api-automation-agent.spec
 
-if [ -f "dist/api-automation-agent" ]; then
+if [ -f "dist/api-agent" ]; then
     echo "✅ Build completed successfully!"
-    echo "📦 Executable created: dist/api-automation-agent"
+    echo "📦 Executable created: dist/api-agent"
     
-    file_size=$(stat -f%z "dist/api-automation-agent" 2>/dev/null || stat -c%s "dist/api-automation-agent" 2>/dev/null)
+    file_size=$(stat -f%z "dist/api-agent" 2>/dev/null || stat -c%s "dist/api-agent" 2>/dev/null)
     echo "📏 Size: $file_size bytes"
     
     echo "📁 Creating distribution package..."
-    if [ -d "api-automation-agent-macos" ]; then
-        rm -rf "api-automation-agent-macos"
+    if [ -d "api-agent-macos" ]; then
+        rm -rf "api-agent-macos"
     fi
-    mkdir "api-automation-agent-macos"
+    mkdir "api-agent-macos"
     
-cp "dist/api-automation-agent" "api-automation-agent-macos/"
-cp "example.env" "api-automation-agent-macos/"
-cp "USAGE-GUIDE.txt" "api-automation-agent-macos/"    echo "✅ Distribution package created: api-automation-agent-macos/"
+cp "dist/api-agent" "api-agent-macos/"
+cp "example.env" "api-agent-macos/"
+cp "USAGE-GUIDE.txt" "api-agent-macos/"    echo "✅ Distribution package created: api-agent-macos/"
 else
     echo "❌ Build failed!"
     exit 1
