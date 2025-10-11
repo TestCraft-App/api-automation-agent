@@ -3,7 +3,7 @@ name: Build and Release
 on:
   push:
     branches: [main]
-    tags: ['v*']
+    tags: ["v*"]
 
 permissions:
   contents: write
@@ -48,7 +48,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
@@ -120,7 +120,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
@@ -189,7 +189,7 @@ jobs:
         with:
           tag_name: api-automation-agent-build-${{ needs.generate-timestamp.outputs.timestamp }}-${{ github.ref_name }}
 
-          name: 'API Automation Agent — Build ${{ needs.generate-timestamp.outputs.timestamp }} (${{ github.ref_name }})'
+          name: "API Automation Agent — Build ${{ needs.generate-timestamp.outputs.timestamp }} (${{ github.ref_name }})"
 
           body: |
             ## 🚀 API Automation Agent
@@ -202,7 +202,6 @@ jobs:
 
             ### Quick Start
             1. Download the package for your platform
-            2. Create a `.env` file with your API key
             3. Run: `./api-agent --help` (Windows & macOS)
 
             ### Requirements

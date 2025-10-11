@@ -109,7 +109,7 @@ class InteractiveSetup:
             print("https://platform.openai.com/api-keys")
         else:
             print("https://console.anthropic.com/")
-        print("⚠️  Your API key will be stored securely in the .env file")
+        print("\n⚠️  Your API key will be stored securely in the .env file")
 
         if input_func is None:
             input_func = lambda prompt: getpass.getpass("Enter your API key: ")
