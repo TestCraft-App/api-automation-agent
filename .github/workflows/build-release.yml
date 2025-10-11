@@ -2,7 +2,7 @@ name: Build and Release
 
 on:
   push:
-    branches: [agent-cli]
+    branches: [main]
     tags: ["v*"]
 
 permissions:
