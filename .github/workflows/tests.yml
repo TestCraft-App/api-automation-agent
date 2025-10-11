@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: "3.11"
@@ -19,4 +21,18 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-test.txt
       - name: Run Tests
-        run: pytest --cov=src --cov-report=term --cov-config=.coveragerc
+        run: |
+          pytest --cov=src --cov-report=term --cov-report=xml --cov-config=.coveragerc
+          cp coverage.xml /tmp/pr_coverage.xml
+          rm coverage.xml
+      - name: Run Base Coverage
+        if: github.event_name == 'pull_request'
+        run: |
+          git checkout --progress --force "${{ github.event.pull_request.base.sha }}"
+          pytest --cov=src --cov-report=term --cov-report=xml --cov-config=.coveragerc
+          cp coverage.xml /tmp/base_coverage.xml
+          rm coverage.xml
+          git checkout --progress --force "$GITHUB_SHA"
+      - name: Enforce Coverage Non-Regression
+        if: github.event_name == 'pull_request'
+        run: python scripts/coverage_guard.py --base /tmp/base_coverage.xml --pr /tmp/pr_coverage.xml
