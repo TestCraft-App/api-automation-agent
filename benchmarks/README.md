@@ -65,8 +65,8 @@ python benchmarks/benchmark_runner.py --openapi-spec <path_to_openapi_spec> --ll
 
 *   `--openapi-spec` (Required): Path to the OpenAPI specification file (e.g., `path/to/your/api.yaml`).
 *   `--llms` (Required): A comma-separated list of LLM models to benchmark. Do not use spaces between names.
-    *   Available choices: `GPT_5`, `GPT_4_O`, `GPT_4_1`, `O3`, `O4_MINI`, `CLAUDE_SONNET_3_5`, `CLAUDE_SONNET_3_7`, `CLAUDE_SONNET_4` (these are derived from the `Model` enum in `src/configuration/models.py`).
-    *   Example: `GPT_5,CLAUDE_SONNET_4`
+    *   Available choices: `GPT_5`, `GPT_4_O`, `GPT_4_1`, `O3`, `CLAUDE_SONNET_3_5`, `CLAUDE_SONNET_3_7`, `CLAUDE_SONNET_4`, `CLAUDE_SONNET_4_5` (these are derived from the `Model` enum in `src/configuration/models.py`).
+    *   Example: `GPT_5,CLAUDE_SONNET_4_5`
 *   `--endpoints` (Optional): Specific endpoints to target from the OpenAPI specification. If not provided, all endpoints will be targeted.
     *   Example: `/users/{id}`
 *   `--output-dir` (Optional): Directory to save benchmark reports and generated frameworks.
@@ -78,10 +78,10 @@ python benchmarks/benchmark_runner.py --openapi-spec <path_to_openapi_spec> --ll
 **Example Usage**:
 
 ```bash
-python benchmarks/benchmark_runner.py --openapi-spec http://localhost:3000/swagger.json --endpoints /adopters --llms GPT_5,CLAUDE_SONNET_4 --output-dir ./benchmark_run_results
+python benchmarks/benchmark_runner.py --openapi-spec http://localhost:3000/swagger.json --endpoints /adopters --llms GPT_5,CLAUDE_SONNET_4_5 --output-dir ./benchmark_run_results
 ```
 
-This command will run the benchmark using the `http://localhost:3000/swagger.json` API definition, targeting the `/adopters` endpoint for the `GPT_5` and `CLAUDE_SONNET_4` models, saving results to the `./benchmark_run_results` directory.
+This command will run the benchmark using the `http://localhost:3000/swagger.json` API definition, targeting the `/adopters` endpoint for the `GPT_5` and `CLAUDE_SONNET_4_5` models, saving results to the `./benchmark_run_results` directory.
 
 > **Important Note on Cost**: Running benchmarks, especially with multiple LLMs and/or large OpenAPI specifications (i.e., many endpoints), can incur significant costs due to API calls to the language models. It is highly recommended to start by targeting a single endpoint or a small set of endpoints, as shown in the example above, to understand the potential cost before running benchmarks against an entire API specification. Refer to your LLM provider's pricing page for details on token costs.
 
