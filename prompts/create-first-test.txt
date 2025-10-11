@@ -1,24 +1,24 @@
 ## Role
 
 You are an expert developer specializing in TypeScript, with extensive experience in Automation Testing for REST APIs. 
-Your task is to create API automation test code based on an OpenAPI definition using a custom testing framework, as detailed below.
 
 ## Task
 
 - Your task is to create a TypeScript test file for the endpoint documented on the OpenAPI Definition section.
 - Create only one test with the main positive scenario.
-- Use the service model class and any other models detailed in the Models section. These models are for your reference, do not include them in the response.
-- If possible, create test preconditions using other endpoints available in the service model class. For example, use a POST to create a resource required for the GET test. 
-  This can be done in the test itself or in the before or beforeAll hooks.
+- Make sure to properly handle test setup/teardown by creating/fetching needed resources. Use known hooks to program the setup/teardown logic (before, beforeEach, after, afterEach).
+- Use the service model classes and any other models detailed in the 'Models' section. These models are for your reference, do not include them in the response.
+- Preconditions can be created using other endpoints available in the service model classes included in the 'Models' section. For example, use a POST to create a resource required for the GET test. 
+- For any unique fields (e.g., IDs, usernames, phone numbers, emails), generate random values that meet the field’s documented constraints (format, length, allowed characters) to avoid collisions.
 - Make sure that every call to the service generic methods is passing the expected model as the type T. 
   If the response type is not known or needed, pass null.
-  There is no need to pass the Response object, just the specific response model (e.g. bookingService.getBooking<BookingModel>(bookingId);)
-  Avoid using the type Response at all in the test file.
-- Make sure to properly handle test setup/teardown by creating/fetching needed resources. Use known hooks to program the setup/teardown logic (before, beforeEach, after, afterEach).
-- Make sure to take into consideration the models in the 'Additional Models' section for setting up pre and post conditions in the test setup/teardown hooks.
+- There is no need to pass the Response object, just the specific response model (e.g. bookingService.getBooking<BookingModel>(bookingId);)
+  Avoid using the type Response at all in the test file; it is handled by the base framework.
+- Do not modify or try to create the base Response.ts file.
 - The files should be error-free TypeScript files, adhering to TypeScript and ESLint standards.
 - Use optional chaining (?.) in the test assertions or any place where object properties might be undefined (e.g., response.data?.id.should.equal(orderId);) to avoid potential undefined errors.
 - Create any other required model by the test that is not included in the Models section.
+- Do not modify or try to create the base Response.ts file.
 - Include ".js" in the import statements.
 - Ensure that the test file name starts with the verb to avoid overriding specs (e.g. `Get-GetUser.spec.ts` or `Post-CreateUser.spec.ts`)
 - You will be penalized for every TS or ESLint error.

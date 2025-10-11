@@ -53,10 +53,6 @@ class FrameworkGenerator:
         """Helper method to log errors consistently"""
         self.logger.error(f"{message}: {exc}")
 
-    def get_aggregated_usage_metadata(self) -> AggregatedUsageMetadata:
-        """Returns the aggregated LLM usage metadata Pydantic model instance."""
-        return self.llm_service.get_aggregated_usage_metadata()
-
     def save_state(self):
         self.checkpoint.save(
             state={
@@ -185,6 +181,32 @@ class FrameworkGenerator:
         except Exception as e:
             self._log_error("Error during final checks", e)
             raise
+
+    def get_aggregated_usage_metadata(self) -> AggregatedUsageMetadata:
+        """Returns the aggregated LLM usage metadata Pydantic model instance."""
+        return self.llm_service.get_aggregated_usage_metadata()
+
+    def report_generation_metrics(self, duration_seconds: float):
+        usage_metadata = self.get_aggregated_usage_metadata()
+
+        hours = int(duration_seconds // 3600)
+        remaining_seconds = duration_seconds % 3600
+        minutes = int(remaining_seconds // 60)
+        seconds = int(remaining_seconds % 60)
+
+        formatted_duration = ""
+        if hours > 0:
+            formatted_duration = f"{hours}h {minutes}m {seconds}s"
+        elif minutes > 0:
+            formatted_duration = f"{minutes}m {seconds}s"
+        else:
+            formatted_duration = f"{seconds}s"
+
+        self.logger.info("\n📊 Generation Metrics:")
+        self.logger.info(f"   Duration: {formatted_duration}")
+        self.logger.info(f"   Input Tokens: {usage_metadata.total_input_tokens:,}")
+        self.logger.info(f"   Output Tokens: {usage_metadata.total_output_tokens:,}")
+        self.logger.info(f"   Total Cost (USD): ${usage_metadata.total_cost:.4f}")
 
     def _generate_models(self, api_definition: APIPath | str) -> Optional[List[GeneratedModel]]:
         """Generate models for the API definition."""

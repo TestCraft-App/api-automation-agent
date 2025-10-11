@@ -69,9 +69,12 @@ class SwaggerProcessor(APIProcessor):
 
             result = APIDefinition(endpoints=self.config.endpoints, base_yaml=base_definition)
             for definition in merged_definitions:
-                if definition.type == "path":
+                if not result.should_process_endpoint(definition.path):
+                    self.logger.debug(f"Skipping endpoint: {definition.path}")
+                    continue
+                if isinstance(definition, APIPath):
                     result.add_definition(APIPath(path=definition.path, yaml=definition.yaml))
-                elif definition.type == "verb":
+                elif isinstance(definition, APIVerb):
                     result.add_definition(
                         APIVerb(
                             verb=definition.verb,
@@ -86,7 +89,15 @@ class SwaggerProcessor(APIProcessor):
                 if isinstance(definition, APIVerb):
                     self.logger.debug(f"Verb: {definition.verb}")
 
-            self.logger.info("Successfully processed API definition.")
+            if not result.definitions:
+                if self.config.endpoints:
+                    self.logger.error(
+                        f"\n❌ The API definition does not contain any of the provided endpoints: {', '.join(self.config.endpoints)}"
+                    )
+                else:
+                    self.logger.error("❌ No endpoints were found in the API definition.")
+            else:
+                self.logger.info(f"Successfully processed {len(result.definitions)} API definitions.")
             return result
         except Exception as e:
             self.logger.error(f"Error processing API definition: {e}")
@@ -134,14 +145,14 @@ class SwaggerProcessor(APIProcessor):
 
     def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath]:
         """Get all path definitions that should be processed."""
-        return api_definition.get_filtered_paths()
+        return api_definition.get_paths()
 
     def get_api_path_name(self, api_path: APIPath) -> str:
         return api_path.path
 
     def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb]:
         """Get all verb definitions that should be processed."""
-        return api_definition.get_filtered_verbs()
+        return api_definition.get_verbs()
 
     def get_api_verb_path(self, api_verb: APIVerb) -> str:
         return api_verb.path

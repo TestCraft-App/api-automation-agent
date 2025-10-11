@@ -6,6 +6,95 @@ from src.configuration.config import Config
 from src.models import APIPath, APIVerb
 
 
+def test_swagger_processor_processes_valid_spec():
+    processor = SwaggerProcessor(
+        file_loader=FileService(),
+        splitter=APIDefinitionSplitter(),
+        merger=APIDefinitionMerger(),
+        components_filter=APIComponentsFilter(),
+        file_service=FileService(),
+        config=Config(),
+    )
+    result = processor.process_api_definition("tests/unit/api_definitions/spec.json")
+    assert result is not None
+    assert len(result.definitions) == 7
+    paths = result.get_paths()
+    verbs = result.get_verbs()
+    assert len(paths) == 3
+    assert len(verbs) == 4
+
+
+def test_swagger_processsor_filters_endpoint_with_one_verb():
+    processor = SwaggerProcessor(
+        file_loader=FileService(),
+        splitter=APIDefinitionSplitter(),
+        merger=APIDefinitionMerger(),
+        components_filter=APIComponentsFilter(),
+        file_service=FileService(),
+        config=Config(),
+    )
+    processor.config.endpoints = ["/items"]
+    result = processor.process_api_definition("tests/unit/api_definitions/spec.json")
+    paths = result.get_paths()
+    verbs = result.get_verbs()
+    assert len(paths) == 1
+    assert len(verbs) == 1
+    assert all(p.path.startswith("/items") for p in paths)
+    assert all(v.path.startswith("/items") for v in verbs)
+
+
+def test_swagger_processsor_filters_endpoint_with_multiple_verbs():
+    processor = SwaggerProcessor(
+        file_loader=FileService(),
+        splitter=APIDefinitionSplitter(),
+        merger=APIDefinitionMerger(),
+        components_filter=APIComponentsFilter(),
+        file_service=FileService(),
+        config=Config(),
+    )
+    processor.config.endpoints = ["/users"]
+    result = processor.process_api_definition("tests/unit/api_definitions/spec.json")
+    paths = result.get_paths()
+    verbs = result.get_verbs()
+    assert len(paths) == 1
+    assert len(verbs) == 2
+    assert all(p.path.startswith("/users") for p in paths)
+    assert all(v.path.startswith("/users") for v in verbs)
+
+
+def test_swagger_processsor_filters_multiple_endpoints():
+    processor = SwaggerProcessor(
+        file_loader=FileService(),
+        splitter=APIDefinitionSplitter(),
+        merger=APIDefinitionMerger(),
+        components_filter=APIComponentsFilter(),
+        file_service=FileService(),
+        config=Config(),
+    )
+    processor.config.endpoints = ["/users", "/items"]
+    result = processor.process_api_definition("tests/unit/api_definitions/spec.json")
+    paths = result.get_paths()
+    verbs = result.get_verbs()
+    assert len(paths) == 2
+    assert len(verbs) == 3
+    assert all(p.path.startswith("/users") or p.path.startswith("/items") for p in paths)
+    assert all(v.path.startswith("/users") or v.path.startswith("/items") for v in verbs)
+
+
+def test_swagger_processsor_no_matching_endpoints():
+    processor = SwaggerProcessor(
+        file_loader=FileService(),
+        splitter=APIDefinitionSplitter(),
+        merger=APIDefinitionMerger(),
+        components_filter=APIComponentsFilter(),
+        file_service=FileService(),
+        config=Config(),
+    )
+    processor.config.endpoints = ["/nonexistent"]
+    result = processor.process_api_definition("tests/unit/api_definitions/spec.json")
+    assert len(result.definitions) == 0
+
+
 def test_swagger_processor_rebuilds_full_path_definition():
     spec = {
         "openapi": "3.0.0",

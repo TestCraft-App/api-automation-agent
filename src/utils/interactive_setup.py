@@ -14,14 +14,19 @@ class InteractiveSetup:
         "1": {
             "name": "Anthropic (recommended)",
             "env_key": "ANTHROPIC_API_KEY",
-            "models": ["claude-sonnet-4-20250514", "claude-3-5-sonnet-latest", "claude-3-7-sonnet-latest"],
-            "default_model": "claude-sonnet-4-20250514",
+            "models": [
+                "claude-sonnet-4-5-20250929",
+                "claude-sonnet-4-20250514",
+                "claude-3-7-sonnet-latest",
+                "claude-3-5-sonnet-latest",
+            ],
+            "default_model": "claude-sonnet-4-5-20250929",
         },
         "2": {
             "name": "OpenAI",
             "env_key": "OPENAI_API_KEY",
-            "models": ["gpt-4o", "gpt-4.1", "gpt-5", "o3", "o4-mini"],
-            "default_model": "gpt-4o",
+            "models": ["gpt-5", "gpt-4o", "gpt-4.1", "o3"],
+            "default_model": "gpt-5",
         },
     }
 

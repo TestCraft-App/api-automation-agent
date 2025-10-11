@@ -166,7 +166,7 @@ DEBUG=False
 
         content = self.env_file.read_text()
         assert "OPENAI_API_KEY=sk-test-openai-key" in content
-        assert "MODEL=gpt-4o" in content
+        assert "MODEL=gpt-5" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_anthropic(self, mock_get_dir):
@@ -185,7 +185,7 @@ DEBUG=False
 
         content = self.env_file.read_text()
         assert "ANTHROPIC_API_KEY=sk-ant-test-key" in content
-        assert "MODEL=claude-sonnet-4-20250514" in content
+        assert "MODEL=claude-sonnet-4-5-20250929" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_invalid_provider_then_valid(self, mock_get_dir):

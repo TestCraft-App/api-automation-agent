@@ -107,6 +107,8 @@ def main(
             framework_generator.restore_state(last_namespace)
 
         api_definition = framework_generator.process_api_definition()
+        if not api_definition.definitions:
+            return
 
         if config.list_endpoints:
             EndpointLister.list_endpoints(api_definition.definitions)
@@ -126,26 +128,7 @@ def main(
 
             logger.info("\n✅ Framework generation completed successfully!")
 
-            usage_metadata = framework_generator.get_aggregated_usage_metadata()
-
-            def format_duration(duration_seconds: float) -> str:
-                hours = int(duration_seconds // 3600)
-                remaining_seconds = duration_seconds % 3600
-                minutes = int(remaining_seconds // 60)
-                seconds = int(remaining_seconds % 60)
-
-                if hours > 0:
-                    return f"{hours}h {minutes}m {seconds}s"
-                elif minutes > 0:
-                    return f"{minutes}m {seconds}s"
-                else:
-                    return f"{seconds}s"
-
-            logger.info("\n📊 Generation Metrics:")
-            logger.info(f"   Duration: {format_duration(duration_seconds)}")
-            logger.info(f"   Input Tokens: {usage_metadata.total_input_tokens:,}")
-            logger.info(f"   Output Tokens: {usage_metadata.total_output_tokens:,}")
-            logger.info(f"   Total Cost (USD): ${usage_metadata.total_cost:.4f}")
+            framework_generator.report_generation_metrics(duration_seconds)
 
             if test_files:
                 test_controller.run_tests_flow(test_files)

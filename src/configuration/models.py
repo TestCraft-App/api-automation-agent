@@ -15,7 +15,6 @@ class Model(Enum):
         "o3",
         ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=8.0),
     )
-    O4_MINI = ("o4-mini", ModelCost(input_cost_per_million_tokens=1.1, output_cost_per_million_tokens=4.4))
     CLAUDE_SONNET_3_5 = (
         "claude-3-5-sonnet-latest",
         ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
@@ -26,6 +25,10 @@ class Model(Enum):
     )
     CLAUDE_SONNET_4 = (
         "claude-sonnet-4-20250514",
+        ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
+    )
+    CLAUDE_SONNET_4_5 = (
+        "claude-sonnet-4-5-20250929",
         ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
     )
 
@@ -44,6 +47,7 @@ class Model(Enum):
             Model.CLAUDE_SONNET_3_5,
             Model.CLAUDE_SONNET_3_7,
             Model.CLAUDE_SONNET_4,
+            Model.CLAUDE_SONNET_4_5,
         ]
 
     def get_costs(self) -> ModelCost:
