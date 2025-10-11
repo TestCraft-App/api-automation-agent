@@ -1,6 +1,7 @@
 from argparse import Namespace
 import logging
 import os
+import sys
 import time
 import traceback
 
@@ -14,7 +15,10 @@ from src.configuration.config import Config, GenerationOptions, Envs
 from src.container import Container
 from src.test_controller import TestController
 from src.utils.checkpoint import Checkpoint
+from src.utils.interactive_setup import InteractiveSetup
 from src.utils.logger import Logger
+from src.utils.system_check import SystemCheck
+from src.utils.version_checker import check_for_updates
 from src.processors.swagger.endpoint_lister import EndpointLister
 from src.configuration.data_sources import DataSource, get_processor_for_data_source
 from src.processors.api_processor import APIProcessor
@@ -28,9 +32,9 @@ def main(
 ):
     """Main function to orchestrate the API framework generation process."""
     try:
-        logger.info("🚀 Starting the API Framework Generation Process! 🌟")
+        check_for_updates()
 
-        args = CLIArgumentParser.parse_arguments()
+        logger.info("\n🚀 Starting the API Framework Generation Process! 🌟")
 
         checkpoint = Checkpoint()
 
@@ -160,6 +164,20 @@ def main(
 
 
 if __name__ == "__main__":
+    print("🔍 Checking system requirements...")
+    if not SystemCheck.perform_system_checks():
+        print("❌ System requirements not met. Please install the required software and try again.")
+        sys.exit(1)
+
+    args = CLIArgumentParser.parse_arguments()
+    needs_api_access = not args.list_endpoints
+
+    if needs_api_access and not InteractiveSetup.check_env_file():
+        print("\n📝 Configuration required for API generation...")
+        if not InteractiveSetup.run_interactive_setup():
+            print("❌ Setup failed. Cannot continue without proper configuration.")
+            sys.exit(1)
+
     load_dotenv(override=True)
     env = Envs(os.getenv("ENV", "DEV").upper())
 

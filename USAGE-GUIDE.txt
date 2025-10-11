@@ -1,0 +1,158 @@
+================================================================================================
+                           API Automation Agent - Usage Guide
+================================================================================================
+
+PREREQUISITES
+- Windows 7+ or macOS 10.14+
+- Node.js (download from https://nodejs.org/)
+- API key (OpenAI or Anthropic)
+- Internet connection
+
+================================================================================================
+SETUP STEPS
+================================================================================================
+
+INTERACTIVE SETUP (RECOMMENDED - FIRST TIME USE):
+When you run the CLI for the first time, it will automatically guide you through setup:
+1. Select AI Provider (OpenAI or Anthropic)
+2. Choose Model from supported options  
+3. Enter your API key
+The CLI will create a .env file automatically.
+
+SUPPORTED MODELS:
+Anthropic Models:
+- claude-sonnet-4-20250514 (recommended)
+- claude-3-5-sonnet-latest
+- claude-3-7-sonnet-latest
+
+OpenAI Models:
+- gpt-4o (recommended)
+- gpt-4.1  
+- gpt-5
+- o3
+- o4-mini
+
+MANUAL SETUP (ALTERNATIVE):
+
+WINDOWS:
+1. Extract api-agent-windows.zip
+2. Open Command Prompt or PowerShell in the extracted folder
+3. Copy example.env to .env:
+   copy example.env .env
+4. Edit .env in Notepad and add your API key:
+   OPENAI_API_KEY=your_key_here
+   OR
+   ANTHROPIC_API_KEY=your_key_here
+
+MACOS:
+1. Extract the tar.gz file:
+   tar -xzf api-agent-macos.tar.gz
+   cd api-agent-macos
+2. Copy example.env to .env:
+   cp example.env .env
+3. Edit .env with any text editor and add your API key:
+   OPENAI_API_KEY=your_key_here
+   OR
+   ANTHROPIC_API_KEY=your_key_here
+4. Make executable (if needed):
+   chmod +x api-agent
+
+================================================================================================
+BASIC USAGE
+================================================================================================
+
+WINDOWS:
+- Show help: ./api-agent --help
+- Generate framework: ./api-agent swagger.json
+- Custom folder: ./api-agent swagger.json --destination-folder my-tests
+
+MACOS:
+- Show help: ./api-agent --help
+- Generate framework: ./api-agent swagger.json
+- Custom folder: ./api-agent swagger.json --destination-folder my-tests
+
+================================================================================================
+ADVANCED USAGE
+================================================================================================
+
+List available endpoints:
+    ./api-agent --list-endpoints
+
+Generate framework for specific endpoints:
+    ./api-agent --destination-folder my-framework --endpoints /pets /users
+
+Generate with different options:
+    Models only:
+    ./api-agent --generate models --destination-folder my-framework
+
+    Models and first test:
+    ./api-agent --generate models_and_first_test --destination-folder my-framework
+
+    Models and all tests:
+    ./api-agent --generate models_and_tests --destination-folder my-framework
+
+================================================================================================
+EXAMPLE COMPLETE COMMAND
+================================================================================================
+
+./api-agent --destination-folder my-pet-store-tests --endpoints /pets /store --generate models_and_tests
+
+================================================================================================
+RUNNING GENERATED TESTS
+================================================================================================
+
+After generation, navigate to the created folder:
+1. cd generated-framework_*
+2. npm test
+
+================================================================================================
+FILE STRUCTURE AFTER GENERATION
+================================================================================================
+
+your-folder/
+├── api-agent.exe
+├── .env
+└── my-api-framework/          (generated framework)
+    ├── package.json
+    ├── src/
+    ├── tests/
+    └── ...
+
+================================================================================================
+TROUBLESHOOTING
+================================================================================================
+
+1. "Missing API key" error:
+   - Make sure you have a ".env" file in the same folder as the executable
+   - Check that your API key is correctly formatted in the ".env" file
+
+2. "Internet connection" error:
+   - The tool requires internet to communicate with AI APIs
+   - Check your internet connection
+
+3. "Permission denied" error:
+   - Make sure you're running the command prompt as an administrator
+   - Or try running from a folder where you have write permissions
+
+4. Node.js not found:
+   - Install Node.js from https://nodejs.org/
+   - Restart your terminal
+   - Verify: node --version
+
+5. Permission denied (macOS):
+   - Run: chmod +x api-agent
+
+6. API key issues:
+   - Check .env file has correct key without extra spaces
+   - Ensure API key has sufficient permissions/credits
+
+================================================================================================
+SUPPORT
+================================================================================================
+
+GitHub: https://github.com/TestCraft-App/api-automation-agent
+Issues: Report bugs or request features on GitHub
+
+Run "./api-agent --help" for all available options and parameters.
+
+Happy Testing! 🧪✨

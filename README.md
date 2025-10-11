@@ -11,13 +11,40 @@ An open-source AI Agent that automatically generates an automation framework fro
 - Runs tests with detailed reporting and assertions
 - Migrates Postman collections to an open source automation framework, mantaining test structure and run order.
 
-## Prerequisites
+## Usage
 
-- Python 3.8 or higher
+### Standalone Installer
+
+Download the standalone executable:
+
+#### Prerequisites
+
+- Windows 7+ or macOS 10.14+
+- API key (OpenAI or Anthropic)
+- Node.js 18+
+
+#### Windows Users
+
+1. Go to [Releases](https://github.com/TestCraft-App/api-automation-agent/releases)
+2. Download `api-agent-windows.zip`
+3. Extract and follow the included `USAGE-GUIDE.txt`
+
+#### Mac Users
+
+1. Go to [Releases](https://github.com/TestCraft-App/api-automation-agent/releases)
+2. Download `api-agent-macos.tar.gz`
+3. Extract and follow the included `USAGE-GUIDE.txt`
+4. Make the executable runnable: `chmod +x api-agent`
+
+### Manual Installation (for development)
+
+#### Prerequisites
+
 - Node.js 18 or higher
+- Python 3.8 or higher
 - OpenAI API key or Anthropic API key (Anthropic API key required by default)
 
-## Installation
+#### Installation Steps
 
 1. Clone the repository:
 
@@ -60,9 +87,9 @@ This project supports both Anthropic and OpenAI language models:
 
 **Anthropic**
 
-- Claude 4 Sonnet (claude-sonnet-4-20250514)
-- Claude 3.7 Sonnet (claude-3-7-sonnet-latest)
+- Claude 4 Sonnet (claude-sonnet-4-20250514) - **Recommended**
 - Claude 3.5 Sonnet (claude-3-5-sonnet-latest)
+- Claude 3.7 Sonnet (claude-3-7-sonnet-latest)
 
 **OpenAI**
 
@@ -80,9 +107,19 @@ MODEL=o4-mini
 
 > **Important**: Before using any model, please check the current pricing and costs on the respective provider's website (Anthropic or OpenAI). Model costs can vary significantly and may impact your usage budget.
 
-## Usage
+## Running the Agent
 
-Run the agent using the following command:
+### Standalone Executable
+
+If you downloaded the standalone executable:
+
+```bash
+./api-agent <path_or_url_to_openapi_definition>
+```
+
+### Manual Installation
+
+If you installed manually for development:
 
 ```bash
 python ./main.py <path_or_url_to_openapi_definition>
@@ -108,43 +145,49 @@ The agent accepts either:
 
 ### Examples
 
-```bash
+````bash
 # Generate framework from a local file
+./api-agent api-spec.yaml
 python ./main.py api-spec.yaml
-```
 
 ```bash
 # Generate framework from a URL
+./api-agent https://api.example.com/swagger.json
 python ./main.py https://api.example.com/swagger.json
-```
+````
 
 ```bash
 # Generate list root endpoints
+./api-agent api-spec.yaml --list-endpoints
 python ./main.py api-spec.yaml --list-endpoints
 ```
 
 ```bash
 # Generate complete framework with all endpoints
+./api-agent api-spec.yaml
 python ./main.py api-spec.yaml
 ```
 
 ```bash
 # Generate models and tests for specific endpoints using an existing framework
+./api-agent api-spec.yaml --use-existing-framework --destination-folder ./my-api-framework --endpoints /user /store
 python ./main.py api-spec.yaml --use-existing-framework --destination-folder ./my-api-framework --endpoints /user /store
 ```
 
-```bash
+````bash
 # Generate only data and service models for all endpoints
+./api-agent api-spec.yaml --generate models
 python ./main.py api-spec.yaml --generate models
-```
 
 ```bash
 # Generate models and first test for each endpoint in a custom folder
+./api-agent api-spec.yaml --generate models_and_first_test --destination-folder ./quick-tests
 python ./main.py api-spec.yaml --generate models_and_first_test --destination-folder ./quick-tests
-```
+````
 
 ```bash
 # Combine options to generate specific endpoints with first test only
+./api-agent api-spec.yaml --endpoints /store --generate models_and_first_test
 python ./main.py api-spec.yaml --endpoints /store --generate models_and_first_test
 ```
 
@@ -190,10 +233,10 @@ The migration works best with well-structured APIs where:
 
 ### Usage
 
-```bash
+````bash
 # Migrate a Postman collection to TypeScript test framework
+./api-agent path/to/postman_collection.json --destination-folder ./my-api-tests
 python ./main.py path/to/postman_collection.json --destination-folder ./my-api-tests
-```
 
 ## Testing the Agent
 
@@ -208,13 +251,15 @@ To try out the agent without using your own API specification, you can use one o
 
 ```bash
 # /adopters endpoints
+./api-agent http://localhost:3000/swagger.json --endpoints /adopters
 python ./main.py http://localhost:3000/swagger.json --endpoints /adopters
-```
+````
 
 **Pet Store**
 
 ```bash
 # /store endpoints
+./api-agent https://petstore.swagger.io/v2/swagger.json --endpoints /store
 python ./main.py https://petstore.swagger.io/v2/swagger.json --endpoints /store
 ```
 
@@ -224,12 +269,14 @@ Estimated cost (with claude-sonnet-4-20250514) to run each example above: US$ ~0
 You can combine endpoints to test larger scenarios.:
 
 ```bash
+./api-agent http://localhost:3000/swagger.json --endpoints /adopters /pet
 python ./main.py http://localhost:3000/swagger.json --endpoints /adopters /pet
 ```
 
 Or simply run it for the whole API
 
 ```bash
+./api-agent http://localhost:3000/swagger.json
 python ./main.py http://localhost:3000/swagger.json
 ```
 
@@ -246,17 +293,20 @@ The project includes a comprehensive test suite to ensure code quality and funct
 ### Running the Test Suite
 
 1. Install test dependencies:
+
    ```bash
    pip install -r requirements.txt
    pip install -r requirements-test.txt  # Additional test dependencies
    ```
 
 2. Run all tests:
+
    ```bash
    pytest
    ```
 
 3. Run specific test categories:
+
    ```bash
    pytest tests/unit/  # Run only unit tests
    pytest tests/integration/  # Run only integration tests
