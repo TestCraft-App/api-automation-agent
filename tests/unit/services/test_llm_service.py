@@ -328,3 +328,105 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
 
     for label, expected, actual in captured:
         assert actual == expected, f"Scenario {label} expected tool_choice {expected} but got {actual}"
+
+
+# ---------------------- Tests for _select_language_model ---------------------- #
+
+
+def test_select_language_model_returns_anthropic_client_for_anthropic_model(llm_service, monkeypatch):
+    captured = {}
+
+    class FakeAnthropic:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    from src.configuration.models import Model
+
+    llm_service.config.model = Model.CLAUDE_SONNET_4
+
+    monkeypatch.setattr("src.services.llm_service.ChatAnthropic", FakeAnthropic)
+
+    result = llm_service._select_language_model()
+
+    assert isinstance(result, FakeAnthropic)
+    assert captured["model_name"] == Model.CLAUDE_SONNET_4.value
+    assert captured["temperature"] == 1
+    assert "api_key" in captured
+
+
+def test_select_language_model_returns_openai_client_for_openai_model(llm_service, monkeypatch):
+    captured = {}
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    from src.configuration.models import Model
+
+    llm_service.config.model = Model.GPT_4_O
+    monkeypatch.setattr("src.services.llm_service.ChatOpenAI", FakeOpenAI)
+
+    result = llm_service._select_language_model()
+
+    assert isinstance(result, FakeOpenAI)
+    assert captured["model"] == Model.GPT_4_O.value
+    assert captured["temperature"] == 1
+    assert captured["max_retries"] == 3
+
+
+def test_select_language_model_override_updates_config(llm_service, monkeypatch):
+    """Passing language_model with override=True should update config.model and return correct client type."""
+
+    from src.configuration.models import Model
+
+    llm_service.config.model = Model.CLAUDE_SONNET_4
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    monkeypatch.setattr("src.services.llm_service.ChatOpenAI", FakeOpenAI)
+
+    result = llm_service._select_language_model(language_model=Model.GPT_4_O, override=True)
+
+    assert isinstance(result, FakeOpenAI)
+    assert llm_service.config.model == Model.GPT_4_O, "Config model should be updated when override=True"
+    assert result.kwargs["model"] == Model.GPT_4_O.value
+
+
+def test_select_language_model_without_override_ignores_language_model_arg(llm_service, monkeypatch):
+    """When override is False, provided language_model argument should be ignored and config.model preserved."""
+
+    from src.configuration.models import Model
+
+    llm_service.config.model = Model.CLAUDE_SONNET_4
+
+    class FakeAnthropic:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    monkeypatch.setattr("src.services.llm_service.ChatAnthropic", FakeAnthropic)
+
+    result = llm_service._select_language_model(language_model=Model.GPT_4_O, override=False)
+
+    assert isinstance(result, FakeAnthropic)
+    assert (
+        llm_service.config.model == Model.CLAUDE_SONNET_4
+    ), "Config model should remain unchanged when override=False"
+    assert result.kwargs["model_name"] == Model.CLAUDE_SONNET_4.value
+
+
+def test_select_language_model_propagates_initialization_error(llm_service, monkeypatch):
+    """If underlying client class raises an exception, it should be propagated (not swallowed)."""
+
+    from src.configuration.models import Model
+
+    llm_service.config.model = Model.GPT_4_O
+
+    def exploding_constructor(**_):
+        raise RuntimeError("init failure")
+
+    monkeypatch.setattr("src.services.llm_service.ChatOpenAI", exploding_constructor)
+
+    with pytest.raises(RuntimeError, match="init failure"):
+        llm_service._select_language_model()
