@@ -12,10 +12,14 @@ def parse_args() -> argparse.Namespace:
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--base", required=True, help="Path to the Cobertura XML generated from the base branch.",
+        "--base",
+        required=True,
+        help="Path to the Coverage XML generated from the base branch.",
     )
     parser.add_argument(
-        "--pr", required=True, help="Path to the Cobertura XML generated from the pull request.",
+        "--pr",
+        required=True,
+        help="Path to the Coverage XML generated from the pull request.",
     )
     parser.add_argument(
         "--tolerance",
@@ -27,7 +31,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def load_line_rate(path: str) -> float:
-    """Load the overall line-rate from a Cobertura XML file."""
+    """Load the overall line-rate from a Coverage XML file."""
 
     try:
         tree = ET.parse(path)
@@ -38,9 +42,7 @@ def load_line_rate(path: str) -> float:
     try:
         return float(root.attrib["line-rate"])
     except (KeyError, ValueError) as exc:
-        raise SystemExit(
-            f"Coverage report '{path}' does not contain a valid 'line-rate' attribute."
-        ) from exc
+        raise SystemExit(f"Coverage report '{path}' does not contain a valid 'line-rate' attribute.") from exc
 
 
 def main() -> int:
@@ -52,16 +54,12 @@ def main() -> int:
     if pr_rate + args.tolerance < base_rate:
         percent_delta = (pr_rate - base_rate) * 100
         message = (
-            "Test coverage decreased: "
-            f"base={base_rate:.2%}, PR={pr_rate:.2%}, delta={percent_delta:.2f}%"
+            "Test coverage decreased: " f"base={base_rate:.2%}, PR={pr_rate:.2%}, delta={percent_delta:.2f}%"
         )
         print(message, file=sys.stderr)
         return 1
 
-    print(
-        "Coverage check passed: "
-        f"base={base_rate:.2%}, PR={pr_rate:.2%}."
-    )
+    print("Coverage check passed: " f"base={base_rate:.2%}, PR={pr_rate:.2%}.")
     return 0
 
 
