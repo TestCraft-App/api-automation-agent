@@ -17,6 +17,9 @@ def llm_service(temp_config):
     return LLMService(temp_config, FileService())
 
 
+# ---------------------- Tests for _calculate_llm_call_cost ---------------------- #
+
+
 def test_calculate_llm_call_cost_returns_expected_value(llm_service):
     usage_data = LLMCallUsageData(input_tokens=1_000, output_tokens=2_000)
 
@@ -36,6 +39,9 @@ def test_calculate_llm_call_cost_returns_none_on_error(llm_service, monkeypatch)
     cost = llm_service._calculate_llm_call_cost(Model.GPT_4_O, usage_data)
 
     assert cost is None
+
+
+# ---------------------- Tests for create_ai_chain ---------------------- #
 
 
 def test_create_ai_chain_appends_usage_metadata(llm_service, tmp_path, monkeypatch):
@@ -328,6 +334,164 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
 
     for label, expected, actual in captured:
         assert actual == expected, f"Scenario {label} expected tool_choice {expected} but got {actual}"
+
+
+def test_create_ai_chain_tool_call_invokes_selected_tool(llm_service, monkeypatch, tmp_path):
+    """When response.tool_calls has an entry whose name matches a provided tool,
+    create_ai_chain should invoke that tool and return its result instead of response.content."""
+
+    class FakeResponse:
+        def __init__(self, content, usage_metadata, tool_calls):
+            self.content = content
+            self.usage_metadata = usage_metadata
+            self.tool_calls = tool_calls
+
+    class FakeLLM:
+        def __init__(self, response):
+            self.response = response
+            self.bound_tools = None
+            self.bound_tool_choice = None
+
+        def bind_tools(self, tools, tool_choice="auto"):
+            self.bound_tools = tools
+            self.bound_tool_choice = tool_choice
+            return self
+
+        def invoke(self, _inputs):
+            return self.response
+
+        def __or__(self, rhs):  # rhs is the process_response callable
+            class _Chain:
+                def __init__(self, llm, processor):
+                    self.llm = llm
+                    self.processor = processor
+
+                def invoke(self, inputs):
+                    resp = self.llm.invoke(inputs)
+                    return self.processor(resp)
+
+            return _Chain(self, rhs)
+
+    class FakePrompt:
+        def __init__(self, template):
+            self.template = template
+
+        def __or__(self, llm):
+            return llm
+
+    class RecordingTool:
+        def __init__(self, name="my_tool"):
+            self.name = name
+            self.invocations = []
+
+        def invoke(self, args):  # matches create_ai_chain expectation
+            self.invocations.append(args)
+            return {"tool_ran": True, "args": args}
+
+    prompt_path = tmp_path / "prompt.txt"
+    prompt_path.write_text("Prompt: {x}")
+
+    # The tool call name has different case to test case-insensitive lookup
+    tool_call_payload = [{"name": "MY_TOOL", "args": {"value": 42}}, {"name": "unused", "args": {}}]
+    usage_payload = {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
+    response = FakeResponse("should not be returned", usage_payload, tool_calls=tool_call_payload)
+    fake_llm = FakeLLM(response)
+    tool = RecordingTool()
+
+    from src.configuration.models import Model
+
+    llm_service.config.model = Model.GPT_4_O
+
+    monkeypatch.setattr(LLMService, "_select_language_model", lambda self, language_model=None: fake_llm)
+    monkeypatch.setattr(
+        ChatPromptTemplate,
+        "from_template",
+        classmethod(lambda cls, template: FakePrompt(template)),
+    )
+
+    chain = llm_service.create_ai_chain(str(prompt_path), tools=[tool], must_use_tool=True)
+    result = chain.invoke({"x": "val"})
+
+    # Assert the tool result returned and tool called exactly once with expected args
+    assert result == {"tool_ran": True, "args": {"value": 42}}
+    assert tool.invocations == [{"value": 42}]
+    # Ensure only first tool_call considered (second has different name but we ignore after first)
+    assert len(tool.invocations) == 1
+
+
+def test_create_ai_chain_tool_call_name_not_found_returns_content(llm_service, monkeypatch, tmp_path):
+    """If response.tool_calls contains a name not in tool_map, the chain should fall back to returning response.content."""
+
+    class FakeResponse:
+        def __init__(self, content, usage_metadata, tool_calls):
+            self.content = content
+            self.usage_metadata = usage_metadata
+            self.tool_calls = tool_calls
+
+    class FakeLLM:
+        def __init__(self, response):
+            self.response = response
+
+        def bind_tools(self, tools, tool_choice="auto"):
+            return self
+
+        def invoke(self, _inputs):
+            return self.response
+
+        def __or__(self, rhs):  # rhs is the process_response callable
+            class _Chain:
+                def __init__(self, llm, processor):
+                    self.llm = llm
+                    self.processor = processor
+
+                def invoke(self, inputs):
+                    resp = self.llm.invoke(inputs)
+                    return self.processor(resp)
+
+            return _Chain(self, rhs)
+
+    class FakePrompt:
+        def __init__(self, template):
+            self.template = template
+
+        def __or__(self, llm):
+            return llm
+
+    class DummyTool:
+        def __init__(self, name="different_tool"):
+            self.name = name
+            self.invocations = 0
+
+        def invoke(self, args):
+            self.invocations += 1
+            return {"unexpected": True}
+
+    prompt_path = tmp_path / "prompt.txt"
+    prompt_path.write_text("Prompt: {x}")
+
+    # tool_calls name does not match provided tool name
+    tool_call_payload = [{"name": "unknown_tool", "args": {}}]
+    usage_payload = {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
+    response = FakeResponse("expected content", usage_payload, tool_calls=tool_call_payload)
+    fake_llm = FakeLLM(response)
+    tool = DummyTool()
+
+    from src.configuration.models import Model
+
+    llm_service.config.model = Model.GPT_4_O
+
+    monkeypatch.setattr(LLMService, "_select_language_model", lambda self, language_model=None: fake_llm)
+    monkeypatch.setattr(
+        ChatPromptTemplate,
+        "from_template",
+        classmethod(lambda cls, template: FakePrompt(template)),
+    )
+
+    chain = llm_service.create_ai_chain(str(prompt_path), tools=[tool], must_use_tool=False)
+    result = chain.invoke({"x": "val"})
+
+    assert result == "expected content"
+    assert tool.invocations == 0  # tool should not have been invoked
 
 
 # ---------------------- Tests for _select_language_model ---------------------- #
