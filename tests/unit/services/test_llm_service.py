@@ -120,6 +120,92 @@ def test_create_ai_chain_appends_usage_metadata(llm_service, tmp_path, monkeypat
     assert aggregated_usage.call_details[0].input_tokens == usage_payload["input_tokens"]
 
 
+def test_create_ai_chain_usage_metadata_validation_fallback(llm_service, tmp_path, monkeypatch):
+    """When usage metadata exists but is invalid (fails pydantic validation),
+    the service should log a warning, create a default LLMCallUsageData() instance,
+    and aggregate it without raising an exception.
+
+    This test injects a usage_metadata payload with an invalid type for an int field
+    (a dict instead of an int) to trigger validation failure.
+    """
+
+    class FakeResponse:
+        def __init__(self, content, usage_metadata):
+            self.content = content
+            self.usage_metadata = usage_metadata
+            self.tool_calls = []
+
+    class FakeLLM:
+        def __init__(self, response):
+            self.response = response
+
+        def bind_tools(self, tools, tool_choice="auto"):
+            return self
+
+        def invoke(self, inputs):
+            return self.response
+
+    class FakeChain:
+        def __init__(self, llm, process_response):
+            self.llm = llm
+            self.process_response = process_response
+
+        def invoke(self, inputs):
+            response = self.llm.invoke(inputs)
+            return self.process_response(response)
+
+    class FakePipeline:
+        def __init__(self, llm):
+            self.llm = llm
+
+        def __or__(self, process_response):
+            return FakeChain(self.llm, process_response)
+
+    class FakePrompt:
+        def __init__(self, template):
+            self.template = template
+
+        def __or__(self, llm):
+            return FakePipeline(llm)
+
+    prompt_path = tmp_path / "prompt.txt"
+    prompt_path.write_text("Prompt: {x}")
+
+    invalid_usage_payload = {"input_tokens": {"bad": "value"}, "output_tokens": 10, "total_tokens": 10}
+    fake_response = FakeResponse("ok", invalid_usage_payload)
+    fake_llm = FakeLLM(fake_response)
+
+    from src.configuration.models import Model  # local import to avoid unused at module import
+
+    llm_service.config.model = Model.GPT_4_O
+
+    monkeypatch.setattr(LLMService, "_select_language_model", lambda self, language_model=None: fake_llm)
+    monkeypatch.setattr(
+        ChatPromptTemplate,
+        "from_template",
+        classmethod(lambda cls, template: FakePrompt(template)),
+    )
+
+    chain = llm_service.create_ai_chain(str(prompt_path))
+
+    result = chain.invoke({"x": "y"})
+    assert result == "ok"
+
+    aggregated = llm_service.get_aggregated_usage_metadata()
+
+    # Because validation failed, a default LLMCallUsageData() (all zeros) should have been added.
+    assert aggregated.total_input_tokens == 0
+    assert aggregated.total_output_tokens == 0
+    assert aggregated.total_tokens == 0
+    assert aggregated.total_cost == 0
+    assert len(aggregated.call_details) == 1
+    detail = aggregated.call_details[0]
+    assert detail.input_tokens == 0
+    assert detail.output_tokens == 0
+    assert detail.total_tokens == 0
+    assert detail.cost is None
+
+
 def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_path):
     """Verify tool_choice value chosen for OpenAI vs Anthropic models with must_use_tool flag.
 
@@ -145,7 +231,7 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
     class FakeLLM:
         def __init__(self):
             self.bound = []  # collected tool_choice values
-            self.bind_calls = 0  # count how many times bind_tools invoked
+            self.bind_calls = 0
 
         def bind_tools(self, tools, tool_choice="auto"):
             self.bind_calls += 1
@@ -242,3 +328,144 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
 
     for label, expected, actual in captured:
         assert actual == expected, f"Scenario {label} expected tool_choice {expected} but got {actual}"
+
+
+def test_generate_models_success_list_return(monkeypatch, llm_service):
+    """generate_models should return a list of ModelFileSpec when chain.invoke returns a list of dicts."""
+
+    class FakeChain:
+        def __init__(self, payload):
+            self.payload = payload
+            self.invocations = []
+
+        def invoke(self, inputs):
+            self.invocations.append(inputs)
+            return self.payload
+
+    model_payload = [
+        {
+            "path": "./UserModel.ts",
+            "fileContent": "export interface User { id: string; name: string }",
+            "summary": "User model. Properties: id, name",
+        },
+        {
+            "path": "./PetService.ts",
+            "fileContent": "export class PetService {}",
+            "summary": "Pet service: listPets, getPet",
+        },
+    ]
+
+    fake_chain = FakeChain(model_payload)
+    monkeypatch.setattr(LLMService, "create_ai_chain", lambda self, *a, **k: fake_chain)
+
+    result = llm_service.generate_models("openapi spec text")
+
+    assert len(result) == 2
+    assert result[0].path == "./UserModel.ts"
+    assert result[0].summary.startswith("User model")
+    assert result[1].path == "./PetService.ts"
+    assert "Pet service" in result[1].summary
+
+
+def test_generate_models_success_json_string(monkeypatch, llm_service):
+    """generate_models should handle JSON string returned by chain.invoke."""
+
+    import json
+
+    class FakeChain:
+        def __init__(self, payload):
+            self.payload = payload
+
+        def invoke(self, inputs):
+            return json.dumps(self.payload)
+
+    model_payload = [
+        {
+            "path": "./OrderModel.ts",
+            "fileContent": "export interface Order { id: string }",
+            "summary": "Order model. Properties: id",
+        }
+    ]
+    fake_chain = FakeChain(model_payload)
+    monkeypatch.setattr(LLMService, "create_ai_chain", lambda self, *a, **k: fake_chain)
+
+    result = llm_service.generate_models("openapi spec text")
+    assert len(result) == 1
+    assert result[0].path == "./OrderModel.ts"
+    assert result[0].summary.startswith("Order model")
+    assert result[0].fileContent == "export interface Order { id: string }"
+
+
+def test_generate_models_error_returns_empty_list(monkeypatch, llm_service):
+    """If an exception occurs inside generate_models, it should return an empty list."""
+
+    class FakeChain:
+        def invoke(self, inputs):  # pragma: no cover - error path
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(LLMService, "create_ai_chain", lambda self, *a, **k: FakeChain())
+
+    result = llm_service.generate_models("whatever")
+    assert result == []
+
+
+def test_generate_models_chain_construction_arguments(monkeypatch, llm_service):
+    """Ensure generate_models uses the expected prompt, must_use_tool flag, and FileCreationTool configured for models."""
+
+    captured = {}
+
+    class DummyChain:
+        def invoke(self, _):
+            return []
+
+    def spy_create_ai_chain(self, prompt_path, tools=None, must_use_tool=False, language_model=None):
+        captured["prompt_path"] = prompt_path
+        captured["must_use_tool"] = must_use_tool
+        captured["tools"] = tools
+        return DummyChain()
+
+    monkeypatch.setattr(LLMService, "create_ai_chain", spy_create_ai_chain)
+
+    llm_service.generate_models("spec text")
+
+    from src.services.llm_service import PromptConfig
+
+    assert captured["prompt_path"] == PromptConfig.MODELS
+    assert captured["must_use_tool"] is True
+    assert isinstance(captured["tools"], list) and len(captured["tools"]) == 1
+    tool = captured["tools"][0]
+    assert getattr(tool, "are_models", False) is True
+    assert getattr(tool, "name", "") == "create_models"
+
+
+def test_generate_models_malformed_json(monkeypatch, llm_service):
+    """Malformed JSON from chain should cause generate_models to return an empty list."""
+
+    class FakeChain:
+        def invoke(self, _):
+            return "{ bad json"
+
+    monkeypatch.setattr(LLMService, "create_ai_chain", lambda self, *a, **k: FakeChain())
+
+    result = llm_service.generate_models("spec")
+    assert result == []
+
+
+def test_generate_models_non_list_json(monkeypatch, llm_service):
+    """A JSON object (not list) response should yield an empty result list."""
+
+    import json
+
+    class FakeChain:
+        def invoke(self, _):
+            obj = {
+                "path": "./SoloModel.ts",
+                "fileContent": "export interface Solo {}",
+                "summary": "Solo model.",
+            }
+            return json.dumps(obj)
+
+    monkeypatch.setattr(LLMService, "create_ai_chain", lambda self, *a, **k: FakeChain())
+
+    result = llm_service.generate_models("spec")
+    assert result == []
