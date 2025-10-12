@@ -223,7 +223,7 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
         def __init__(self, name="dummy"):
             self.name = name
 
-        def invoke(self, args):  # pragma: no cover - not exercised
+        def invoke(self, args):
             return args
 
     captured = []

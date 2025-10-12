@@ -85,7 +85,7 @@ def test_generate_models_error_returns_empty_list(monkeypatch, llm_service):
     """If an exception occurs inside generate_models, it should return an empty list."""
 
     class FakeChain:
-        def invoke(self, inputs):  # pragma: no cover - error path
+        def invoke(self, inputs):
             raise RuntimeError("boom")
 
     monkeypatch.setattr(LLMService, "create_ai_chain", lambda self, *a, **k: FakeChain())
@@ -249,7 +249,7 @@ def test_generate_first_test_error_returns_empty(monkeypatch, llm_service):
     """If create_ai_chain.invoke raises an error, generate_first_test returns []."""
 
     class FakeChain:
-        def invoke(self, _):  # pragma: no cover - error path
+        def invoke(self, _):
             raise ValueError("fail")
 
     monkeypatch.setattr(LLMService, "create_ai_chain", lambda self, *a, **k: FakeChain())
@@ -379,7 +379,7 @@ def test_get_additional_models_error_returns_empty(monkeypatch, llm_service):
     """Errors during chain invoke cause empty list return."""
 
     class FakeChain:
-        def invoke(self, _):  # pragma: no cover - error path
+        def invoke(self, _):
             raise RuntimeError("boom")
 
     monkeypatch.setattr(LLMService, "create_ai_chain", lambda self, *a, **k: FakeChain())
@@ -460,3 +460,269 @@ def test_get_additional_models_empty_list(monkeypatch, llm_service):
     inv = fake_chain.invocations[0]
     assert isinstance(inv.get("relevant_models"), list)
     assert isinstance(inv.get("available_models"), list)
+
+
+# ---------------------- Tests for generate_additional_tests ---------------------- #
+
+
+def _build_file_specs_for_additional_tests():
+    from src.ai_tools.models.file_spec import FileSpec
+
+    return [
+        FileSpec(path="./tests/Get-GetUser.spec.ts", fileContent="// original test"),
+        FileSpec(path="./tests/Post-CreateUser.spec.ts", fileContent="// original create test"),
+    ]
+
+
+def test_generate_additional_tests_success_list(monkeypatch, llm_service):
+    """generate_additional_tests returns list[FileSpec] when chain returns list payload."""
+
+    class FakeChain:
+        def __init__(self, payload):
+            self.payload = payload
+            self.invocations = []
+
+        def invoke(self, inputs):
+            self.invocations.append(inputs)
+            return self.payload
+
+    payload = [
+        {"path": "./tests/Delete-DeleteUser.spec.ts", "fileContent": "// delete test"},
+        {"path": "./tests/Put-UpdateUser.spec.ts", "fileContent": "// update test"},
+    ]
+    fake_chain = FakeChain(payload)
+    monkeypatch.setattr(LLMService, "create_ai_chain", lambda self, *a, **k: fake_chain)
+
+    models = _build_generated_models()
+    existing_tests = _build_file_specs_for_additional_tests()
+    result = llm_service.generate_additional_tests(existing_tests, models, "spec content")
+
+    assert len(result) == 2
+    assert result[0].path.endswith("Delete-DeleteUser.spec.ts")
+    assert result[1].path.endswith("Put-UpdateUser.spec.ts")
+    # Ensure invocation includes transformed inputs
+    assert len(fake_chain.invocations) == 1
+    inv = fake_chain.invocations[0]
+    assert "tests" in inv and isinstance(inv["tests"], list)
+    assert "models" in inv and isinstance(inv["models"], list)
+    assert inv["api_definition"] == "spec content"
+
+
+def test_generate_additional_tests_success_json_string(monkeypatch, llm_service):
+    """generate_additional_tests handles JSON string output."""
+
+    class FakeChain:
+        def __init__(self, payload):
+            self.payload = payload
+
+        def invoke(self, _):
+            return json.dumps(self.payload)
+
+    payload = [
+        {"path": "./tests/Patch-PartialUpdateUser.spec.ts", "fileContent": "// patch test"},
+    ]
+    monkeypatch.setattr(LLMService, "create_ai_chain", lambda self, *a, **k: FakeChain(payload))
+
+    models = _build_generated_models()
+    existing_tests = _build_file_specs_for_additional_tests()
+    result = llm_service.generate_additional_tests(existing_tests, models, "spec content")
+    assert len(result) == 1 and result[0].path.endswith("Patch-PartialUpdateUser.spec.ts")
+
+
+def test_generate_additional_tests_chain_construction_arguments(monkeypatch, llm_service):
+    """Ensure generate_additional_tests uses ADDITIONAL_TESTS prompt, FileCreationTool, must_use_tool True."""
+
+    captured = {}
+
+    class DummyChain:
+        def invoke(self, _):
+            return []
+
+    def spy_create_ai_chain(self, prompt_path, tools=None, must_use_tool=False, language_model=None):
+        captured["prompt_path"] = prompt_path
+        captured["must_use_tool"] = must_use_tool
+        captured["tools"] = tools
+        return DummyChain()
+
+    monkeypatch.setattr(LLMService, "create_ai_chain", spy_create_ai_chain)
+
+    models = _build_generated_models()
+    existing_tests = _build_file_specs_for_additional_tests()
+    llm_service.generate_additional_tests(existing_tests, models, "spec content")
+
+    from src.services.llm_service import PromptConfig
+
+    assert captured["prompt_path"] == PromptConfig.ADDITIONAL_TESTS
+    assert captured["must_use_tool"] is True
+    assert isinstance(captured["tools"], list) and len(captured["tools"]) == 1
+    tool = captured["tools"][0]
+    assert getattr(tool, "name", "") == "create_files"
+    assert getattr(tool, "are_models", True) is False
+
+
+def test_generate_additional_tests_malformed_json(monkeypatch, llm_service):
+    """Malformed JSON should cause convert_to_file_spec to return empty list (handled upstream)."""
+
+    class FakeChain:
+        def invoke(self, _):
+            return "{ malformed"
+
+    monkeypatch.setattr(LLMService, "create_ai_chain", lambda self, *a, **k: FakeChain())
+
+    models = _build_generated_models()
+    existing_tests = _build_file_specs_for_additional_tests()
+
+    # Previously this raised JSONDecodeError. Behavior changed: service catches and returns [].
+    result = llm_service.generate_additional_tests(existing_tests, models, "spec content")
+    assert result == []
+
+
+def test_generate_additional_tests_non_list_json(monkeypatch, llm_service):
+    """Non-list JSON object should yield empty list."""
+
+    class FakeChain:
+        def invoke(self, _):
+            return json.dumps({"path": "./tests/Single.spec.ts", "fileContent": "// single"})
+
+    monkeypatch.setattr(LLMService, "create_ai_chain", lambda self, *a, **k: FakeChain())
+    models = _build_generated_models()
+    existing_tests = _build_file_specs_for_additional_tests()
+    result = llm_service.generate_additional_tests(existing_tests, models, "spec content")
+    assert result == []
+
+
+def test_generate_additional_tests_empty_list(monkeypatch, llm_service):
+    """Empty list response should produce empty list output."""
+
+    class FakeChain:
+        def __init__(self):
+            self.invocations = []
+
+        def invoke(self, inputs):
+            self.invocations.append(inputs)
+            return []
+
+    fake_chain = FakeChain()
+    monkeypatch.setattr(LLMService, "create_ai_chain", lambda self, *a, **k: fake_chain)
+    models = _build_generated_models()
+    existing_tests = _build_file_specs_for_additional_tests()
+    result = llm_service.generate_additional_tests(existing_tests, models, "spec content")
+    assert result == []
+    assert len(fake_chain.invocations) == 1
+
+
+# ---------------------- Tests for fix_typescript ---------------------- #
+
+
+def _build_files_for_fix():
+    from src.ai_tools.models.file_spec import FileSpec
+
+    return [
+        FileSpec(path="./src/models/UserModel.ts", fileContent="export interface User { id: string }"),
+        FileSpec(path="./src/services/UserService.ts", fileContent="export class UserService {}"),
+    ]
+
+
+def test_fix_typescript_invokes_creation_tool_regular(monkeypatch, llm_service):
+    """fix_typescript should construct a chain with FIX_TYPESCRIPT prompt and create_files tool (are_models False)."""
+
+    captured = {}
+
+    class DummyChain:
+        def __init__(self):
+            self.invocations = []
+
+        def invoke(self, inputs):
+            self.invocations.append(inputs)
+            return []
+
+    def spy_create_ai_chain(self, prompt_path, tools=None, must_use_tool=False, language_model=None):
+        captured["prompt_path"] = prompt_path
+        captured["must_use_tool"] = must_use_tool
+        captured["tools"] = tools
+        return DummyChain()
+
+    monkeypatch.setattr(LLMService, "create_ai_chain", spy_create_ai_chain)
+
+    files = _build_files_for_fix()
+    messages = ["TS2345: Argument of type 'X' is not assignable to parameter of type 'Y'."]
+    llm_service.fix_typescript(files, messages, are_models=False)
+
+    from src.services.llm_service import PromptConfig
+
+    assert captured["prompt_path"] == PromptConfig.FIX_TYPESCRIPT
+    assert captured["must_use_tool"] is True
+    assert isinstance(captured["tools"], list) and len(captured["tools"]) == 1
+    tool = captured["tools"][0]
+    assert getattr(tool, "name", "") == "create_files"
+    assert getattr(tool, "are_models", True) is False
+
+
+def test_fix_typescript_invokes_creation_tool_models(monkeypatch, llm_service):
+    """fix_typescript with are_models=True should set tool.are_models True and use same prompt."""
+
+    captured = {}
+
+    class DummyChain:
+        def __init__(self):
+            self.invocations = []
+
+        def invoke(self, inputs):
+            self.invocations.append(inputs)
+            return []
+
+    def spy_create_ai_chain(self, prompt_path, tools=None, must_use_tool=False, language_model=None):
+        captured["prompt_path"] = prompt_path
+        captured["tools"] = tools
+        captured["must_use_tool"] = must_use_tool
+        return DummyChain()
+
+    monkeypatch.setattr(LLMService, "create_ai_chain", spy_create_ai_chain)
+
+    files = _build_files_for_fix()
+    llm_service.fix_typescript(files, ["error"], are_models=True)
+
+    from src.services.llm_service import PromptConfig
+
+    assert captured["prompt_path"] == PromptConfig.FIX_TYPESCRIPT
+    assert captured["must_use_tool"] is True
+    tool = captured["tools"][0]
+    assert getattr(tool, "name", "") == "create_models"  # name changes when are_models True
+    assert getattr(tool, "are_models", False) is True
+
+
+def test_fix_typescript_empty_files(monkeypatch, llm_service):
+    """Calling fix_typescript with empty files list should still invoke the chain (tool sees empty files)."""
+
+    class DummyChain:
+        def __init__(self):
+            self.invocations = []
+
+        def invoke(self, inputs):
+            self.invocations.append(inputs)
+            return []
+
+    chain_instance = DummyChain()
+    monkeypatch.setattr(LLMService, "create_ai_chain", lambda self, *a, **k: chain_instance)
+
+    llm_service.fix_typescript([], ["no files errors"], are_models=False)
+
+    # One invocation with empty list
+    assert len(chain_instance.invocations) == 1
+    invocation_payload = chain_instance.invocations[0]
+    assert invocation_payload["files"] == []
+    assert invocation_payload["messages"] == ["no files errors"]
+
+
+def test_fix_typescript_handles_chain_exception_soft(monkeypatch, llm_service):
+    """If the underlying chain raises, fix_typescript should log and swallow (soft-fail)."""
+
+    class ExplodingChain:
+        def invoke(self, _):
+            raise RuntimeError("tool failure")
+
+    monkeypatch.setattr(LLMService, "create_ai_chain", lambda self, *a, **k: ExplodingChain())
+
+    files = _build_files_for_fix()
+    # Should not raise after soft-fail change
+    llm_service.fix_typescript(files, ["boom"], are_models=False)
