@@ -238,17 +238,21 @@ class LLMService:
     ) -> List[FileSpec]:
         """Trigger read file tool to decide what additional model info is needed"""
         self.logger.info("\nGetting additional models...")
-        result = self.create_ai_chain(
-            PromptConfig.ADD_INFO,
-            tools=[FileReadingTool(self.config, self.file_service)],
-            must_use_tool=True,
-        ).invoke(
-            {
-                "relevant_models": GeneratedModel.list_to_json(relevant_models),
-                "available_models": api_models_to_json(available_models),
-            }
-        )
-        return convert_to_file_spec(result)
+        try:
+            result = self.create_ai_chain(
+                PromptConfig.ADD_INFO,
+                tools=[FileReadingTool(self.config, self.file_service)],
+                must_use_tool=True,
+            ).invoke(
+                {
+                    "relevant_models": GeneratedModel.list_to_json(relevant_models),
+                    "available_models": api_models_to_json(available_models),
+                }
+            )
+            return convert_to_file_spec(result)
+        except Exception as e:  # pragma: no cover - defensive error path
+            self.logger.error(f"Error getting additional models: {e}")
+            return []
 
     def generate_additional_tests(
         self,
