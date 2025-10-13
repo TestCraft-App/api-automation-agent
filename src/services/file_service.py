@@ -5,6 +5,7 @@ import sys
 from typing import List, Optional
 
 from ..ai_tools.models.file_spec import FileSpec
+from ..exceptions import FrameworkTemplateCopyError
 from ..utils.logger import Logger
 
 
@@ -29,7 +30,7 @@ class FileService:
         """
         self.logger = Logger.get_logger(__name__)
 
-    def copy_framework_template(self, destination_folder: str) -> Optional[str]:
+    def copy_framework_template(self, destination_folder: str) -> str:
         """
         Copy the API framework template to a new folder.
 
@@ -49,7 +50,7 @@ class FileService:
             return destination_folder
         except Exception as e:
             self.logger.error(f"Error copying folder: {e}")
-            return None
+            raise FrameworkTemplateCopyError(destination_folder, e) from e
 
     def create_files(self, destination_folder: str, files: List[FileSpec]) -> List[str]:
         """
@@ -72,7 +73,7 @@ class FileService:
                 if len(content) >= 2 and content[0] == content[-1] and content[0] in ('"', "'"):
                     try:
                         # ast.literal_eval will strip the quotes AND un-escape \n, \", etc.
-                        file_spec.fileContent = ast.literal_eval(content)
+                        content = ast.literal_eval(content)
                     except (ValueError, SyntaxError):
                         # if it fails, leave it as-is
                         pass
