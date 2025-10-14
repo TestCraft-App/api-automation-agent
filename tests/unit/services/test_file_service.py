@@ -66,7 +66,6 @@ def test_create_files_edge_cases(tmp_path):
     ]
     created_paths = fs.create_files(str(tmp_path), files)
 
-    # Validate returned paths correspond to actual filesystem
     expected_relatives = [
         "quoted.txt",
         os.path.join("relative", "trim.txt"),
@@ -76,13 +75,11 @@ def test_create_files_edge_cases(tmp_path):
         p.replace(os.sep, "/") for p in expected_relatives
     )
 
-    # Confirm newline un-escaped
     quoted_contents = (tmp_path / "quoted.txt").read_text()
     assert quoted_contents == "line1\nline2"
 
 
 def test_get_resource_path_pyinstaller(monkeypatch, tmp_path):
-    # Simulate PyInstaller _MEIPASS attribute
     fake_meipass = tmp_path / "_MEIPASS"
     fake_meipass.mkdir()
     monkeypatch.setattr(sys, "_MEIPASS", str(fake_meipass), raising=False)
@@ -92,7 +89,6 @@ def test_get_resource_path_pyinstaller(monkeypatch, tmp_path):
 
 
 def test_get_resource_path_fallback():
-    # Ensure _MEIPASS missing
     if hasattr(sys, "_MEIPASS"):
         delattr(sys, "_MEIPASS")
     rel = "another/thing"
