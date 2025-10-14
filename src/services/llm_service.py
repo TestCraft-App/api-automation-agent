@@ -238,17 +238,21 @@ class LLMService:
     ) -> List[FileSpec]:
         """Trigger read file tool to decide what additional model info is needed"""
         self.logger.info("\nGetting additional models...")
-        result = self.create_ai_chain(
-            PromptConfig.ADD_INFO,
-            tools=[FileReadingTool(self.config, self.file_service)],
-            must_use_tool=True,
-        ).invoke(
-            {
-                "relevant_models": GeneratedModel.list_to_json(relevant_models),
-                "available_models": api_models_to_json(available_models),
-            }
-        )
-        return convert_to_file_spec(result)
+        try:
+            result = self.create_ai_chain(
+                PromptConfig.ADD_INFO,
+                tools=[FileReadingTool(self.config, self.file_service)],
+                must_use_tool=True,
+            ).invoke(
+                {
+                    "relevant_models": GeneratedModel.list_to_json(relevant_models),
+                    "available_models": api_models_to_json(available_models),
+                }
+            )
+            return convert_to_file_spec(result)
+        except Exception as e:
+            self.logger.error(f"Error getting additional models: {e}")
+            return []
 
     def generate_additional_tests(
         self,
@@ -257,18 +261,22 @@ class LLMService:
         definition_content: str,
     ) -> List[FileSpec]:
         """Generate additional tests based on the initial test and models."""
-        result = self.create_ai_chain(
-            PromptConfig.ADDITIONAL_TESTS,
-            tools=[FileCreationTool(self.config, self.file_service)],
-            must_use_tool=True,
-        ).invoke(
-            {
-                "tests": file_specs_to_json(tests),
-                "models": GeneratedModel.list_to_json(models),
-                "api_definition": definition_content,
-            }
-        )
-        return convert_to_file_spec(result)
+        try:
+            result = self.create_ai_chain(
+                PromptConfig.ADDITIONAL_TESTS,
+                tools=[FileCreationTool(self.config, self.file_service)],
+                must_use_tool=True,
+            ).invoke(
+                {
+                    "tests": file_specs_to_json(tests),
+                    "models": GeneratedModel.list_to_json(models),
+                    "api_definition": definition_content,
+                }
+            )
+            return convert_to_file_spec(result)
+        except Exception as e:
+            self.logger.error(f"Error generating additional tests: {e}")
+            return []
 
     def fix_typescript(self, files: List[FileSpec], messages: List[str], are_models: bool = False) -> None:
         """
@@ -283,8 +291,12 @@ class LLMService:
         for file in files:
             self.logger.info(f"  - {file.path}")
 
-        self.create_ai_chain(
-            PromptConfig.FIX_TYPESCRIPT,
-            tools=[FileCreationTool(self.config, self.file_service, are_models=are_models)],
-            must_use_tool=True,
-        ).invoke({"files": file_specs_to_json(files), "messages": messages})
+        try:
+            self.create_ai_chain(
+                PromptConfig.FIX_TYPESCRIPT,
+                tools=[FileCreationTool(self.config, self.file_service, are_models=are_models)],
+                must_use_tool=True,
+            ).invoke({"files": file_specs_to_json(files), "messages": messages})
+        except Exception as e:
+            self.logger.error(f"Error fixing TypeScript files: {e}")
+            return None
