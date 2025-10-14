@@ -12,7 +12,6 @@ def test_file_service_create_files(tmp_path):
     files = [FileSpec(path="dir/a.txt", fileContent="hello"), FileSpec(path="b.txt", fileContent="world")]
     created = fs.create_files(str(tmp_path), files)
     expected_paths = [tmp_path / "dir" / "a.txt", tmp_path / "b.txt"]
-    # Normalize to same absolute path objects to avoid slash direction differences
     assert {Path(p).resolve() for p in created} == {p.resolve() for p in expected_paths}
     for p in expected_paths:
         assert p.exists()
