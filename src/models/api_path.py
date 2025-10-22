@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import List, Optional
 from .api_base import APIBase
 
 
@@ -9,19 +10,32 @@ class APIPath(APIBase):
     type: str = field(default="path", init=False)
 
     @staticmethod
-    def normalize_path(path: str) -> str:
+    def normalize_path(path: str, prefixes: Optional[List[str]] = None) -> str:
         """Normalizes the path by removing api and version prefixes."""
-        parts = [p for p in path.split("/") if p]
 
-        if not parts:
+        def _format_path(s: str) -> str:
+            parts = [p for p in s.split("/") if p]
+            return "/" + "/".join(parts) if parts else ""
+
+        def _starts_with_prefix(path: str, prefix: str) -> bool:
+            if not path.startswith(prefix):
+                return False
+            if len(path) == len(prefix):
+                return True
+            return path[len(prefix)] == "/"
+
+        normalized_path = _format_path(path)
+        if not normalized_path:
             return path
 
-        start_index = 0
+        prefixes = prefixes or ["/api"]
+        normalized_prefixes = []
+        for pre in prefixes:
+            normalized_prefixes.append(_format_path(pre))
 
-        if start_index < len(parts):
-            if parts[start_index] == "api":
-                start_index += 1
+        normalized_prefixes.sort(key=len, reverse=True)
+        for prefix in normalized_prefixes:
+            if _starts_with_prefix(normalized_path, prefix):
+                return normalized_path[len(prefix):] or "/"
 
-        if start_index < len(parts):
-            return "/" + "/".join(parts[start_index:])
-        return "/"
+        return normalized_path

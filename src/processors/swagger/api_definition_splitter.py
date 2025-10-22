@@ -1,5 +1,5 @@
 import copy
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import yaml
 
@@ -13,7 +13,7 @@ class APIDefinitionSplitter:
     def __init__(self):
         self.logger = Logger.get_logger(__name__)
 
-    def split(self, api_definition: Dict) -> Tuple[str, List[APIDef]]:
+    def split(self, api_definition: Dict, prefixes: Optional[List[str]] = None) -> Tuple[str, List[APIDef]]:
         """Splits the API definition into base and path/verb components."""
         self.logger.info("Splitting API definition into components...")
         api_definition_list: List[APIDef] = []
@@ -23,7 +23,7 @@ class APIDefinitionSplitter:
         base_yaml = yaml.dump(base_definition, sort_keys=False)
 
         for path, path_data in api_definition.get("paths", {}).items():
-            normalized_path = APIPath.normalize_path(path)
+            normalized_path = APIPath.normalize_path(path, prefixes)
 
             api_definition_list.append(
                 APIPath(path=normalized_path, yaml=yaml.dump({path: path_data}, sort_keys=False))
