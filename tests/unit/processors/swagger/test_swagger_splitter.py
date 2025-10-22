@@ -104,6 +104,19 @@ def test_splitter_path_normalization():
     assert parts[1].verb == "GET"
 
 
+def test_splitter_path_with_custom_prefixes():
+    spec = {"paths": {"/public-api/v1/widgets/": {"get": {"responses": {"200": {"description": "ok"}}}}}}
+
+    splitter = APIDefinitionSplitter()
+    _, parts = splitter.split(spec, ["/public-api/v1"])
+
+    assert len(parts) == 2
+    assert isinstance(parts[0], APIPath)
+    assert parts[0].path == "/widgets"
+    assert isinstance(parts[1], APIVerb)
+    assert parts[1].path == "/widgets"
+    assert parts[1].verb == "GET"
+
 def test_splitter_path_with_parameters():
     spec = {
         "paths": {
