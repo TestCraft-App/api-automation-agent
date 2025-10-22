@@ -14,30 +14,38 @@ def test_api_path_instantiation():
 
 
 @pytest.mark.parametrize(
-    "path,expected",
+    "path,prefixes,expected",
     [
-        ("/api/pets", "/pets"),
-        ("/api/pets/123", "/pets/123"),
-        ("/api/users/profile", "/users/profile"),
-        ("/api/v1/pets", "/v1/pets"),
-        ("/api/v2/pets/123", "/v2/pets/123"),
-        ("/api/v10/pets", "/v10/pets"),
-        ("api/v1/pets", "/v1/pets"),
-        ("/api/v1beta/pets", "/v1beta/pets"),
-        ("/v2/products", "/v2/products"),
-        ("/pets", "/pets"),
-        ("/users/profile", "/users/profile"),
-        ("/pets?limit=10", "/pets?limit=10"),
-        ("/api/v1/", "/v1"),
-        ("/api/v1", "/v1"),
-        ("/", "/"),
-        ("", ""),
-        ("//api//v1//pets", "/v1/pets"),
-        ("/api/v1/pets/", "/v1/pets"),
+        ("/api/pets", None, "/pets"),
+        ("/api/pets/123", None,"/pets/123"),
+        ("/api/users/profile", None, "/users/profile"),
+        ("/api/v1/pets", None, "/v1/pets"),
+        ("/api/v2/pets/123", None, "/v2/pets/123"),
+        ("/api/v10/pets", None, "/v10/pets"),
+        ("api/v1/pets", None, "/v1/pets"),
+        ("/api/v1beta/pets", None, "/v1beta/pets"),
+        ("/v2/products", None, "/v2/products"),
+        ("/pets", None, "/pets"),
+        ("/users/profile", None, "/users/profile"),
+        ("/pets?limit=10", None, "/pets?limit=10"),
+        ("/api/v1/", None, "/v1"),
+        ("/api/v1", None, "/v1"),
+        ("/", None, "/"),
+        ("", None, ""),
+        ("//api//v1//pets", None, "/v1/pets"),
+        ("/api/v1/pets/", None, "/v1/pets"),
+        ("/public-api/pets", ["/public-api"], "/pets"),
+        ("/api/v2beta/pets", ["/api", "/api/v2beta"], "/pets"),
+        ("/api", ["/api"], "/"),
+        ("/", ["/"], "/"),
+        ("", [""], ""),
+        ("//api//v1//pets", ["//api//v1"], "/pets"),
+        ("/am/api/pets/", ["am/api"], "/pets"),
+        ("/am/api/v1/orders", ["/am/api", "/v1"], "/v1/orders"),
     ],
 )
-def test_normalize_path(path, expected):
-    assert APIPath.normalize_path(path) == expected
+def test_normalize_path(path, prefixes, expected):
+    assert APIPath.normalize_path(path, prefixes) == expected
 
 
 def test_api_path_to_json():
