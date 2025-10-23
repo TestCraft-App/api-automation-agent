@@ -17,7 +17,7 @@ def test_api_path_instantiation():
     "path,prefixes,expected",
     [
         ("/api/pets", None, "/pets"),
-        ("/api/pets/123", None,"/pets/123"),
+        ("/api/pets/123", None, "/pets/123"),
         ("/api/users/profile", None, "/users/profile"),
         ("/api/v1/pets", None, "/v1/pets"),
         ("/api/v2/pets/123", None, "/v2/pets/123"),

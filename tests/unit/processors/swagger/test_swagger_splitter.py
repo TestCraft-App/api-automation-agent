@@ -117,6 +117,7 @@ def test_splitter_path_with_custom_prefixes():
     assert parts[1].path == "/widgets"
     assert parts[1].verb == "GET"
 
+
 def test_splitter_path_with_parameters():
     spec = {
         "paths": {
