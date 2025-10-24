@@ -185,7 +185,7 @@ DEBUG=False
 
         content = self.env_file.read_text()
         assert "ANTHROPIC_API_KEY=sk-ant-test-key" in content
-        assert "MODEL=claude-sonnet-4-5-20250929" in content
+        assert "MODEL=claude-haiku-4-5-20251001" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_invalid_provider_then_valid(self, mock_get_dir):
