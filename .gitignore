@@ -5,6 +5,7 @@
 # Distribution folders
 /api-agent-windows/
 /api-agent-macos/
+/.github/copilot-instructions.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
