@@ -37,6 +37,15 @@ class CLIArgumentParser:
             ),
         )
         parser.add_argument(
+            "--prefixes",
+            type=str,
+            nargs="+",
+            help=(
+                "Specify one or more API path prefixes to remove from endpoints."
+                "Example: --prefixes /public-api /am/api /api/v2beta"
+            ),
+        )
+        parser.add_argument(
             "--use-existing-framework",
             action="store_true",
             help="Use an existing framework instead of creating a new one.",

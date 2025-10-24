@@ -58,6 +58,7 @@ def main(
                 args.use_existing_framework
                 or args.list_endpoints
                 or args.endpoints
+                or args.prefixes
                 or (args.generate != GenerationOptions.MODELS_AND_TESTS.value)
             ):
                 raise ValueError(
@@ -81,6 +82,7 @@ def main(
                 "endpoints": args.endpoints,
                 "generate": GenerationOptions(args.generate),
                 "data_source": data_source,
+                "prefixes": args.prefixes,
                 "use_existing_framework": args.use_existing_framework,
                 "list_endpoints": args.list_endpoints,
             }
@@ -96,6 +98,7 @@ def main(
         logger.info(f"Destination folder: {config.destination_folder}")
         logger.info(f"Use existing framework: {config.use_existing_framework}")
         logger.info(f"Endpoints: {', '.join(config.endpoints) if config.endpoints else 'All'}")
+        logger.info(f"Prefixes: {', '.join(config.prefixes) if config.prefixes else '/api'}")
         logger.info(f"Generate: {config.generate}")
         logger.info(f"Model: {config.model}")
         logger.info(f"List endpoints: {config.list_endpoints}")

@@ -29,6 +29,7 @@ class Config:
     data_source: str = ""
     destination_folder: str = ""
     endpoints: Optional[List[str]] = None
+    prefixes: Optional[List[str]] = None
     use_existing_framework: bool = False
     list_endpoints: bool = False
     tsc_max_passes: int = 4

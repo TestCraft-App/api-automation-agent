@@ -63,7 +63,7 @@ class SwaggerProcessor(APIProcessor):
         try:
             self.logger.info("Starting API processing")
             raw_definition = self.api_definition_loader.load(api_definition_path)
-            base_definition, split_definitions = self.splitter.split(raw_definition)
+            base_definition, split_definitions = self.splitter.split(raw_definition, self.config.prefixes)
             merged_definitions = self.merger.merge(split_definitions)
             self.base_definition = base_definition
 
