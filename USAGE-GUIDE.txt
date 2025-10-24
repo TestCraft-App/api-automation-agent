@@ -21,7 +21,8 @@ The CLI will create a .env file automatically.
 
 SUPPORTED MODELS:
 Anthropic Models:
-- claude-sonnet-4-5-20250929 (recommended)
+- claude-haiku-4-5-20251001 (recommended default)
+- claude-sonnet-4-5-20250929 
 - claude-sonnet-4-20250514
 - claude-3-5-sonnet-latest
 - claude-3-7-sonnet-latest

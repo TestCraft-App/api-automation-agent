@@ -77,7 +77,7 @@ This project supports both Anthropic and OpenAI language models:
 
 ### Default Model
 
-**Claude Sonnet 4.5** (claude-sonnet-4-5-20250929) is the default and recommended model
+**Claude Haiku 4.5** (claude-haiku-4-5-20251001) is the default and recommended model. For complex tasks, try Claude Sonnet 4.5 (more expensive)
 
 - Provides superior code generation and understanding
 - Offers the best balance of performance and cost
@@ -87,7 +87,8 @@ This project supports both Anthropic and OpenAI language models:
 
 **Anthropic**
 
-- Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) - **Recommended**
+- Claude Haiku 4.5 (claude-haiku-4-5-20251001) - **Recommended default: Good quality + fast + low cost**
+- Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) - **Recommended: Higher quality for complex suites**
 - Claude Sonnet 4 (claude-sonnet-4-20250514)
 - Claude Sonnet 3.7 (claude-3-7-sonnet-latest)
 - Claude Sonnet 3.5 (claude-3-5-sonnet-latest)
