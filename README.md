@@ -1,372 +1,441 @@
-# API Automation Agent
+<div align="center">
 
-An open-source AI Agent that automatically generates an automation framework from your OpenAPI/Swagger specification or Postman collection, based on the api-framework-ts-mocha template (https://github.com/damianpereira86/api-framework-ts-mocha).
+# API Automation Agent
+`AI-powered tool that generates production-ready test automation frameworks from OpenAPI specifications and Postman collections`
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Node.js 18+](https://img.shields.io/badge/node.js-18+-green.svg)](https://nodejs.org/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+[![GitHub Issues](https://img.shields.io/github/issues/TestCraft-App/api-automation-agent)](https://github.com/TestCraft-App/api-automation-agent/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/TestCraft-App/api-automation-agent)](https://github.com/TestCraft-App/api-automation-agent/stargazers)
+
+
+
+[Features](#features) • [Installation](#installation) • [Usage](#usage) • [Documentation](#documentation) • [Contributing](#contributing)
+
+</div>
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Installation](#installation)
+  - [Standalone Executable](#standalone-executable)
+  - [Manual Installation](#manual-installation)
+- [Usage](#usage)
+  - [Basic Commands](#basic-commands)
+  - [Command-Line Options](#command-line-options)
+  - [Examples](#examples)
+- [LLM Configuration](#llm-configuration)
+- [Postman Collections](#postman-collections)
+- [Advanced Features](#advanced-features)
+  - [Checkpoints](#checkpoints)
+  - [Performance Benchmarking](#performance-benchmarking)
+- [Development](#development)
+  - [Running Tests](#running-tests)
+  - [Code Formatting](#code-formatting)
+  - [Logging](#logging)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Overview
+
+API Automation Agent is an open-source tool that automatically generates comprehensive test automation frameworks from API specifications. Built on the [api-framework-ts-mocha](https://github.com/damianpereira86/api-framework-ts-mocha) template, it uses AI to eliminate manual setup and boilerplate code generation.
+
+### Key Benefits
+
+| Traditional Approach | API Automation Agent |
+|---------------------|---------------------|
+| Hours of manual framework setup | Minutes to generate complete framework |
+| Manual test case writing | AI-generated test suites with assertions |
+| Vendor lock-in with proprietary tools | Open-source, portable framework |
+| Inconsistent code quality | Built-in best practices and linting |
+
+---
 
 ## Features
 
-- Generates type-safe service and data models
-- Generates test suites for every endpoint
-- Reviewes and fixes code issues and ensures code quality and best practices
-- Includes code formatting and linting
-- Runs tests with detailed reporting and assertions
-- Migrates Postman collections to an open source automation framework, mantaining test structure and run order.
+### Code Generation
+- Type-safe TypeScript interfaces and data models
+- Service classes for all API endpoints
+- Comprehensive test suites with Mocha and Chai
+- ESLint and Prettier configuration included
 
-## Usage
+### Quality Assurance
+- Automatic code review and issue detection
+- Best practices enforcement
+- Detailed test reporting with assertions
+- Code formatting and linting built-in
 
-### Standalone Installer
+### Flexibility
+- Generate complete frameworks or specific endpoints
+- Update existing frameworks incrementally
+- Support for OpenAPI 2.0/3.0 and Swagger specifications
+- Postman collection migration to open-source framework
 
-Download the standalone executable:
+---
 
-#### Prerequisites
+## Installation
 
-- Windows 7+ or macOS 10.14+
-- API key (OpenAI or Anthropic)
-- Node.js 18+
+### Prerequisites
 
-#### Windows Users
-
-1. Go to [Releases](https://github.com/TestCraft-App/api-automation-agent/releases)
-2. Download `api-agent-windows.zip`
-3. Extract and follow the included `USAGE-GUIDE.txt`
-
-#### Mac Users
-
-1. Go to [Releases](https://github.com/TestCraft-App/api-automation-agent/releases)
-2. Download `api-agent-macos.tar.gz`
-3. Extract and follow the included `USAGE-GUIDE.txt`
-4. Make the executable runnable: `chmod +x api-agent`
-
-### Manual Installation (for development)
-
-#### Prerequisites
-
-- Node.js 18 or higher
-- Python 3.8 or higher
-- OpenAI API key or Anthropic API key (Anthropic API key required by default)
-
-#### Installation Steps
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/TestCraft-App/api-automation-agent.git
-   cd api-automation-agent
-   ```
-
-2. Install Python dependencies:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Set up environment variables:
-
-   ```bash
-   cp example.env .env
-   ```
-
-4. Edit the `.env` file with your API keys:
-   ```
-   OPENAI_API_KEY=your_openai_api_key_here
-   ANTHROPIC_API_KEY=your_anthropic_api_key_here
-   ```
-
-## Large Language Models
-
-This project supports both Anthropic and OpenAI language models:
-
-### Default Model
-
-**Claude Haiku 4.5** (claude-haiku-4-5-20251001) is the default and recommended model. For complex tasks, try Claude Sonnet 4.5 (more expensive)
-
-- Provides superior code generation and understanding
-- Offers the best balance of performance and cost
-- **Strongly recommended**: Other models may not provide satisfactory results for this specific use case
-
-### Supported Models
-
-**Anthropic**
-
-- Claude Haiku 4.5 (claude-haiku-4-5-20251001) - **Recommended default: Good quality + fast + low cost**
-- Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) - **Recommended: Higher quality for complex suites**
-- Claude Sonnet 4 (claude-sonnet-4-20250514)
-- Claude Sonnet 3.7 (claude-3-7-sonnet-latest)
-- Claude Sonnet 3.5 (claude-3-5-sonnet-latest)
-
-**OpenAI**
-
-- GPT-5 (gpt-5) - **Recommended**
-- GPT-4o (gpt-4o)
-- GPT-4.1 (gpt-4.1)
-- O3 (o3)
-
-You can configure your preferred model in the `.env` file:
-
-```env
-MODEL=o3
-```
-
-> **Important**: Before using any model, please check the current pricing and costs on the respective provider's website (Anthropic or OpenAI). Model costs can vary significantly and may impact your usage budget.
-
-## Running the Agent
+| Requirement | Version | Notes |
+|------------|---------|-------|
+| **Node.js** | 18+ | Required for generated framework execution |
+| **Python** | 3.8+ | Required for agent execution |
+| **API Key** | - | OpenAI or Anthropic (Anthropic required by default) |
 
 ### Standalone Executable
 
-If you downloaded the standalone executable:
+Download the pre-built executable for your platform:
+
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>Download</th>
+<th>Requirements</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Windows</strong></td>
+<td><a href="https://github.com/TestCraft-App/api-automation-agent/releases">api-agent-windows.zip</a></td>
+<td>Windows 7 or higher</td>
+</tr>
+<tr>
+<td><strong>macOS</strong></td>
+<td><a href="https://github.com/TestCraft-App/api-automation-agent/releases">api-agent-macos.tar.gz</a></td>
+<td>macOS 10.14 or higher</td>
+</tr>
+</tbody>
+</table>
+
+#### Windows Setup
+
+```cmd
+1. Download api-agent-windows.zip
+2. Extract the archive
+3. Follow the USAGE-GUIDE.txt instructions
+4. Run: api-agent.exe path/to/spec.yaml
+```
+
+#### macOS Setup
 
 ```bash
-./api-agent <path_or_url_to_openapi_definition>
+# Download and extract api-agent-macos.tar.gz
+chmod +x api-agent
+./api-agent path/to/spec.yaml
 ```
 
 ### Manual Installation
 
-If you installed manually for development:
+For development or customization:
 
 ```bash
-python ./main.py <path_or_url_to_openapi_definition>
+# Clone the repository
+git clone https://github.com/TestCraft-App/api-automation-agent.git
+cd api-automation-agent
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Configure environment variables
+cp example.env .env
 ```
 
-The agent accepts either:
+Edit `.env` with your API keys:
 
-- A local file path to your OpenAPI/Swagger specification or Postman collection
-- A URL to a JSON or YAML OpenAPI/Swagger specification (URL not supported for Postman collections)
+```env
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+MODEL=claude-haiku-4-5-20251001
+```
 
-### Options
+---
 
-- `--destination-folder`: Specify output directory (default: ./generated-framework\_[timestamp])
-- `--use-existing-framework`: Use an existing framework instead of creating a new one
-- `--endpoints`: Generate framework for specific endpoints (can specify multiple)
-- `--generate`: Specify what to generate (default: models_and_tests)
-  - `models`: Generate only the data models
-  - `models_and_first_test`: Generate data models and the first test for each endpoint
-  - `models_and_tests`: Generate data models and complete test suites
-- `--list-endpoints`: List the endpoints that can be used with the --endpoints flag
+## Usage
 
-> **Note**: The `--endpoints`, `--generate`, `--list-endpoints`, and `--use-existing-framework` options are only available when using Swagger/OpenAPI specifications. When using Postman collections, only the `--destination-folder` parameter is fully supported.
-
-### Examples
-
-````bash
-# Generate framework from a local file
-./api-agent api-spec.yaml
-python ./main.py api-spec.yaml
+### Basic Commands
 
 ```bash
-# Generate framework from a URL
+# Generate from local file
+./api-agent api-spec.yaml
+
+# Generate from URL (OpenAPI only)
 ./api-agent https://api.example.com/swagger.json
-python ./main.py https://api.example.com/swagger.json
-````
 
-```bash
-# Generate list root endpoints
+# List available endpoints
 ./api-agent api-spec.yaml --list-endpoints
-python ./main.py api-spec.yaml --list-endpoints
 ```
 
-```bash
-# Generate complete framework with all endpoints
-./api-agent api-spec.yaml
-python ./main.py api-spec.yaml
-```
+If using manual installation, replace `./api-agent` with `python main.py`.
 
-```bash
-# Generate models and tests for specific endpoints using an existing framework
-./api-agent api-spec.yaml --use-existing-framework --destination-folder ./my-api-framework --endpoints /user /store
-python ./main.py api-spec.yaml --use-existing-framework --destination-folder ./my-api-framework --endpoints /user /store
-```
+### Command-Line Options
 
-````bash
-# Generate only data and service models for all endpoints
-./api-agent api-spec.yaml --generate models
-python ./main.py api-spec.yaml --generate models
+| Option | Description | Supported Sources |
+|--------|-------------|-------------------|
+| `--destination-folder` | Specify output directory | All |
+| `--use-existing-framework` | Update existing framework instead of creating new one | OpenAPI/Swagger |
+| `--endpoints` | Generate specific endpoints (space-separated) | OpenAPI/Swagger |
+| `--generate` | Control generation scope (see table below) | OpenAPI/Swagger |
+| `--list-endpoints` | Display available endpoints | OpenAPI/Swagger |
 
-```bash
-# Generate models and first test for each endpoint in a custom folder
-./api-agent api-spec.yaml --generate models_and_first_test --destination-folder ./quick-tests
-python ./main.py api-spec.yaml --generate models_and_first_test --destination-folder ./quick-tests
-````
+#### Generation Modes
 
-```bash
-# Combine options to generate specific endpoints with first test only
-./api-agent api-spec.yaml --endpoints /store --generate models_and_first_test
-python ./main.py api-spec.yaml --endpoints /store --generate models_and_first_test
-```
-
-The generated framework will follow the structure:
-
-```
-generated-framework_[timestamp]/    # Or the Destination Folder selected
-├── src/
-│   ├── base/                       # Framework base classes
-│   ├── models/                     # Generated TypeScript interfaces and API service classes
-│   └── tests/                      # Generated test suites
-├── package.json
-├── (...)
-└── tsconfig.json
-```
-
-## Postman Collection Migration
-
-The API Automation Agent can now convert your Postman collections into TypeScript automated test frameworks, preserving the structure and test logic of your collections.
-
-### Supported Features
-
-- Converts Postman Collection v2.0 format JSON files into a TypeScript test framework
-- Maintains the original folder structure of your Postman collection
-- Preserves test run order for consistent test execution
-- Creates service files by grouping API routes by path
-- Migrates test scripts and assertions
-
-### Limitations
-
-- Only supports local Postman collection files (no HTTP download support yet)
-- Currently only supports Postman Collection v2.0 format
-- Scripts contained in folders (rather than requests) are not processed
-- Limited CLI support - only the `--destination-folder` parameter is fully supported with Postman collections
-
-### Best Practices
-
-The migration works best with well-structured APIs where:
-
-- Endpoints are organized logically by resource
-- Similar endpoints (e.g., /users, /users/{id}) are grouped together
-- HTTP methods follow REST conventions
-
-### Usage
-
-````bash
-# Migrate a Postman collection to TypeScript test framework
-./api-agent path/to/postman_collection.json --destination-folder ./my-api-tests
-python ./main.py path/to/postman_collection.json --destination-folder ./my-api-tests
-
-## Testing the Agent
-
-To try out the agent without using your own API specification, you can use one of the following test APIs:
-
-- [CatCafe API](https://github.com/CodingRainbowCat/CatCafeProject): Test API created by [@CodingRainbowCat](https://github.com/CodingRainbowCat) epecifically for testing the agent. You can check the repo to run it locally. It's very useful since it can be easily modified to test different scenarios.
-- [Pet Store API](https://petstore.swagger.io/#/): Public test API
+| Mode | Description | Generated Files |
+|------|-------------|----------------|
+| `models` | Data models and service classes only | Interfaces, API clients |
+| `models_and_first_test` | Models plus one test per endpoint | Interfaces, API clients, sample tests |
+| `models_and_tests` | Complete framework (default) | Full test suite with all assertions |
 
 ### Examples
 
-**Cat Cafe**
+<details>
+<summary><strong>Generate Complete Framework</strong></summary>
 
 ```bash
-# /adopters endpoints
-./api-agent http://localhost:3000/swagger.json --endpoints /adopters
-python ./main.py http://localhost:3000/swagger.json --endpoints /adopters
-````
-
-**Pet Store**
-
-```bash
-# /store endpoints
-./api-agent https://petstore.swagger.io/v2/swagger.json --endpoints /store
-python ./main.py https://petstore.swagger.io/v2/swagger.json --endpoints /store
+./api-agent api-spec.yaml
 ```
 
-These are simple and small examples that includes basic CRUD operations and are ideal for testing the agent's capabilities.
-Estimated cost (with claude-sonnet-4-5-20250929) to run each example above: US$ ~0.3
+Creates a complete framework with all endpoints and tests in `generated-framework_[timestamp]/`
 
-You can combine endpoints to test larger scenarios.:
+</details>
 
-```bash
-./api-agent http://localhost:3000/swagger.json --endpoints /adopters /pet
-python ./main.py http://localhost:3000/swagger.json --endpoints /adopters /pet
-```
-
-Or simply run it for the whole API
+<details>
+<summary><strong>Generate Specific Endpoints</strong></summary>
 
 ```bash
-./api-agent http://localhost:3000/swagger.json
-python ./main.py http://localhost:3000/swagger.json
+./api-agent api-spec.yaml --endpoints /user /store
 ```
 
-## Running Tests
+Generates framework for only `/user` and `/store` endpoints.
 
-The project includes a comprehensive test suite to ensure code quality and functionality. Here's how to run and work with the tests:
+</details>
 
-### Test Structure
+<details>
+<summary><strong>Update Existing Framework</strong></summary>
 
-- Unit tests are located in `tests/unit/`
-- Integration tests are in `tests/integration/`
-- Test fixtures and mocks are in `tests/fixtures/`
+```bash
+./api-agent api-spec.yaml \
+  --use-existing-framework \
+  --destination-folder ./my-api-framework \
+  --endpoints /products
+```
 
-### Running the Test Suite
+Adds `/products` endpoint to existing framework without regenerating everything.
 
-1. Install test dependencies:
+</details>
 
-   ```bash
-   pip install -r requirements.txt
-   pip install -r requirements-test.txt  # Additional test dependencies
-   ```
+<details>
+<summary><strong>Generate Models Only</strong></summary>
 
-2. Run all tests:
+```bash
+./api-agent api-spec.yaml --generate models
+```
 
-   ```bash
-   pytest
-   ```
+Creates only TypeScript interfaces and service classes, useful for API clients.
 
-3. Run specific test categories:
+</details>
 
-   ```bash
-   pytest tests/unit/  # Run only unit tests
-   pytest tests/integration/  # Run only integration tests
-   ```
+<details>
+<summary><strong>Custom Output Directory</strong></summary>
 
-4. Run tests with coverage report:
-   ```bash
-   pytest --cov=src --cov-report=term --cov-config=.coveragerc
-   ```
+```bash
+./api-agent api-spec.yaml \
+  --destination-folder ./my-tests \
+  --endpoints /store \
+  --generate models_and_first_test
+```
 
-### Test Best Practices
+Generates store endpoint with sample tests in specified directory.
 
-- All external LLM calls are mocked to keep tests fast and free of API costs
-- Use the `@pytest.mark.asyncio` decorator for async tests
-- Follow the naming convention: `test_<function_name>_<scenario>`
-- Keep tests focused and isolated
-- Use fixtures for common setup and teardown
+</details>
 
-### Writing New Tests
+### Generated Framework Structure
 
-When adding new tests:
+```
+generated-framework_[timestamp]/
+├── src/
+│   ├── base/                  # Framework core classes
+│   │   ├── BaseTest.ts
+│   │   └── ApiClient.ts
+│   ├── models/                # Generated TypeScript interfaces and services
+│   │   ├── User.ts
+│   │   ├── UserService.ts
+│   │   └── ...
+│   └── tests/                 # Test suites
+│       ├── user.test.ts
+│       └── ...
+├── package.json
+├── tsconfig.json
+├── .eslintrc.json
+└── .prettierrc.json
+```
 
-1. Place them in the appropriate directory based on test type
-2. Use descriptive names that explain the test scenario
-3. Mock external dependencies using `pytest-mock`
-4. Add appropriate assertions to verify behavior
-5. Consider edge cases and error scenarios
+---
 
-## Performance Benchmarking
+## LLM Configuration
 
-This project includes a benchmark tool designed to evaluate the performance of different Large Language Models (LLMs) in generating API test frameworks using this agent. It automates running the agent against an OpenAPI specification for various LLMs and collects quantifiable metrics.
+### Supported Models
 
-For detailed instructions on how to set up, run, and interpret the benchmark results, please refer to the [Benchmark README](./benchmarks/README.md).
+The agent supports multiple Large Language Models with varying performance characteristics.
 
-## Checkpoints
+#### Anthropic Claude
 
-The checkpoints feature allows you to save and restore the state of the framework generation process. This is useful if you need to interrupt the process and resume it later without losing progress.
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Model ID</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Claude Haiku 4.5</strong> (Default)</td>
+<td><code>claude-haiku-4-5-20251001</code></td>
+<td>Balanced performance, speed, and cost</td>
+</tr>
+<tr>
+<td><strong>Claude Sonnet 4.5</strong> (Recommended for complex APIs)</td>
+<td><code>claude-sonnet-4-5-20250929</code></td>
+<td>Highest quality output, complex specifications</td>
+</tr>
+<tr>
+<td>Claude Sonnet 4</td>
+<td><code>claude-sonnet-4-20250514</code></td>
+<td>Standard quality tasks</td>
+</tr>
+<tr>
+<td>Claude Sonnet 3.7</td>
+<td><code>claude-3-7-sonnet-latest</code></td>
+<td>Legacy support</td>
+</tr>
+<tr>
+<td>Claude Sonnet 3.5</td>
+<td><code>claude-3-5-sonnet-latest</code></td>
+<td>Legacy support</td>
+</tr>
+</tbody>
+</table>
 
-### Purpose
+#### OpenAI Models
 
-The purpose of the checkpoints feature is to provide a way to save the current state of the framework generation process and restore it later.
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Model ID</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GPT-5</strong></td>
+<td><code>gpt-5</code></td>
+<td>Latest capabilities</td>
+</tr>
+<tr>
+<td>GPT-4o</td>
+<td><code>gpt-4o</code></td>
+<td>Optimized performance</td>
+</tr>
+<tr>
+<td>GPT-4.1</td>
+<td><code>gpt-4.1</code></td>
+<td>Standard tasks</td>
+</tr>
+<tr>
+<td>O3</td>
+<td><code>o3</code></td>
+<td>Advanced reasoning</td>
+</tr>
+</tbody>
+</table>
 
-### How to Use
+### Configuration
 
-1. **Saving State**: The state is automatically saved at various points during the framework generation process. You don't need to manually save the state.
+Set your preferred model in `.env`:
 
-2. **Restoring State**: If a previous run was interrupted, you will be prompted to resume the process when you run the agent again. The agent will restore the last saved state and continue from where it left off.
+```env
+MODEL=claude-haiku-4-5-20251001
+```
 
-3. **Clearing Checkpoints**: After the framework generation process is completed successfully, the checkpoints are automatically cleared.
+> **Important**: Check current pricing at [Anthropic](https://www.anthropic.com/pricing) or [OpenAI](https://openai.com/pricing) before running generations. Model costs vary significantly.
 
-### Implementation
+### Model Recommendations
 
-The checkpoints feature is implemented in the `src/utils/checkpoint.py` file. It uses the `shelve` module to store the state in a persistent dictionary.
+- **Start with Claude Haiku 4.5**: Best balance for most use cases
+- **Use Claude Sonnet 4.5** for:
+  - Large API specifications (50+ endpoints)
+  - Complex nested data structures
+  - High-quality output requirements
+- **Consider GPT-5** if you prefer OpenAI's ecosystem
 
-#### Decorator to Functions
+---
 
-The `Checkpoint` class provides a `checkpoint` decorator that can be used to automatically save and restore the state of a function. This decorator can be applied to any function that you want to checkpoint.
+## Postman Collections
 
-Example:
+### Migration to Open Source
+
+Convert Postman collections to TypeScript test frameworks.
+
+#### Supported Features
+
+- Postman Collection v2.0 format
+- Preserves folder structure and test run order
+- Migrates test scripts and assertions
+- Groups API routes by path for service organization
+
+#### Limitations
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| HTTP URL download | Not supported | Use local files only |
+| Collection formats | v2.0 only | Export as v2.0 from Postman |
+| Folder-level scripts | Not processed | Move scripts to request level |
+| CLI options | Limited | Only `--destination-folder` supported |
+
+#### Best Practices
+
+For optimal results:
+- Organize endpoints logically by resource
+- Group related endpoints together (`/users`, `/users/{id}`)
+- Use standard REST conventions for HTTP methods
+- Place test scripts at request level, not folder level
+
+#### Usage
+
+```bash
+./api-agent path/to/postman_collection.json --destination-folder ./migrated-tests
+```
+
+Generated structure follows the same pattern as OpenAPI-generated frameworks.
+
+---
+
+## Advanced Features
+
+### Checkpoints
+
+The agent automatically saves progress during long-running operations, allowing you to resume if interrupted.
+
+#### How It Works
+
+1. **Automatic Saving**: State is saved at key points during generation
+2. **Resume on Restart**: Agent detects incomplete runs and prompts to resume
+3. **Auto-Cleanup**: Checkpoints are cleared on successful completion
+
+#### Implementation
+
+Checkpoints are managed transparently. No configuration required.
+
+For developers extending the agent, use the checkpoint decorator:
 
 ```python
 from src.utils.checkpoint import Checkpoint
@@ -381,116 +450,195 @@ class MyClass:
         pass
 ```
 
-#### For Wrapper
-
-The `checkpoint_iter` method of the `Checkpoint` class can be used to wrap a for-loop and automatically save and restore progress. This is useful for long-running loops where you want to ensure progress is not lost.
-
-Example:
+For long-running loops:
 
 ```python
-from src.utils.checkpoint import Checkpoint
-
-class MyClass:
-    def __init__(self):
-        self.checkpoint = Checkpoint(self)
-        self.state = {"info": []}
-
-    def my_loop_function(self, items):
-        for item in self.checkpoint.checkpoint_iter(items, "my_loop", self.state):
-            self.state["info"].append(item)
-         print(self.state)
+def my_loop_function(self, items):
+    for item in self.checkpoint.checkpoint_iter(items, "my_loop", self.state):
+        self.state["info"].append(item)
 ```
 
-In the example above, the `checkpoint_iter` method is used to wrap the for-loop. The `self.state` dictionary is passed as the third argument to the `checkpoint_iter` method. This dictionary needs to be in the format of a dict with a state. The iteration will start from where it left off (index) and restore the last state of the third variable.
+### Performance Benchmarking
 
-## Contribution Guidelines
+The project includes tools to evaluate LLM performance across different models.
 
-Contributions are welcome! Here's how you can help:
+See [benchmarks/README.md](./benchmarks/README.md) for detailed instructions on:
+- Running benchmarks
+- Comparing model performance
+- Analyzing cost vs. quality tradeoffs
+- Interpreting results
 
-### Finding Tasks to Work On
+---
 
-We maintain a [project board](https://github.com/orgs/TestCraft-App/projects/2/views/1) to track features, enhancements, and bugs. Each task in the board includes:
+## Development
 
-- Task descriptions
-- Priority
-- Complexity
-- Size
+### Running Tests
 
-New contributors can check out our ["Good First Issues"](https://github.com/orgs/TestCraft-App/projects/2/views/2) view for beginner-friendly tasks to get started with.
+The project uses pytest for comprehensive unit and integration testing.
 
-### Contribution Process
+#### Test Structure
 
-1. Fork the repository
-2. Create a new branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests and linting
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request to the original repo
+```
+tests/
+├── unit/              # Unit tests
+├── integration/       # Integration tests
+└── fixtures/          # Test data and mocks
+```
 
-### Reporting Issues
+#### Commands
 
-Found a bug or have a suggestion? Please open an issue on GitHub with:
+```bash
+# Install test dependencies
+pip install -r requirements.txt
+pip install -r requirements-test.txt
 
-- A clear description of the problem
-- Steps to reproduce
-- Expected vs actual behavior
-- Your environment details (OS, Python version, etc.)
+# Run all tests
+pytest
 
-## Code Formatting
+# Run specific test categories
+pytest tests/unit/
+pytest tests/integration/
 
-This project uses strict code formatting rules to maintain consistency:
+# Generate coverage report
+pytest --cov=src --cov-report=term --cov-config=.coveragerc
+```
 
-- [Black](https://black.readthedocs.io/) is used as the Python code formatter
-  - Line length is set to 88 characters
-  - Python 3.7+ compatibility is enforced
-- VS Code is configured for automatic formatting on save
-- Editor settings and recommended extensions are provided in the `.vscode` directory
+#### Test Guidelines
 
-All Python files will be automatically formatted when you save them in VS Code with the recommended extensions installed. To manually format code, you can run:
+- All external LLM calls are mocked (no API costs during testing)
+- Use `@pytest.mark.asyncio` for async tests
+- Follow naming convention: `test_<function_name>_<scenario>`
+- Keep tests focused and isolated
+- Use fixtures for common setup
+
+#### Writing Tests
+
+When adding new tests:
+
+1. Place in appropriate directory (`unit/` or `integration/`)
+2. Use descriptive names explaining the scenario
+3. Mock external dependencies with `pytest-mock`
+4. Include assertions for expected behavior
+5. Consider edge cases and error scenarios
+
+### Code Formatting
+
+The project enforces strict formatting for consistency:
+
+- **Formatter**: Black (88 character line length)
+- **Python Version**: 3.7+ compatibility
+- **Auto-format**: On save in VS Code
+
+#### Manual Formatting
 
 ```bash
 black .
 ```
 
-## Logging
+Configuration is provided in `.vscode/` for automatic formatting with recommended extensions.
 
-The project implements a dual logging strategy:
+### Logging
 
-1. **Console Output**: By default shows INFO level messages in a user-friendly format
+Dual logging strategy for debugging and production use:
 
-   ```
-   Generated service class for Pet endpoints
-   Creating test suite for /pet/findByStatus
-   ```
+#### Console Output
 
-2. **File Logging**: Detailed DEBUG level logging with timestamps and metadata in `logs/[framework-name].log`
-   ```
-   2024-03-21 14:30:22,531 - generator.services - DEBUG - Initializing service class generator for Pet endpoints
-   2024-03-21 14:30:22,531 - generator.services - INFO - Generated service class for Pet endpoints
-   2024-03-21 14:30:23,128 - generator.tests - DEBUG - Loading OpenAPI spec for /pet/findByStatus
-   2024-03-21 14:30:23,128 - generator.tests - INFO - Creating test suite for /pet/findByStatus
-   ```
+INFO-level messages in user-friendly format:
 
-### Debug Options
+```
+Generated service class for Pet endpoints
+Creating test suite for /pet/findByStatus
+```
 
-You can control debug levels through environment variables:
+#### File Logging
 
-1. **Application Debug**: Set `DEBUG=True` in your `.env` file to enable debug-level logging in the console output
-2. **LangChain Debug**: Set `LANGCHAIN_DEBUG=True` to enable detailed logging of LangChain operations
+DEBUG-level logs with timestamps in `logs/[framework-name].log`:
 
-Example `.env` configuration:
+```
+2024-03-21 14:30:22,531 - generator.services - DEBUG - Initializing service class generator
+2024-03-21 14:30:22,531 - generator.services - INFO - Generated service class for Pet
+```
+
+#### Debug Configuration
+
+Control debug levels via environment variables:
 
 ```env
-DEBUG=False          # Default: False (INFO level console output)
-LANGCHAIN_DEBUG=False  # Default: False (disabled)
+DEBUG=False                # Console debug output (default: False)
+LANGCHAIN_DEBUG=False      # LangChain operation logging (default: False)
 ```
+
+Set `DEBUG=True` for verbose console output during development.
+
+---
+
+## Contributing
+
+Contributions are welcome. We maintain a [project board](https://github.com/orgs/TestCraft-App/projects/2/views/1) with tracked tasks.
+
+### Finding Tasks
+
+- **Project Board**: Features, enhancements, and bugs with priorities
+- **Good First Issues**: [Beginner-friendly tasks](https://github.com/orgs/TestCraft-App/projects/2/views/2)
+- Each task includes description, priority, complexity, and size
+
+### Contribution Process
+
+```bash
+# 1. Fork the repository
+
+# 2. Create a feature branch
+git checkout -b feature/your-feature-name
+
+# 3. Make changes and test
+pytest
+black .
+
+# 4. Commit with clear messages
+git commit -m "Add feature: description"
+
+# 5. Push and create Pull Request
+git push origin feature/your-feature-name
+```
+
+### Pull Request Guidelines
+
+- Include clear description of changes
+- Add tests for new functionality
+- Ensure all tests pass
+- Follow existing code style
+- Update documentation if needed
+
+### Reporting Issues
+
+When reporting bugs or suggesting features:
+
+- Use clear, descriptive titles
+- Provide reproduction steps for bugs
+- Include expected vs. actual behavior
+- Add environment details (OS, Python version, etc.)
+
+---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
+---
 
-- OpenAI and Anthropic for their AI models
-- All contributors who have helped build and improve this project
+## Resources
+
+- **Documentation**: [Project Wiki](https://github.com/TestCraft-App/api-automation-agent/wiki)
+- **Issue Tracker**: [GitHub Issues](https://github.com/TestCraft-App/api-automation-agent/issues)
+- **Project Board**: [Development Roadmap](https://github.com/orgs/TestCraft-App/projects/2/views/1)
+- **Base Template**: [api-framework-ts-mocha](https://github.com/damianpereira86/api-framework-ts-mocha)
+
+---
+
+<div align="center">
+
+**[⬆ Back to Top](#api-automation-agent)**
+
+Made with precision by the TestCraft community
+
+</div>
