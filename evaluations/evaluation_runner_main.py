@@ -50,7 +50,6 @@ def save_evaluation_results(results, output_dir: str, dataset_name: str) -> str:
     Args:
         results: EvaluationRunResult to save
         output_dir: Directory to save results in
-        output_dir: Directory to save results in
         dataset_name: Name of the dataset
 
     Returns:
@@ -62,7 +61,6 @@ def save_evaluation_results(results, output_dir: str, dataset_name: str) -> str:
     filepath = os.path.join(output_dir, filename)
 
     with open(filepath, "w", encoding="utf-8") as f:
-        # Convert Pydantic model to dict and serialize
         json.dump(results.model_dump(mode="json"), f, indent=2)
 
     return filepath
