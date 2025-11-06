@@ -9,7 +9,7 @@
         "requests/test_001_UserModel.ts",
         "services/test_001_UserService.ts"
       ],
-      "evaluation_criteria": "The generated test should:\n1. Include proper setup/teardown hooks (before, beforeEach, after, afterEach) if needed\n2. Test the main positive scenario for a POST endpoint to create a user\n3. Use the UserService.createUser method with proper TypeScript types (UserModel)\n4. Use proper assertions using optional chaining (e.g., response.data?.id)\n5. Avoid using the Response type directly in service method calls\n6. Generate random values for required fields (name, email) to avoid collisions\n7. Be error-free TypeScript code that adheres to TypeScript and ESLint standards\n8. Include \".js\" in import statements"
+      "evaluation_criteria": "The generated test should:\n1. Test the main positive scenario for a POST endpoint to create a user\n2. Use the UserService.createUser method with proper TypeScript types (UserModel)\n3. Use proper assertions using optional chaining (e.g., response.data?.id)\n4. Generate random values for required fields (name, email) to avoid collisions"
     }
   ]
 }
