@@ -53,20 +53,15 @@ def main(
 
         data_source = APIProcessor.set_data_source(args.api_definition, logger)
 
-        def handle_unsupported_cli_args(data_source: DataSource, args: Namespace):
-            if data_source == DataSource.POSTMAN and (
-                args.use_existing_framework
-                or args.list_endpoints
-                or args.endpoints
-                or args.prefixes
-                or (args.generate != GenerationOptions.MODELS_AND_TESTS.value)
-            ):
+        generation_opts = GenerationOptions(args.generate)
+
+        if data_source == DataSource.POSTMAN:
+            generation_opts = GenerationOptions.MODELS_AND_FIRST_TEST
+            if args.use_existing_framework or args.list_endpoints or args.endpoints or args.prefixes:
                 raise ValueError(
                     "The specified CLI arguments are not supported for the current data source. "
                     "Check the README.md document for more info."
                 )
-
-        handle_unsupported_cli_args(data_source, args)
 
         if last_namespace != "default" and prompt_user_resume_previous_run():
             checkpoint.restore_last_namespace()
@@ -80,7 +75,7 @@ def main(
                 "api_definition": args.api_definition,
                 "destination_folder": args.destination_folder or config.destination_folder,
                 "endpoints": args.endpoints,
-                "generate": GenerationOptions(args.generate),
+                "generate": generation_opts,
                 "data_source": data_source,
                 "prefixes": args.prefixes,
                 "use_existing_framework": args.use_existing_framework,
