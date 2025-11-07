@@ -18,30 +18,15 @@ evaluations/data/
         └── services/                  # Service models
 ```
 
+See `evaluations/data/main_dataset/` for a complete example:
+
 ### Required Components
 
 - **Dataset JSON File**: Must be named `{folder_name}.json` and placed directly in the dataset folder
 - **API Definition Files**: Placed in the `definitions/` subfolder
 - **Model Files**: TypeScript files placed in the `models/` subfolder (can be organized in subdirectories like `requests/`, `responses/`, `services/`)
 
-## Example Structure
-
-See `evaluations/data/main_dataset/` for a complete example:
-
-```
-evaluations/data/main_dataset/
-├── main_dataset.json                  # Dataset file
-├── definitions/
-│   └── user_post_api.yaml            # API definition
-└── models/
-    ├── requests/
-    │   └── UserModel.ts              # Request model
-    ├── responses/
-    └── services/
-        └── UserService.ts            # Service model
-```
-
-## Dataset Format
+## Dataset JSON File
 
 A dataset file should be a JSON file with the following structure:
 
@@ -73,16 +58,51 @@ A dataset file should be a JSON file with the following structure:
   - `model_files`: **Required** list of model file paths relative to the `models/` folder. **The filename must be prefixed with test_id** (e.g., "requests/test_001_UserModel.ts"). The test_id prefix will be automatically removed from the filename and "src/models/" will be prepended when creating GeneratedModel objects for evaluation.
   - `evaluation_criteria`: Description of what the generated test should meet
 
-### Test ID Prefix Behavior
+## API Definition Files
 
-The `test_id` prefix serves the purpose of **File Organization**. The filename is prefixed with test_id in the dataset folder for easy identification and linking.
+API definition files are OpenAPI Specification (YAML or JSON) files that define a single API endpoint with one HTTP verb (GET, POST, PUT, DELETE, etc.). Each file should contain:
 
-Example:
-- Dataset path: `models/requests/test_001_UserModel.ts`
-- After removing test_id from filename: `requests/UserModel.ts`
-- Final GeneratedModel path: `src/models/requests/UserModel.ts`
+> **Note**: The API does not need to exist or be running. Since the evaluation only assesses the generated test code (tests are not executed), you can create API definitions for any scenario without requiring an actual API server.
 
-During evaluation, the test_id prefix is removed from the filename and "src/models/" is prepended to create realistic paths.
+- **Single Endpoint**: Only one path in the `paths` section
+- **Single HTTP Verb**: Only one HTTP method (verb) for that path
+- **Complete Schemas**: All referenced schemas must be included in the `components/schemas` section
+
+### Test ID Prefix
+
+The **filename** must be prefixed with the `test_id` from the dataset. For example:
+- `test_001_user_post_api.yaml`
+
+### Structure
+
+The API definition file should match the output of the `process_api_definition` method in the `FrameworkGenerator` class.
+
+### Example
+
+See `evaluations/data/main_dataset/definitions/test_001_user_post_api.yaml` for a complete example of an API definition file for a POST `/users` endpoint.
+
+## Model Files
+
+Model files are TypeScript files that represent the models and services that `generate_first_test` receives as input. These files are placed in the `models/` subfolder and can be organized in subdirectories like `requests/`, `responses/`, and `services/`.
+
+### File Format
+
+Model files should be valid TypeScript files containing:
+- **Request/Response Models**: TypeScript interfaces representing data models (e.g., `UserModel.ts`)
+- **Service Models**: TypeScript classes extending `ServiceBase` with API endpoint methods (e.g., `UserService.ts`)
+
+### Test ID Prefix
+
+The **filename** (not the directory path) must be prefixed with the `test_id` from the dataset. For example:
+- `requests/test_001_UserModel.ts`
+- `services/test_001_UserService.ts`
+
+### Examples
+
+See `evaluations/data/main_dataset/models/` for examples of model files:
+- `requests/test_001_UserModel.ts` - Example request/response model
+- `services/test_001_UserService.ts` - Example service model
+
 
 ## Example Dataset
 

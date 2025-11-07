@@ -6,9 +6,11 @@ This evaluation suite provides infrastructure for evaluating LLMService generati
 
 The evaluation suite allows you to:
 - Define test cases with API definitions and evaluation criteria
-- Run `generate_first_test` and other generation methods
+- Run `generate_first_test` (other generation methods comming soon)
 - Automatically grade generated files using LLM-based evaluation
 - Generate detailed reports of evaluation results
+
+> **Important**: The API does not need to exist because the generated tests are not executed. Evaluation is based solely on the generated code quality, allowing you to easily create extensive datasets with specific scenarios without requiring a running API server.
 
 ## Structure
 
@@ -43,6 +45,8 @@ evaluations/
 2. Create a dataset JSON file named `{folder_name}.json` (e.g., `main_dataset.json`)
 3. Place API definition files in the `definitions/` subfolder
 4. Place model files (TypeScript) in the `models/` subfolder
+
+See `README.md` inside data folder for more details on test data requirements. 
 
 ### 2. Run Evaluation
 
