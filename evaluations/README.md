@@ -33,6 +33,15 @@ evaluations/
 
 ## Usage
 
+### Setup Requirements
+
+Before running evaluations:
+
+1. Copy `.env.example` (or follow the project README) to create a `.env` file.
+2. Add API keys for the LLM vendor you plan to use (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`).
+
+Refer back to the main README for exact environment variable names and additional instructions.
+
 ### 1. Prepare Test Data
 
 1. Create a dataset folder (e.g., `evaluations/data/generate_first_test_dataset/`)
@@ -61,6 +70,7 @@ python evaluations/evaluation_runner_main.py \
 
 - `--test-data-folder`: Path to the dataset folder (required). The dataset JSON file should be named `{folder_name}.json` inside this folder.
 - `--output-dir`: Directory to save evaluation results (default: `evaluations/reports`)
+- `--llm`: Optional override for the LLM model to use (e.g., `--llm GPT_5`)
 
 ### 3. Review Results
 
@@ -68,6 +78,7 @@ Results are saved as JSON files in the output directory with timestamps. The con
 
 Summary metrics include:
 - Total test cases and pass/fail/error counts
+- LLM model used for the evaluation
 - Token usage (input, output, total) and total evaluation cost (USD)
 - Average score across all graded test cases (0.0 – 1.0)
 - Status values per test case:

@@ -89,6 +89,7 @@ class EvaluationRunResult(BaseModel):
     """Complete result of an evaluation run."""
 
     dataset_name: str = Field(description="Name of the dataset evaluated")
+    llm_model: str = Field(description="LLM model value used for this evaluation")
     total_test_cases: int = Field(description="Total number of test cases")
     graded_count: int = Field(description="Number of test cases that produced a model-based grade")
     not_evaluated_count: int = Field(
@@ -124,6 +125,7 @@ class EvaluationSummary(BaseModel):
     total_input_tokens: int = Field(description="Total input tokens across all datasets")
     total_output_tokens: int = Field(description="Total output tokens across all datasets")
     total_cost: float = Field(description="Total cost (USD) across all datasets")
+    llm_model: str = Field(description="LLM model value used for this evaluation")
     average_score_across_datasets: Optional[float] = Field(
         default=None,
         description="Average of dataset-level average scores, when available",

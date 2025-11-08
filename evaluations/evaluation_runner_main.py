@@ -19,8 +19,13 @@ from src.container import Container  # noqa: E402
 from src.services.file_service import FileService  # noqa: E402
 from src.services.llm_service import LLMService  # noqa: E402
 from src.utils.logger import Logger  # noqa: E402
+from src.configuration.models import Model  # noqa: E402
 
-from evaluations.models.evaluation_dataset import EvaluationDataset  # noqa: E402
+from evaluations.models.evaluation_dataset import (  # noqa: E402
+    EvaluationDataset,
+    EvaluationRunResult,
+    EvaluationSummary,
+)
 from evaluations.services.evaluation_runner import EvaluationRunner  # noqa: E402
 
 
@@ -99,6 +104,7 @@ def print_evaluation_summary(results):
     print("EVALUATION SUMMARY")
     print("=" * 120)
     print(f"Dataset: {results.dataset_name}")
+    print(f"LLM Model: {results.llm_model}")
     print(f"Total Test Cases: {results.total_test_cases}")
     print(f"Graded: {results.graded_count}")
     print(f"Not Evaluated: {results.not_evaluated_count}")
@@ -137,6 +143,13 @@ def parse_args() -> argparse.Namespace:
         help="Directory to save evaluation results (default: evaluations/reports)",
     )
 
+    parser.add_argument(
+        "--llm",
+        type=str,
+        choices=[model.name for model in Model],
+        help="Override the LLM model to use. Choices: %(choices)s. Example: --llm GPT_5",
+    )
+
     return parser.parse_args()
 
 
@@ -156,8 +169,6 @@ def main():
         sys.exit(1)
 
     os.makedirs(args.output_dir, exist_ok=True)
-
-    from evaluations.models.evaluation_dataset import EvaluationSummary, EvaluationRunResult
 
     all_results: list[EvaluationRunResult] = []
 
@@ -186,7 +197,11 @@ def main():
         container.init_resources()
 
         config: Config = container.config()
+        if args.llm:
+            selected_model = Model[args.llm]
+            config.update({"model": selected_model})
         Logger.configure_logger(config)
+        print(f"Using LLM model: {config.model.name} ({config.model.value})")
 
         file_service = FileService()
         llm_service = LLMService(config, file_service)
@@ -215,6 +230,7 @@ def main():
         total_input_tokens = sum(r.total_input_tokens for r in all_results)
         total_output_tokens = sum(r.total_output_tokens for r in all_results)
         total_cost = sum(r.total_cost for r in all_results)
+        llm_model = config.model.value
 
         score_values = [r.average_score for r in all_results if r.average_score is not None]
         average_score_across_datasets = sum(score_values) / len(score_values) if score_values else None
@@ -228,6 +244,7 @@ def main():
             total_input_tokens=total_input_tokens,
             total_output_tokens=total_output_tokens,
             total_cost=total_cost,
+            llm_model=llm_model,
             average_score_across_datasets=average_score_across_datasets,
             dataset_results=all_results,
         )
@@ -243,6 +260,7 @@ def main():
         print(f"Total Input Tokens: {summary.total_input_tokens}")
         print(f"Total Output Tokens: {summary.total_output_tokens}")
         print(f"Total Cost (USD): ${summary.total_cost:.4f}")
+        print(f"LLM Model: {summary.llm_model}")
         if summary.average_score_across_datasets is not None:
             print(f"Average Score Across Datasets: {summary.average_score_across_datasets:.2f}")
         else:

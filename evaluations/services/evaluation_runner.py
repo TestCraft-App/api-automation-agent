@@ -341,6 +341,7 @@ class EvaluationRunner:
             EvaluationRunResult with aggregated results
         """
         self.logger.info(f"\nStarting evaluation run for dataset: {dataset.dataset_name}")
+        print(f"Using LLM model: {self.config.model.name} ({self.config.model.value})")
         self.logger.info(f"Number of test cases: {len(dataset.test_cases)}\n")
 
         usage_before = self.llm_service.get_aggregated_usage_metadata().model_copy(deep=True)
@@ -412,6 +413,7 @@ class EvaluationRunner:
 
         return EvaluationRunResult(
             dataset_name=dataset.dataset_name,
+            llm_model=self.config.model.value,
             total_test_cases=len(dataset.test_cases),
             graded_count=graded_count,
             not_evaluated_count=not_evaluated_count,
