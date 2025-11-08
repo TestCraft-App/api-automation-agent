@@ -4,14 +4,88 @@
     {
       "case_type": "generate_models",
       "test_id": "test_001",
-      "name": "inventory_models",
-      "api_definition_file": "test_001_inventory_api.yaml",
+      "name": "create_users_models",
+      "api_definition_file": "users_post_api.yaml",
       "model_files": [],
       "evaluation_criteria": [
-        "Generate a Service Model file for the Inventory service, containing the listInventoryItems method",
-        "Generate at least one TypeScript model file for the InventoryItem schema",
-        "Ensure the generated model includes id, name, quantity, and tags properties",
-        "Use appropriate TypeScript types (string, number, string[])"
+        "Generate a Service Model file for the User service, containing the createUser method",
+        "Generate a Request Model file for the User request body",
+        "Ensure the generated models include id, name, and email properties"
+      ]
+    },
+    {
+      "case_type": "generate_models",
+      "test_id": "test_002",
+      "name": "list_users_models",
+      "api_definition_file": "users_get_api.yaml",
+      "model_files": [],
+      "evaluation_criteria": [
+        "Generate a Service Model file for the User service, containing the getUsers method",
+        "Generate a Response Model file for the User response body",
+        "Ensure the generated models include id, name, and email properties"
+      ]
+    },
+    {
+      "case_type": "generate_models",
+      "test_id": "test_003",
+      "name": "get_users_by_id_models",
+      "api_definition_file": "users_get_by_id_api.yaml",
+      "model_files": [],
+      "evaluation_criteria": [
+        "Generate a Service Model file for the User service, containing the getUserById method",
+        "Generate a Response Model file for the User response body",
+        "Ensure the generated models include id, name, and email properties"
+      ]
+    },
+    {
+      "case_type": "generate_models",
+      "test_id": "test_004",
+      "name": "update_users_models",
+      "api_definition_file": "users_put_api.yaml",
+      "model_files": [],
+      "evaluation_criteria": [
+        "Generate a Service Model file for the User service, containing the updateUser method",
+        "Generate a Request Model file for the User request body",
+        "Generate a Response Model file for the User response body. This could be the same as the Request Model file.",
+        "Ensure the generated models include id, name, and email properties"
+      ]
+    },
+    {
+      "case_type": "generate_models",
+      "test_id": "test_005",
+      "name": "delete_users_models",
+      "api_definition_file": "users_delete_api.yaml",
+      "model_files": [],
+      "evaluation_criteria": [
+        "Generate a Service Model file for the User service, containing the deleteUser method",
+        "No other files should be generated"
+      ]
+    },
+    {
+      "case_type": "generate_models",
+      "test_id": "test_006",
+      "name": "patch_users_models",
+      "api_definition_file": "users_patch_api.yaml",
+      "model_files": [],
+      "evaluation_criteria": [
+        "Generate a Service Model file for the User service, containing the patchUser method",
+        "Generate a Request Model file for the User request body",
+        "Generate a Response Model file for the User response body. This could be the same as the Request Model file.",
+        "Ensure the generated models include id, name, and email properties"
+      ]
+    },
+    {
+      "case_type": "generate_models",
+      "test_id": "test_007",
+      "name": "full_users_api_models",
+      "api_definition_file": "users_api.yaml",
+      "model_files": [],
+      "evaluation_criteria": [
+        "Generate a Service Model file for the User service, containing listUsers, createUser, getUserById, updateUser, patchUser, and deleteUser methods",
+        "Generate Request Model files for createUser, updateUser, and patchUser payloads. Some of the files could be the same.",
+        "Generate Response Model files for listUsers, getUserById, updateUser, and patchUser operations. Some of the files could be the same.",
+        "Ensure models reuse shared User schemas where appropriate and include id, name, email, and age properties",
+        "Generate an ErrorResponse model."
       ]
     }
   ]

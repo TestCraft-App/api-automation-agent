@@ -49,6 +49,14 @@ python evaluations/evaluation_runner_main.py \
   --test-data-folder evaluations/data/generate_first_test_dataset 
 ```
 
+You can evaluate multiple datasets in a single run by repeating the flag:
+
+```bash
+python evaluations/evaluation_runner_main.py \
+  --test-data-folder evaluations/data/generate_first_test_dataset \
+  --test-data-folder evaluations/data/generate_models_dataset
+```
+
 ### Arguments
 
 - `--test-data-folder`: Path to the dataset folder (required). The dataset JSON file should be named `{folder_name}.json` inside this folder.

@@ -121,10 +121,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--test-data-folder",
         type=str,
+        action="append",
         required=True,
         help=(
-            "Path to the dataset folder (e.g., evaluations/data/generate_first_test_dataset). "
-            "The dataset JSON file should be named {folder_name}.json"
+            "Path to a dataset folder (e.g., evaluations/data/generate_first_test_dataset). "
+            "Provide this flag multiple times for multiple datasets, or supply a comma-separated list. "
+            "Each dataset must contain a JSON file named {folder_name}.json."
         ),
     )
 
@@ -144,47 +146,108 @@ def main():
 
     args = parse_args()
 
-    if not os.path.exists(args.test_data_folder):
-        print(f"Error: Test data folder not found: {args.test_data_folder}")
+    dataset_folders: list[str] = []
+    for entry in args.test_data_folder:
+        parts = [part.strip() for part in entry.split(",") if part.strip()]
+        dataset_folders.extend(parts)
+
+    if not dataset_folders:
+        print("Error: No dataset folders provided.")
         sys.exit(1)
 
-    folder_name = os.path.basename(os.path.normpath(args.test_data_folder))
-    dataset_file = os.path.join(args.test_data_folder, f"{folder_name}.json")
+    os.makedirs(args.output_dir, exist_ok=True)
 
-    if not os.path.exists(dataset_file):
-        print(f"Error: Dataset file not found: {dataset_file}")
-        print(f"Expected dataset file: {folder_name}.json in {args.test_data_folder}")
-        sys.exit(1)
+    from evaluations.models.evaluation_dataset import EvaluationSummary, EvaluationRunResult
 
-    print(f"Loading evaluation dataset from: {dataset_file}")
-    dataset = load_evaluation_dataset(dataset_file)
+    all_results: list[EvaluationRunResult] = []
 
-    print("Initializing services...")
-    config_adapter = DevConfigAdapter()
-    processors_adapter = ProcessorsAdapter(config=config_adapter.config)
-    container = Container(config_adapter=config_adapter, processors_adapter=processors_adapter)
-    container.init_resources()
+    for dataset_folder in dataset_folders:
+        dataset_folder = os.path.normpath(dataset_folder)
 
-    config: Config = container.config()
-    Logger.configure_logger(config)
+        if not os.path.exists(dataset_folder):
+            print(f"Error: Test data folder not found: {dataset_folder}")
+            sys.exit(1)
 
-    file_service = FileService()
-    llm_service = LLMService(config, file_service)
+        folder_name = os.path.basename(dataset_folder)
+        dataset_file = os.path.join(dataset_folder, f"{folder_name}.json")
 
-    evaluation_runner = EvaluationRunner(
-        config=config,
-        llm_service=llm_service,
-        file_service=file_service,
-        test_data_folder=args.test_data_folder,
-    )
+        if not os.path.exists(dataset_file):
+            print(f"Error: Dataset file not found: {dataset_file}")
+            print(f"Expected dataset file: {folder_name}.json in {dataset_folder}")
+            sys.exit(1)
 
-    results = evaluation_runner.run_evaluation(dataset)
+        print(f"\nLoading evaluation dataset from: {dataset_file}")
+        dataset = load_evaluation_dataset(dataset_file)
 
-    print(f"\nSaving results to: {args.output_dir}")
-    results_path = save_evaluation_results(results, args.output_dir, dataset.dataset_name)
-    print(f"Results saved to: {results_path}")
+        print("Initializing services...")
+        config_adapter = DevConfigAdapter()
+        processors_adapter = ProcessorsAdapter(config=config_adapter.config)
+        container = Container(config_adapter=config_adapter, processors_adapter=processors_adapter)
+        container.init_resources()
 
-    print_evaluation_summary(results)
+        config: Config = container.config()
+        Logger.configure_logger(config)
+
+        file_service = FileService()
+        llm_service = LLMService(config, file_service)
+
+        evaluation_runner = EvaluationRunner(
+            config=config,
+            llm_service=llm_service,
+            file_service=file_service,
+            test_data_folder=dataset_folder,
+        )
+
+        results = evaluation_runner.run_evaluation(dataset)
+
+        print(f"\nSaving results to: {args.output_dir}")
+        results_path = save_evaluation_results(results, args.output_dir, dataset.dataset_name)
+        print(f"Results saved to: {results_path}")
+
+        print_evaluation_summary(results)
+        all_results.append(results)
+
+    if len(all_results) > 1:
+        total_test_cases = sum(r.total_test_cases for r in all_results)
+        total_graded = sum(r.graded_count for r in all_results)
+        total_not_evaluated = sum(r.not_evaluated_count for r in all_results)
+        total_errors = sum(r.error_count for r in all_results)
+        total_input_tokens = sum(r.total_input_tokens for r in all_results)
+        total_output_tokens = sum(r.total_output_tokens for r in all_results)
+        total_cost = sum(r.total_cost for r in all_results)
+
+        score_values = [r.average_score for r in all_results if r.average_score is not None]
+        average_score_across_datasets = sum(score_values) / len(score_values) if score_values else None
+
+        summary = EvaluationSummary(
+            total_datasets=len(all_results),
+            total_test_cases=total_test_cases,
+            total_graded=total_graded,
+            total_not_evaluated=total_not_evaluated,
+            total_errors=total_errors,
+            total_input_tokens=total_input_tokens,
+            total_output_tokens=total_output_tokens,
+            total_cost=total_cost,
+            average_score_across_datasets=average_score_across_datasets,
+            dataset_results=all_results,
+        )
+
+        print("\n" + "=" * 120)
+        print("AGGREGATED SUMMARY")
+        print("=" * 120)
+        print(f"Datasets evaluated: {summary.total_datasets}")
+        print(f"Total Test Cases: {summary.total_test_cases}")
+        print(f"Total Graded: {summary.total_graded}")
+        print(f"Total Not Evaluated: {summary.total_not_evaluated}")
+        print(f"Total Errors: {summary.total_errors}")
+        print(f"Total Input Tokens: {summary.total_input_tokens}")
+        print(f"Total Output Tokens: {summary.total_output_tokens}")
+        print(f"Total Cost (USD): ${summary.total_cost:.4f}")
+        if summary.average_score_across_datasets is not None:
+            print(f"Average Score Across Datasets: {summary.average_score_across_datasets:.2f}")
+        else:
+            print("Average Score Across Datasets: N/A")
+        print("=" * 120)
 
 
 if __name__ == "__main__":

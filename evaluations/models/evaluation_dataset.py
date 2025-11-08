@@ -111,3 +111,24 @@ class EvaluationRunResult(BaseModel):
         description="Absolute path to the folder containing generated files for this run",
     )
     results: List[EvaluationResult] = Field(description="Detailed results for each test case")
+
+
+class EvaluationSummary(BaseModel):
+    """Aggregated summary when multiple datasets are evaluated."""
+
+    total_datasets: int = Field(description="Number of datasets evaluated")
+    total_test_cases: int = Field(description="Total test cases across all datasets")
+    total_graded: int = Field(description="Total graded test cases across all datasets")
+    total_not_evaluated: int = Field(description="Total not-evaluated test cases across all datasets")
+    total_errors: int = Field(description="Total errors across all datasets")
+    total_input_tokens: int = Field(description="Total input tokens across all datasets")
+    total_output_tokens: int = Field(description="Total output tokens across all datasets")
+    total_tokens: int = Field(description="Total tokens across all datasets")
+    total_cost: float = Field(description="Total cost (USD) across all datasets")
+    average_score_across_datasets: Optional[float] = Field(
+        default=None,
+        description="Average of dataset-level average scores, when available",
+    )
+    dataset_results: List[EvaluationRunResult] = Field(
+        description="Individual dataset results included in the summary"
+    )

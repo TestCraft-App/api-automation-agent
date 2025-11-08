@@ -27,11 +27,3 @@ paths:
           description: User deleted successfully
         "404":
           description: User not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Reason the user could not be located
