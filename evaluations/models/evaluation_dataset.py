@@ -123,7 +123,6 @@ class EvaluationSummary(BaseModel):
     total_errors: int = Field(description="Total errors across all datasets")
     total_input_tokens: int = Field(description="Total input tokens across all datasets")
     total_output_tokens: int = Field(description="Total output tokens across all datasets")
-    total_tokens: int = Field(description="Total tokens across all datasets")
     total_cost: float = Field(description="Total cost (USD) across all datasets")
     average_score_across_datasets: Optional[float] = Field(
         default=None,
