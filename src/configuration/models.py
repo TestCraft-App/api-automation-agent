@@ -8,21 +8,12 @@ class ModelCost(NamedTuple):
 
 
 class Model(Enum):
-    GPT_4_O = ("gpt-4o", ModelCost(input_cost_per_million_tokens=2.5, output_cost_per_million_tokens=10.0))
+    GPT_5_MINI = (
+        "gpt-5-mini",
+        ModelCost(input_cost_per_million_tokens=0.25, output_cost_per_million_tokens=2.0),
+    )
     GPT_4_1 = ("gpt-4.1", ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=8.0))
     GPT_5 = ("gpt-5", ModelCost(input_cost_per_million_tokens=1.25, output_cost_per_million_tokens=10.0))
-    O3 = (
-        "o3",
-        ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=8.0),
-    )
-    CLAUDE_SONNET_3_5 = (
-        "claude-3-5-sonnet-latest",
-        ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
-    )
-    CLAUDE_SONNET_3_7 = (
-        "claude-3-7-sonnet-latest",
-        ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
-    )
     CLAUDE_SONNET_4 = (
         "claude-sonnet-4-20250514",
         ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
@@ -48,8 +39,6 @@ class Model(Enum):
 
     def is_anthropic(self) -> bool:
         return self in [
-            Model.CLAUDE_SONNET_3_5,
-            Model.CLAUDE_SONNET_3_7,
             Model.CLAUDE_SONNET_4,
             Model.CLAUDE_SONNET_4_5,
             Model.CLAUDE_HAIKU_4_5,

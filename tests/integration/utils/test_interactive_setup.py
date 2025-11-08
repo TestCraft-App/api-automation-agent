@@ -104,12 +104,12 @@ LANGCHAIN_DEBUG=False
         provider = InteractiveSetup.SUPPORTED_PROVIDERS["2"]
 
         with patch("builtins.print"):
-            result = InteractiveSetup.update_env_file(provider, "gpt-4o", "test-key")
+            result = InteractiveSetup.update_env_file(provider, "gpt-5-mini", "test-key")
 
         assert result is True
         content = self.env_file.read_text()
         assert "OPENAI_API_KEY=test-key" in content
-        assert "MODEL=gpt-4o" in content
+        assert "MODEL=gpt-5-mini" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_update_env_file_existing_file(self, mock_get_dir):
@@ -126,12 +126,12 @@ DEBUG=False
         provider = InteractiveSetup.SUPPORTED_PROVIDERS["2"]
 
         with patch("builtins.print"):
-            result = InteractiveSetup.update_env_file(provider, "gpt-4o", "new-key")
+            result = InteractiveSetup.update_env_file(provider, "gpt-5-mini", "new-key")
 
         assert result is True
         content = self.env_file.read_text()
         assert "OPENAI_API_KEY=new-key" in content
-        assert "MODEL=gpt-4o" in content
+        assert "MODEL=gpt-5-mini" in content
         assert "old-key" not in content
         assert "DEBUG=False" in content
 
@@ -238,7 +238,7 @@ class TestInteractiveSetupConfiguration:
         assert openai_config["env_key"] == "OPENAI_API_KEY"
         assert len(openai_config["models"]) > 0
         assert openai_config["default_model"] in openai_config["models"]
-        assert "gpt-4o" in openai_config["models"]
+        assert "gpt-5-mini" in openai_config["models"]
 
     def test_anthropic_provider_configuration(self):
         """Test Anthropic provider configuration."""
