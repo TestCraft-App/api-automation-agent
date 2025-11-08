@@ -1,0 +1,35 @@
+{
+  "dataset_name": "generate_additional_tests_dataset",
+  "test_cases": [
+    {
+      "case_type": "generate_additional_tests",
+      "test_id": "test_001",
+      "name": "create_user",
+      "api_definition_file": "users_post_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "services/test_001_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "A test that creates a user when name and email are valid",
+        "A test that creates a user with optional age omitted",
+        "A test that creates a user with age at minimum boundary (0)",
+        "A test that creates a user with age at maximum boundary (150)",
+        "A test that rejects a request missing required name field",
+        "A test that rejects a request missing required email field",
+        "A test that rejects a request with empty name value",
+        "A test that rejects a request with empty email value",
+        "A test that rejects a request with malformed email format (missing @)",
+        "A test that rejects a request with age below minimum (negative)",
+        "A test that rejects a request with age above maximum (151)",
+        "A test that rejects a request with non-integer age value",
+        "A test that rejects a request with unexpected additional top-level property",
+        "A test that rejects a request using unsupported content type (e.g., text/plain)",
+        "A test that rejects a request when required User schema properties are null",
+        "A test that validates JSON response matches User schema on success",
+        "A test that validates a 400 status code with error message for invalid payload"
+      ],
+      "first_test_file": "Post-CreateUser.spec.ts"
+    }
+  ]
+}

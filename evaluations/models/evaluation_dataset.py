@@ -4,7 +4,7 @@ from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict
 
 
-EvaluationType = Literal["generate_first_test", "generate_models"]
+EvaluationType = Literal["generate_first_test", "generate_models", "generate_additional_tests"]
 
 
 class EvaluationTestCase(BaseModel):
@@ -30,6 +30,13 @@ class EvaluationTestCase(BaseModel):
             "List of model file paths relative to the models folder. "
             "Filenames may start with a test prefix such as 'test_001_' "
             "which will be removed automatically (e.g., 'requests/test_001_UserModel.ts')."
+        ),
+    )
+    first_test_file: Optional[str] = Field(
+        default=None,
+        description=(
+            "Path to the first test file relative to the tests folder. Used for generate_additional_tests "
+            "to provide the initial test (e.g., 'test_001_user_test.ts')."
         ),
     )
     evaluation_criteria: List[str] = Field(

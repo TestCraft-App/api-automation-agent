@@ -6,7 +6,7 @@ This evaluation suite provides infrastructure for evaluating LLMService generati
 
 The evaluation suite allows you to:
 - Define test cases with API definitions and evaluation criteria
-- Run evaluations for `generate_first_test` and `generate_models`
+- Run evaluations for `generate_first_test`, `generate_models`, and `generate_additional_tests`
 - Automatically grade generated files using LLM-based evaluation
 - Generate detailed reports of evaluation results
 
@@ -48,6 +48,7 @@ Refer back to the main README for exact environment variable names and additiona
 2. Create a dataset JSON file named `{folder_name}.json` (e.g., `generate_first_test_dataset.json`)
 3. Place API definition files in the `definitions/` subfolder
 4. Place model files (TypeScript) in the `models/` subfolder (leave empty if not needed, e.g., for `generate_models`)
+5. (Optional) Place seed test files in the `tests/` subfolder when using `generate_additional_tests`
 
 See `README.md` inside data folder for more details on test data requirements. 
 
@@ -97,6 +98,7 @@ See `evaluations/data/README.md` for detailed information about the dataset form
 
 - `evaluations/data/generate_first_test_dataset/` – sample dataset for `generate_first_test`
 - `evaluations/data/generate_models_dataset/` – sample dataset for `generate_models`
+- `evaluations/data/generate_additional_tests_dataset/` – sample dataset for `generate_additional_tests`
 
 ## Model Grading
 
@@ -127,6 +129,17 @@ This evaluation:
 3. Reads the generated models files content
 4. Grades the generated models against the evaluation criteria using model grading
 5. Returns a structured result
+
+### `generate_additional_tests`
+
+This evaluation:
+1. Loads the API definition from the `definitions/` folder within the dataset folder
+2. Loads model files (TypeScript) from the `models/` folder and converts them to `GeneratedModel` objects
+3. Loads the first (seed) test file from the `tests/` folder and converts it to a `FileSpec`
+4. Runs `generate_additional_tests` with the API definition, first test file, and models
+5. Saves the newly generated tests to the evaluation output directory
+6. Grades the generated test files against the evaluation criteria using model grading
+7. Returns a structured result
 
 ## Future Evaluations
 

@@ -12,10 +12,11 @@ evaluations/data/
     ├── {dataset_name}.json            # Dataset file (must match folder name)
     ├── definitions/                   # API definition files
     │   └── *.yaml or *.json
-    └── models/                        # Model files (TypeScript)
-        ├── requests/                  # Request models
-        ├── responses/                 # Response models
-        └── services/                  # Service models
+    ├── models/                        # Model files (TypeScript)
+    │   ├── requests/                  # Request models
+    │   ├── responses/                 # Response models
+    │   └── services/                  # Service models
+    └── tests/                         # Seed test files (TypeScript, optional)
 ```
 
 See `evaluations/data/generate_first_test_dataset/` for a complete example:
@@ -56,11 +57,12 @@ A dataset file should be a JSON file with the following structure:
 
 - `dataset_name`: Name of the evaluation dataset (should match the folder name)
 - `test_cases`: Array of test cases
-  - `case_type`: Type of evaluation to run. Supported values: `"generate_first_test"` (default) and `"generate_models"`.
+  - `case_type`: Type of evaluation to run. Supported values: `"generate_first_test"` (default), `"generate_models"`, `"generate_additional_tests"`.
   - `test_id`: **Required** unique identifier for the test case (e.g., "test_001"). This is used to organize generated artifacts and file prefixes.
   - `name`: Unique name for the test case
   - `api_definition_file`: Name of the API definition file (YAML/JSON) in the `definitions/` folder. **Must be prefixed with test_id** (e.g., "test_001_user_post_api.yaml").
   - `model_files`: List of model file paths relative to the `models/` folder. Filenames may optionally start with a `test_###_` prefix (e.g., "requests/test_001_UserModel.ts"); if present, the prefix is removed automatically and "src/models/" is prepended when creating GeneratedModel objects for evaluation. Leave empty if no seed model files are required (e.g., for `generate_models` evaluations).
+  - `first_test_file`: Single test file path relative to the `tests/` folder. Used only for `"generate_additional_tests"` to provide the initial seed test. Filenames may optionally start with a `test_###_` prefix; if present, the prefix is removed and `"src/tests/"` is prepended.
   - `evaluation_criteria`: Ordered list of specific criteria the generated test should satisfy
 
 ## API Definition Files
@@ -109,6 +111,22 @@ If no prefix is present, the filename is used as-is.
 See `evaluations/data/generate_first_test_dataset/models/` for examples of model files:
 - `requests/UserModel.ts` - Example request/response model
 - `services/test_001_UserService.ts` - Example service model
+
+## Seed Test Files (for generate_additional_tests)
+
+When running the `generate_additional_tests` evaluation, you must provide the initial test file(s) that the LLM will extend. Place these files under the `tests/` subfolder.
+
+### File Format
+
+- Files should be valid test files.
+- Filenames can optionally include the `test_id` prefix. Examples:
+  - `tests/test_001_initial_test.ts` → transformed to `src/tests/test_001_initial_test.ts`
+  - `tests/smoke/initial_test.ts` → transformed to `src/tests/smoke/initial_test.ts`
+
+### Requirements
+
+- Provide exactly one existing test file via the `first_test_file` field for each `"generate_additional_tests"` case.
+- The content should represent the "first test" that `generate_additional_tests` builds upon.
 
 
 ## Example Dataset
