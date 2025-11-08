@@ -10,7 +10,7 @@ The benchmark tool (`benchmark_runner.py`) is designed to evaluate the performan
 
 For each LLM, the benchmark collects the following metrics:
 
-- **LLM Model Value**: The specific model string used by the underlying libraries (e.g., `gpt-4o`). This corresponds to the value of the `Model` enum member (e.g., `Model.GPT_4_O.value`).
+- **LLM Model Value**: The specific model string used by the underlying libraries (e.g., `gpt-5-mini`). This corresponds to the value of the `Model` enum member (e.g., `Model.GPT_5_MINI.value`).
 - **Status**: Indicates whether the benchmark run for this LLM was `COMPLETED` or `FAILED`.
 - **Error Message**: If the status is `FAILED`, this field will contain the error message.
 - **Framework Output Path**: The directory where the generated framework and tests for this LLM are stored.
@@ -65,7 +65,7 @@ python benchmarks/benchmark_runner.py --openapi-spec <path_to_openapi_spec> --ll
 
 *   `--openapi-spec` (Required): Path to the OpenAPI specification file (e.g., `path/to/your/api.yaml`).
 *   `--llms` (Required): A comma-separated list of LLM models to benchmark. Do not use spaces between names.
-    *   Available choices: `GPT_5`, `GPT_4_O`, `GPT_4_1`, `O3`, `CLAUDE_SONNET_3_5`, `CLAUDE_SONNET_3_7`, `CLAUDE_SONNET_4`, `CLAUDE_SONNET_4_5`, `CLAUDE_HAIKU_4_5` (these are derived from the `Model` enum in `src/configuration/models.py`).
+    *   Available choices: `GPT_5`, `GPT_4_1`, `GPT_5_MINI`, `CLAUDE_SONNET_4`, `CLAUDE_SONNET_4_5`, `CLAUDE_HAIKU_4_5` (these are derived from the `Model` enum in `src/configuration/models.py`).
     *   Example: `GPT_5,CLAUDE_SONNET_4_5`
 *   `--endpoints` (Optional): Specific endpoints to target from the OpenAPI specification. If not provided, all endpoints will be targeted.
     *   Example: `/users/{id}`

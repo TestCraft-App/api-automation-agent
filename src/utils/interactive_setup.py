@@ -3,7 +3,7 @@
 import getpass
 import os
 import shutil
-from typing import Optional, Tuple
+from typing import Optional
 from pathlib import Path
 
 
@@ -18,15 +18,13 @@ class InteractiveSetup:
                 "claude-haiku-4-5-20251001",
                 "claude-sonnet-4-5-20250929",
                 "claude-sonnet-4-20250514",
-                "claude-3-7-sonnet-latest",
-                "claude-3-5-sonnet-latest",
             ],
             "default_model": "claude-haiku-4-5-20251001",
         },
         "2": {
             "name": "OpenAI",
             "env_key": "OPENAI_API_KEY",
-            "models": ["gpt-5", "gpt-4o", "gpt-4.1", "o3"],
+            "models": ["gpt-5", "gpt-5-mini", "gpt-4.1"],
             "default_model": "gpt-5",
         },
     }
@@ -52,7 +50,7 @@ class InteractiveSetup:
 
         try:
             shutil.copy2(example_env_path, env_path)
-            print(f"✅ Created .env file from example.env")
+            print("✅ Created .env file from example.env")
             return True
         except Exception as e:
             print(f"❌ Error creating .env file: {e}")
@@ -110,7 +108,7 @@ class InteractiveSetup:
     def get_api_key(provider: dict, input_func=None) -> str:
         """Get API key from user."""
         print(f"\n🔑 ENTER {provider['name'].upper()} API KEY")
-        print(f"Get your API key from:")
+        print("Get your API key from:")
         if provider["name"] == "OpenAI":
             print("https://platform.openai.com/api-keys")
         else:
@@ -166,7 +164,7 @@ class InteractiveSetup:
             with open(env_path, "w") as f:
                 f.writelines(updated_lines)
 
-            print(f"✅ Configuration saved to .env file")
+            print("✅ Configuration saved to .env file")
             print(f"   Provider: {provider['name']}")
             print(f"   Model: {model}")
 
