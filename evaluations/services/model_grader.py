@@ -1,12 +1,12 @@
 """Service for model-based grading of generated files."""
 
 import json
-from typing import Optional
+from typing import Optional, Sequence
 
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
 
-from evaluations.models.evaluation_dataset import ModelGradeResult
+from evaluations.models.evaluation_dataset import EvaluationCriterionResult, ModelGradeResult
 from src.configuration.config import Config
 from src.utils.logger import Logger
 
@@ -26,21 +26,32 @@ Your task is to evaluate whether a generated TypeScript test file meets the spec
 
 ## Instructions:
 1. Carefully review the generated test file content
-2. Check if it meets all the requirements specified in the evaluation criteria
-3. Provide a clear assessment: PASS or FAIL
-4. Give detailed feedback explaining why it passed or failed
-5. If applicable, provide a score from 0.0 to 1.0 indicating how well it meets the criteria
+2. Assess each evaluation criterion individually and determine if it is met
+3. Assign an overall score between 0.0 and 1.0 based on how well the criteria are satisfied
+4. Summarize how the score was determined in the reasoning section
 
 ## Response Format:
 You must respond with a JSON object in this exact format:
 {{
-    "passed": true or false,
-    "score": 0.0 to 1.0 (optional, can be null),
-    "feedback": "Detailed explanation of why it passed or failed",
-    "reasoning": "Optional additional reasoning or notes"
+    "score": 0.0 to 1.0,
+    "evaluation": [
+        {{
+            "criteria": "Criterion text copied or paraphrased from the evaluation criteria",
+            "met": true or false,
+            "details": "One or two sentences explaining why the criterion was or was not met"
+        }}
+    ],
+    "reasoning": "Focused explanation (one to three sentences) describing how the score was determined"
 }}
 
-Respond ONLY with valid JSON, no additional text."""
+### Formatting Requirements:
+- The evaluation array must include every criterion, in order, and set "met" to true
+  only when the criterion is fully satisfied.
+- Use clear, actionable language in the details field. When a criterion is not met,
+  explicitly state what is missing.
+- Do not include any additional top-level fields or commentary outside of the JSON object.
+- Respond ONLY with valid JSON.
+"""
 
     def __init__(self, config: Config, llm: Optional[BaseLanguageModel] = None):
         """
@@ -85,13 +96,13 @@ Respond ONLY with valid JSON, no additional text."""
             self.logger.error(f"Model initialization error: {e}")
             raise
 
-    def grade(self, generated_file_content: str, evaluation_criteria: str) -> ModelGradeResult:
+    def grade(self, generated_file_content: str, evaluation_criteria: Sequence[str]) -> ModelGradeResult:
         """
         Grade a generated file against evaluation criteria.
 
         Args:
             generated_file_content: Content of the generated test file
-            evaluation_criteria: Criteria to evaluate against
+            evaluation_criteria: Ordered list of criteria to evaluate against
 
         Returns:
             ModelGradeResult with grading information
@@ -101,10 +112,16 @@ Respond ONLY with valid JSON, no additional text."""
             prompt = ChatPromptTemplate.from_template(self.GRADING_PROMPT_TEMPLATE)
 
             chain = prompt | llm
+            criteria_block = (
+                "\n".join(f"- {item}" for item in evaluation_criteria)
+                if evaluation_criteria
+                else "- No evaluation criteria provided."
+            )
+
             response = chain.invoke(
                 {
                     "generated_file_content": generated_file_content,
-                    "evaluation_criteria": evaluation_criteria,
+                    "evaluation_criteria": criteria_block,
                 }
             )
 
@@ -130,24 +147,63 @@ Respond ONLY with valid JSON, no additional text."""
             except json.JSONDecodeError as e:
                 self.logger.warning(f"Failed to parse JSON from grader response: {e}. Content: {content}")
                 return ModelGradeResult(
-                    passed=False,
                     score=0.0,
-                    feedback=f"Failed to parse grader response: {str(e)}. Raw response: {content[:200]}",
+                    evaluation=[
+                        EvaluationCriterionResult(
+                            criteria="Model grader response",
+                            met=False,
+                            details=(
+                                "Invalid JSON from grader; the response could not be parsed. "
+                                f"Error: {str(e)}."
+                            ),
+                        )
+                    ],
                     reasoning="Grader response was not valid JSON",
                 )
 
+            evaluation_entries = []
+            raw_evaluation = grade_data.get("evaluation", [])
+
+            if isinstance(raw_evaluation, list):
+                for entry in raw_evaluation:
+                    if not isinstance(entry, dict):
+                        continue
+                    criteria_text = str(entry.get("criteria", "")).strip()
+                    if not criteria_text:
+                        continue
+                    evaluation_entries.append(
+                        EvaluationCriterionResult(
+                            criteria=criteria_text,
+                            met=bool(entry.get("met", False)),
+                            details=str(entry.get("details", "")).strip() or "No details provided",
+                        )
+                    )
+
+            if not evaluation_entries:
+                evaluation_entries.append(
+                    EvaluationCriterionResult(
+                        criteria="Evaluation details",
+                        met=False,
+                        details="No structured evaluation data was provided by the grader",
+                    )
+                )
+
             return ModelGradeResult(
-                passed=grade_data.get("passed", False),
                 score=grade_data.get("score"),
-                feedback=grade_data.get("feedback", "No feedback provided"),
+                evaluation=evaluation_entries,
                 reasoning=grade_data.get("reasoning"),
             )
 
         except Exception as e:
             self.logger.error(f"Error during model grading: {e}", exc_info=True)
             return ModelGradeResult(
-                passed=False,
                 score=0.0,
-                feedback=f"Error during grading: {str(e)}",
+                evaluation=[
+                    EvaluationCriterionResult(
+                        criteria="Model grading",
+                        met=False,
+                        details=f"An exception occurred during the grading process: {str(e)}",
+                    )
+                ],
                 reasoning="An exception occurred during the grading process",
             )

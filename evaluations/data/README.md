@@ -8,7 +8,7 @@ Each dataset must be organized in a dedicated folder with the following structur
 
 ```
 evaluations/data/
-└── {dataset_name}/                    # Dataset folder (e.g., main_dataset)
+└── {dataset_name}/                    # Dataset folder (e.g., generate_first_test_dataset)
     ├── {dataset_name}.json            # Dataset file (must match folder name)
     ├── definitions/                   # API definition files
     │   └── *.yaml or *.json
@@ -18,7 +18,7 @@ evaluations/data/
         └── services/                  # Service models
 ```
 
-See `evaluations/data/main_dataset/` for a complete example:
+See `evaluations/data/generate_first_test_dataset/` for a complete example:
 
 ### Required Components
 
@@ -32,7 +32,7 @@ A dataset file should be a JSON file with the following structure:
 
 ```json
 {
-  "dataset_name": "main_dataset",
+  "dataset_name": "generate_first_test_dataset",
   "test_cases": [
     {
       "test_id": "test_001",
@@ -42,7 +42,10 @@ A dataset file should be a JSON file with the following structure:
         "requests/test_001_UserModel.ts",
         "services/test_001_UserService.ts"
       ],
-      "evaluation_criteria": "The generated test should include proper setup/teardown hooks and test the main positive scenario"
+      "evaluation_criteria": [
+        "Include proper setup/teardown hooks",
+        "Test the main positive scenario"
+      ]
     }
   ]
 }
@@ -52,11 +55,11 @@ A dataset file should be a JSON file with the following structure:
 
 - `dataset_name`: Name of the evaluation dataset (should match the folder name)
 - `test_cases`: Array of test cases
-  - `test_id`: **Required** unique identifier for the test case (e.g., "test_001"). This is used as a prefix for file names to enable easy linking when reviewing datasets.
+  - `test_id`: **Required** unique identifier for the test case (e.g., "test_001"). This is used to organize generated artifacts and file prefixes.
   - `name`: Unique name for the test case
   - `api_definition_file`: Name of the API definition file (YAML/JSON) in the `definitions/` folder. **Must be prefixed with test_id** (e.g., "test_001_user_post_api.yaml").
-  - `model_files`: **Required** list of model file paths relative to the `models/` folder. **The filename must be prefixed with test_id** (e.g., "requests/test_001_UserModel.ts"). The test_id prefix will be automatically removed from the filename and "src/models/" will be prepended when creating GeneratedModel objects for evaluation.
-  - `evaluation_criteria`: Description of what the generated test should meet
+  - `model_files`: **Required** list of model file paths relative to the `models/` folder. Filenames may optionally start with a `test_###_` prefix (e.g., "requests/test_001_UserModel.ts"); if present, the prefix is removed automatically and "src/models/" is prepended when creating GeneratedModel objects for evaluation.
+  - `evaluation_criteria`: Ordered list of specific criteria the generated test should satisfy
 
 ## API Definition Files
 
@@ -79,7 +82,7 @@ The API definition file should match the output of the `process_api_definition` 
 
 ### Example
 
-See `evaluations/data/main_dataset/definitions/test_001_user_post_api.yaml` for a complete example of an API definition file for a POST `/users` endpoint.
+See `evaluations/data/generate_first_test_dataset/definitions/user_post_api.yaml` for a complete example of an API definition file for a POST `/users` endpoint.
 
 ## Model Files
 
@@ -91,20 +94,22 @@ Model files should be valid TypeScript files containing:
 - **Request/Response Models**: TypeScript interfaces representing data models (e.g., `UserModel.ts`)
 - **Service Models**: TypeScript classes extending `ServiceBase` with API endpoint methods (e.g., `UserService.ts`)
 
-### Test ID Prefix
+### Test Prefix
 
-The **filename** (not the directory path) must be prefixed with the `test_id` from the dataset. For example:
-- `requests/test_001_UserModel.ts`
-- `services/test_001_UserService.ts`
+If you choose to prefix filenames with the `test_id` (recommended when you want to distinguish different variations), the prefix will be stripped automatically. For example:
+- `requests/test_001_UserModel.ts` → `src/models/requests/UserModel.ts`
+- `services/test_001_UserService.ts` → `src/models/services/UserService.ts`
+
+If no prefix is present, the filename is used as-is.
 
 ### Examples
 
-See `evaluations/data/main_dataset/models/` for examples of model files:
-- `requests/test_001_UserModel.ts` - Example request/response model
+See `evaluations/data/generate_first_test_dataset/models/` for examples of model files:
+- `requests/UserModel.ts` - Example request/response model
 - `services/test_001_UserService.ts` - Example service model
 
 
 ## Example Dataset
 
-See `evaluations/data/main_dataset/main_dataset.json` for a complete example.
+See `evaluations/data/generate_first_test_dataset/generate_first_test_dataset.json` for a complete example.
 

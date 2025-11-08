@@ -68,20 +68,16 @@ def save_evaluation_results(results, output_dir: str, dataset_name: str) -> str:
 
 def print_evaluation_summary(results):
     """Print a summary of evaluation results to console."""
-    print("\n" + "=" * 80)
-    print("EVALUATION SUMMARY")
-    print("=" * 80)
-    print(f"Dataset: {results.dataset_name}")
-    print(f"Total Test Cases: {results.total_test_cases}")
-    print(f"Passed: {results.passed_count}")
-    print(f"Failed: {results.failed_count}")
-    print(f"Errors: {results.error_count}")
     print("\n" + "-" * 80)
     print("DETAILED RESULTS")
     print("-" * 80)
 
     for result in results.results:
-        status_symbol = "✓" if result.status == "SUCCESS" else "✗"
+        status_symbol = {
+            "GRADED": "✓",
+            "NOT_EVALUATED": "!",
+            "ERROR": "✗",
+        }.get(result.status, "?")
         print(f"\n{status_symbol} [{result.test_id}] {result.test_case_name} [{result.status}]")
         print(f"  API Definition: {result.api_definition_file}")
         if result.error_message:
@@ -89,14 +85,33 @@ def print_evaluation_summary(results):
         if result.generated_files:
             print(f"  Generated Files: {', '.join(result.generated_files)}")
         if result.grade_result:
-            print(f"  Grade: {'PASSED' if result.grade_result.passed else 'FAILED'}")
             if result.grade_result.score is not None:
                 print(f"  Score: {result.grade_result.score:.2f}")
-            print(f"  Feedback: {result.grade_result.feedback}")
+            if result.grade_result.evaluation:
+                print("  Evaluation:")
+                for item in result.grade_result.evaluation:
+                    marker = "PASS" if item.met else "FAIL"
+                    print(f"    - [{marker}] {item.criteria}: {item.details}")
             if result.grade_result.reasoning:
-                print(f"  Reasoning: {result.grade_result.reasoning}")
+                print(f"  Score Reasoning: {result.grade_result.reasoning}")
 
     print("\n" + "=" * 80)
+    print("EVALUATION SUMMARY")
+    print("=" * 80)
+    print(f"Dataset: {results.dataset_name}")
+    print(f"Total Test Cases: {results.total_test_cases}")
+    print(f"Graded: {results.graded_count}")
+    print(f"Not Evaluated: {results.not_evaluated_count}")
+    print(f"Errors: {results.error_count}")
+    print(f"Input Tokens: {results.total_input_tokens}")
+    print(f"Output Tokens: {results.total_output_tokens}")
+    print(f"Total Cost (USD): ${results.total_cost:.4f}")
+    avg_text = f"{results.average_score:.2f}" if results.average_score is not None else "N/A"
+    print(f"Average Score: {avg_text}")
+    if results.generated_files_path:
+        print(f"Generated Files: {results.generated_files_path}")
+
+    print("=" * 80)
 
 
 def parse_args() -> argparse.Namespace:
@@ -108,7 +123,7 @@ def parse_args() -> argparse.Namespace:
         type=str,
         required=True,
         help=(
-            "Path to the dataset folder (e.g., evaluations/data/main_dataset). "
+            "Path to the dataset folder (e.g., evaluations/data/generate_first_test_dataset). "
             "The dataset JSON file should be named {folder_name}.json"
         ),
     )

@@ -27,8 +27,8 @@ evaluations/
 │   ├── model_grader.py            # LLM-based grading service
 │   └── evaluation_runner.py       # Main evaluation orchestration
 └── data/
-    └── main_dataset/               # Example dataset folder
-        ├── main_dataset.json       # Dataset file (must match folder name)
+    └── generate_first_test_dataset/               # Example dataset folder
+        ├── generate_first_test_dataset.json       # Dataset file (must match folder name)
         ├── definitions/            # API definition files
         │   └── user_post_api.yaml
         └── models/                 # Model files (TypeScript)
@@ -41,8 +41,8 @@ evaluations/
 
 ### 1. Prepare Test Data
 
-1. Create a dataset folder (e.g., `evaluations/data/main_dataset/`)
-2. Create a dataset JSON file named `{folder_name}.json` (e.g., `main_dataset.json`)
+1. Create a dataset folder (e.g., `evaluations/data/generate_first_test_dataset/`)
+2. Create a dataset JSON file named `{folder_name}.json` (e.g., `generate_first_test_dataset.json`)
 3. Place API definition files in the `definitions/` subfolder
 4. Place model files (TypeScript) in the `models/` subfolder
 
@@ -52,7 +52,7 @@ See `README.md` inside data folder for more details on test data requirements.
 
 ```bash
 python evaluations/evaluation_runner_main.py \
-  --test-data-folder evaluations/data/main_dataset 
+  --test-data-folder evaluations/data/generate_first_test_dataset 
 ```
 
 ### Arguments
@@ -64,20 +64,32 @@ python evaluations/evaluation_runner_main.py \
 
 Results are saved as JSON files in the output directory with timestamps. The console will also display a summary.
 
+Summary metrics include:
+- Total test cases and pass/fail/error counts
+- Token usage (input, output, total) and total evaluation cost (USD)
+- Average score across all graded test cases (0.0 – 1.0)
+- Status values per test case:
+  - `GRADED` – the file was generated and evaluated
+  - `NOT_EVALUATED` – no file was generated or grading was unavailable
+  - `ERROR` – an exception occurred while processing the test case
+
+Generated files are stored for inspection under `evaluations/reports/generated-files/{dataset_name}/{test_id}/`.
+Each run appends a timestamp to `{dataset_name}`, e.g. `my_dataset_20251107_153045/test_001`.
+
 ## Dataset Format
 
 See `evaluations/data/README.md` for detailed information about the dataset format and structure.
 
 ## Example Dataset
 
-See `evaluations/data/main_dataset/` for a complete example of a dataset folder structure.
+See `evaluations/data/generate_first_test_dataset/` for a complete example of a dataset folder structure.
 
 ## Model Grading
 
 The evaluation uses LLM-based grading to assess whether generated files meet the specified criteria. The grader:
 - Takes the generated file content and evaluation criteria
 - Uses an LLM to evaluate compliance
-- Returns a structured result with pass/fail, score, feedback, and reasoning
+- Returns a structured result with score, detailed criterion-by-criterion evaluation, and reasoning
 
 The grading model uses the same configuration as the generation model (from your `.env` file).
 

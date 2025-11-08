@@ -1,8 +1,10 @@
 """Service for running evaluations on LLMService generation methods."""
 
 import os
-import tempfile
-from typing import List, Optional
+import re
+import shutil
+from datetime import datetime
+from typing import List, Optional, Sequence
 
 from src.ai_tools.models.file_spec import FileSpec
 from src.configuration.config import Config
@@ -11,6 +13,7 @@ from src.services.file_service import FileService
 from src.services.llm_service import LLMService
 from src.utils.logger import Logger
 from evaluations.models.evaluation_dataset import (
+    EvaluationCriterionResult,
     EvaluationDataset,
     EvaluationResult,
     EvaluationRunResult,
@@ -71,39 +74,34 @@ class EvaluationRunner:
             self.logger.error(f"Error reading API definition file {file_path}: {e}")
             return None
 
-    def _remove_test_id_from_filename(self, path: str, test_id: str) -> str:
+    def _normalize_model_path(self, path: str) -> str:
         """
-        Remove test_id prefix from the filename in a file path.
+        Normalize a model file path by removing the test prefix from the filename.
 
         Args:
-            path: File path where test_id prefixes the filename (e.g., "requests/test_001_UserModel.ts")
-            test_id: Test identifier to remove from filename
+            path: File path where filename may start with "test_###_"
 
         Returns:
             Path with test_id prefix removed from filename (e.g., "requests/UserModel.ts")
         """
-        import os
-
         directory = os.path.dirname(path)
         filename = os.path.basename(path)
 
-        if filename.startswith(f"{test_id}_"):
-            filename = filename[len(f"{test_id}_") :]
+        filename = re.sub(r"^test_\d+_", "", filename)
 
         if directory:
             return os.path.join(directory, filename)
         return filename
 
-    def _load_models(self, model_files: List[str], test_id: str) -> List[GeneratedModel]:
+    def _load_models(self, model_files: Sequence[str]) -> List[GeneratedModel]:
         """
         Load model files from the models folder within the test data folder
         and convert them to GeneratedModel objects.
-        The test_id prefix is removed from filenames and 'src/models/' is prepended.
+        The test prefix is removed from filenames and 'src/models/' is prepended.
 
         Args:
-            model_files: List of model file paths relative to the models folder
+            model_files: Iterable of model file paths relative to the models folder
                 (e.g., "requests/test_001_UserModel.ts")
-            test_id: Test identifier used as prefix in filenames
 
         Returns:
             List of GeneratedModel objects with paths like "src/models/requests/UserModel.ts"
@@ -120,7 +118,7 @@ class EvaluationRunner:
                 with open(file_path, "r", encoding="utf-8") as f:
                     file_content = f.read()
 
-                clean_path = self._remove_test_id_from_filename(model_file, test_id)
+                clean_path = self._normalize_model_path(model_file)
                 final_path = f"src/models/{clean_path}"
 
                 generated_model = GeneratedModel(
@@ -142,23 +140,28 @@ class EvaluationRunner:
         return generated_models
 
     def _evaluate_generated_files(
-        self, generated_files: List[FileSpec], evaluation_criteria: str
+        self, generated_files: List[FileSpec], evaluation_criteria: Sequence[str]
     ) -> Optional[ModelGradeResult]:
         """
         Evaluate generated files against criteria using model grading.
 
         Args:
             generated_files: List of generated FileSpec objects
-            evaluation_criteria: Criteria to evaluate against
+            evaluation_criteria: Ordered list of criteria to evaluate against
 
         Returns:
             ModelGradeResult if evaluation succeeded, None otherwise
         """
         if not generated_files:
             return ModelGradeResult(
-                passed=False,
                 score=0.0,
-                feedback="No files were generated",
+                evaluation=[
+                    EvaluationCriterionResult(
+                        criteria="File generation",
+                        met=False,
+                        details="No files were generated for evaluation",
+                    )
+                ],
                 reasoning="The generate_first_test method returned an empty list",
             )
 
@@ -167,12 +170,15 @@ class EvaluationRunner:
 
         return self.model_grader.grade(file_content, evaluation_criteria)
 
-    def evaluate_generate_first_test(self, test_case: EvaluationTestCase) -> EvaluationResult:
+    def evaluate_generate_first_test(
+        self, test_case: EvaluationTestCase, output_dir: str
+    ) -> EvaluationResult:
         """
         Evaluate the generate_first_test method for a single test case.
 
         Args:
             test_case: The test case to evaluate
+            output_dir: Destination directory where generated files should be written
 
         Returns:
             EvaluationResult with the evaluation outcome
@@ -190,7 +196,7 @@ class EvaluationRunner:
                 evaluation_criteria=test_case.evaluation_criteria,
             )
 
-        models = self._load_models(test_case.model_files, test_case.test_id)
+        models = self._load_models(test_case.model_files)
         if not models:
             return EvaluationResult(
                 test_id=test_case.test_id,
@@ -202,54 +208,55 @@ class EvaluationRunner:
             )
 
         original_destination = self.config.destination_folder
-        with tempfile.TemporaryDirectory(prefix=f"eval_{test_case.name}_") as temp_dir:
-            try:
-                self.config.destination_folder = temp_dir
+        os.makedirs(output_dir, exist_ok=True)
+        if os.listdir(output_dir):
+            shutil.rmtree(output_dir)
+            os.makedirs(output_dir, exist_ok=True)
 
-                generated_files = self.llm_service.generate_first_test(api_definition_content, models)
+        try:
+            self.config.destination_folder = output_dir
 
-                if not generated_files:
-                    return EvaluationResult(
-                        test_id=test_case.test_id,
-                        test_case_name=test_case.name,
-                        api_definition_file=test_case.api_definition_file,
-                        status="FAILED",
-                        error_message="No files were generated",
-                        evaluation_criteria=test_case.evaluation_criteria,
-                    )
+            generated_files = self.llm_service.generate_first_test(api_definition_content, models)
 
-                grade_result = self._evaluate_generated_files(generated_files, test_case.evaluation_criteria)
-
-                if grade_result and grade_result.passed:
-                    status = "SUCCESS"
-                else:
-                    status = "FAILED"
-
+            if not generated_files:
                 return EvaluationResult(
                     test_id=test_case.test_id,
                     test_case_name=test_case.name,
                     api_definition_file=test_case.api_definition_file,
-                    status=status,
-                    generated_files=[f.path for f in generated_files],
-                    grade_result=grade_result,
+                    status="NOT_EVALUATED",
+                    error_message="No files were generated",
                     evaluation_criteria=test_case.evaluation_criteria,
                 )
 
-            except Exception as e:
-                self.logger.error(
-                    f"Error during evaluation of test case {test_case.test_id} - {test_case.name}: {e}",
-                    exc_info=True,
-                )
-                return EvaluationResult(
-                    test_id=test_case.test_id,
-                    test_case_name=test_case.name,
-                    api_definition_file=test_case.api_definition_file,
-                    status="ERROR",
-                    error_message=str(e),
-                    evaluation_criteria=test_case.evaluation_criteria,
-                )
-            finally:
-                self.config.destination_folder = original_destination
+            grade_result = self._evaluate_generated_files(generated_files, test_case.evaluation_criteria)
+
+            status = "GRADED" if grade_result else "NOT_EVALUATED"
+
+            return EvaluationResult(
+                test_id=test_case.test_id,
+                test_case_name=test_case.name,
+                api_definition_file=test_case.api_definition_file,
+                status=status,
+                generated_files=[f.path for f in generated_files],
+                grade_result=grade_result,
+                evaluation_criteria=test_case.evaluation_criteria,
+            )
+
+        except Exception as e:
+            self.logger.error(
+                f"Error during evaluation of test case {test_case.test_id} - {test_case.name}: {e}",
+                exc_info=True,
+            )
+            return EvaluationResult(
+                test_id=test_case.test_id,
+                test_case_name=test_case.name,
+                api_definition_file=test_case.api_definition_file,
+                status="ERROR",
+                error_message=str(e),
+                evaluation_criteria=test_case.evaluation_criteria,
+            )
+        finally:
+            self.config.destination_folder = original_destination
 
     def run_evaluation(self, dataset: EvaluationDataset) -> EvaluationRunResult:
         """
@@ -264,33 +271,64 @@ class EvaluationRunner:
         self.logger.info(f"Starting evaluation run for dataset: {dataset.dataset_name}")
         self.logger.info(f"Number of test cases: {len(dataset.test_cases)}")
 
+        usage_before = self.llm_service.get_aggregated_usage_metadata().model_copy(deep=True)
+
         results: List[EvaluationResult] = []
-        passed_count = 0
-        failed_count = 0
+        graded_count = 0
+        not_evaluated_count = 0
         error_count = 0
+        scores: List[float] = []
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        base_output_dir = os.path.join(
+            "evaluations",
+            "reports",
+            "generated-files",
+            f"{dataset.dataset_name}_{timestamp}",
+        )
+        os.makedirs(base_output_dir, exist_ok=True)
 
         for test_case in dataset.test_cases:
-            result = self.evaluate_generate_first_test(test_case)
+            test_output_dir = os.path.join(base_output_dir, test_case.test_id)
+            result = self.evaluate_generate_first_test(test_case, test_output_dir)
             results.append(result)
 
-            if result.status == "SUCCESS":
-                passed_count += 1
-            elif result.status == "FAILED":
-                failed_count += 1
+            if result.status == "GRADED":
+                graded_count += 1
+            elif result.status == "NOT_EVALUATED":
+                not_evaluated_count += 1
             else:
                 error_count += 1
+
+            if result.grade_result and result.grade_result.score is not None:
+                scores.append(result.grade_result.score)
 
             self.logger.info(f"Test case '{test_case.name}': {result.status}")
 
         self.logger.info(
-            f"Evaluation run completed. Passed: {passed_count}, Failed: {failed_count}, Errors: {error_count}"
+            "Evaluation run completed. Graded: %s, Not Evaluated: %s, Errors: %s",
+            graded_count,
+            not_evaluated_count,
+            error_count,
         )
+
+        average_score = sum(scores) / len(scores) if scores else None
+
+        usage_after = self.llm_service.get_aggregated_usage_metadata()
+        total_input_tokens = usage_after.total_input_tokens - usage_before.total_input_tokens
+        total_output_tokens = usage_after.total_output_tokens - usage_before.total_output_tokens
+        total_cost = usage_after.total_cost - usage_before.total_cost
 
         return EvaluationRunResult(
             dataset_name=dataset.dataset_name,
             total_test_cases=len(dataset.test_cases),
-            passed_count=passed_count,
-            failed_count=failed_count,
+            graded_count=graded_count,
+            not_evaluated_count=not_evaluated_count,
             error_count=error_count,
+            total_input_tokens=max(total_input_tokens, 0),
+            total_output_tokens=max(total_output_tokens, 0),
+            total_cost=max(total_cost, 0.0),
+            average_score=average_score,
+            generated_files_path=os.path.abspath(base_output_dir),
             results=results,
         )
