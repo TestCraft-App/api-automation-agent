@@ -90,20 +90,17 @@ This project supports both Anthropic and OpenAI language models:
 - Claude Haiku 4.5 (claude-haiku-4-5-20251001) - **Recommended default: Good quality + fast + low cost**
 - Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) - **Recommended: Higher quality for complex suites**
 - Claude Sonnet 4 (claude-sonnet-4-20250514)
-- Claude Sonnet 3.7 (claude-3-7-sonnet-latest)
-- Claude Sonnet 3.5 (claude-3-5-sonnet-latest)
 
 **OpenAI**
 
 - GPT-5 (gpt-5) - **Recommended**
-- GPT-4o (gpt-4o)
 - GPT-4.1 (gpt-4.1)
-- O3 (o3)
+- GPT-5 Mini (gpt-5-mini)
 
 You can configure your preferred model in the `.env` file:
 
 ```env
-MODEL=o3
+MODEL=gpt-5-mini
 ```
 
 > **Important**: Before using any model, please check the current pricing and costs on the respective provider's website (Anthropic or OpenAI). Model costs can vary significantly and may impact your usage budget.

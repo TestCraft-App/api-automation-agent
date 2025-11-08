@@ -24,14 +24,11 @@ Anthropic Models:
 - claude-haiku-4-5-20251001 (recommended default)
 - claude-sonnet-4-5-20250929 
 - claude-sonnet-4-20250514
-- claude-3-5-sonnet-latest
-- claude-3-7-sonnet-latest
 
 OpenAI Models:
 - gpt-5 (recommended)
-- gpt-4o
-- gpt-4.1  
-- o3
+- gpt-5-mini
+- gpt-4.1
 
 MANUAL SETUP (ALTERNATIVE):
 

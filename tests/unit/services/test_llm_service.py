@@ -23,9 +23,9 @@ def llm_service(temp_config):
 def test_calculate_llm_call_cost_returns_expected_value(llm_service):
     usage_data = LLMCallUsageData(input_tokens=1_000, output_tokens=2_000)
 
-    cost = llm_service._calculate_llm_call_cost(Model.GPT_4_O, usage_data)
+    cost = llm_service._calculate_llm_call_cost(Model.GPT_5_MINI, usage_data)
 
-    expected_cost = (1_000 / 1_000_000) * 2.5 + (2_000 / 1_000_000) * 10.0
+    expected_cost = (1_000 / 1_000_000) * 0.25 + (2_000 / 1_000_000) * 2.0
     assert cost == pytest.approx(expected_cost)
 
 
@@ -36,7 +36,7 @@ def test_calculate_llm_call_cost_returns_none_on_error(llm_service, monkeypatch)
     monkeypatch.setattr(Model, "get_costs", raise_error)
     usage_data = LLMCallUsageData(input_tokens=500, output_tokens=500)
 
-    cost = llm_service._calculate_llm_call_cost(Model.GPT_4_O, usage_data)
+    cost = llm_service._calculate_llm_call_cost(Model.GPT_5_MINI, usage_data)
 
     assert cost is None
 
@@ -95,7 +95,7 @@ def test_create_ai_chain_appends_usage_metadata(llm_service, tmp_path, monkeypat
     fake_response = FakeResponse("final result", usage_payload)
     fake_llm = FakeLLM(fake_response)
 
-    llm_service.config.model = Model.GPT_4_O
+    llm_service.config.model = Model.GPT_5_MINI
 
     monkeypatch.setattr(LLMService, "_select_language_model", lambda self, language_model=None: fake_llm)
     monkeypatch.setattr(
@@ -113,9 +113,9 @@ def test_create_ai_chain_appends_usage_metadata(llm_service, tmp_path, monkeypat
 
     aggregated_usage = llm_service.get_aggregated_usage_metadata()
 
-    expected_cost = (usage_payload["input_tokens"] / 1_000_000) * 2.5 + (
+    expected_cost = (usage_payload["input_tokens"] / 1_000_000) * 0.25 + (
         usage_payload["output_tokens"] / 1_000_000
-    ) * 10.0
+    ) * 2.0
 
     assert aggregated_usage.total_input_tokens == usage_payload["input_tokens"]
     assert aggregated_usage.total_output_tokens == usage_payload["output_tokens"]
@@ -183,7 +183,7 @@ def test_create_ai_chain_usage_metadata_validation_fallback(llm_service, tmp_pat
 
     from src.configuration.models import Model  # local import to avoid unused at module import
 
-    llm_service.config.model = Model.GPT_4_O
+    llm_service.config.model = Model.GPT_5_MINI
 
     monkeypatch.setattr(LLMService, "_select_language_model", lambda self, language_model=None: fake_llm)
     monkeypatch.setattr(
@@ -282,12 +282,12 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
     scenarios = [
         # (model_enum, must_use_tool, expected_tool_choice, label, tools_provider)
         # Single tool cases
-        (Model.GPT_4_O, False, "auto", "openai_no_force_single", lambda: [DummyTool()]),
-        (Model.GPT_4_O, True, "required", "openai_force_single", lambda: [DummyTool()]),
+        (Model.GPT_5_MINI, False, "auto", "openai_no_force_single", lambda: [DummyTool()]),
+        (Model.GPT_5_MINI, True, "required", "openai_force_single", lambda: [DummyTool()]),
         (Model.CLAUDE_SONNET_4, False, "auto", "anthropic_no_force_single", lambda: [DummyTool()]),
         (Model.CLAUDE_SONNET_4, True, "any", "anthropic_force_single", lambda: [DummyTool()]),
         # Multiple tools cases (should behave identically wrt tool_choice)
-        (Model.GPT_4_O, True, "required", "openai_force_multi", lambda: [DummyTool("a"), DummyTool("b")]),
+        (Model.GPT_5_MINI, True, "required", "openai_force_multi", lambda: [DummyTool("a"), DummyTool("b")]),
         (
             Model.CLAUDE_SONNET_4,
             True,
@@ -320,7 +320,7 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
         initial_bind_calls = fake_llm.bind_calls
 
     # No-tools scenarios: ensure bind_tools NOT called and chain creation still works.
-    for model_enum in (Model.GPT_4_O, Model.CLAUDE_SONNET_4):
+    for model_enum in (Model.GPT_5_MINI, Model.CLAUDE_SONNET_4):
         llm_service.config.model = model_enum
         chain = llm_service.create_ai_chain(
             str(prompt_path), tools=None, must_use_tool=False, language_model=model_enum
@@ -400,7 +400,7 @@ def test_create_ai_chain_tool_call_invokes_selected_tool(llm_service, monkeypatc
 
     from src.configuration.models import Model
 
-    llm_service.config.model = Model.GPT_4_O
+    llm_service.config.model = Model.GPT_5_MINI
 
     monkeypatch.setattr(LLMService, "_select_language_model", lambda self, language_model=None: fake_llm)
     monkeypatch.setattr(
@@ -478,7 +478,7 @@ def test_create_ai_chain_tool_call_name_not_found_returns_content(llm_service, m
 
     from src.configuration.models import Model
 
-    llm_service.config.model = Model.GPT_4_O
+    llm_service.config.model = Model.GPT_5_MINI
 
     monkeypatch.setattr(LLMService, "_select_language_model", lambda self, language_model=None: fake_llm)
     monkeypatch.setattr(
@@ -527,13 +527,13 @@ def test_select_language_model_returns_openai_client_for_openai_model(llm_servic
 
     from src.configuration.models import Model
 
-    llm_service.config.model = Model.GPT_4_O
+    llm_service.config.model = Model.GPT_5_MINI
     monkeypatch.setattr("src.services.llm_service.ChatOpenAI", FakeOpenAI)
 
     result = llm_service._select_language_model()
 
     assert isinstance(result, FakeOpenAI)
-    assert captured["model"] == Model.GPT_4_O.value
+    assert captured["model"] == Model.GPT_5_MINI.value
     assert captured["temperature"] == 1
     assert captured["max_retries"] == 3
 
@@ -551,11 +551,11 @@ def test_select_language_model_override_updates_config(llm_service, monkeypatch)
 
     monkeypatch.setattr("src.services.llm_service.ChatOpenAI", FakeOpenAI)
 
-    result = llm_service._select_language_model(language_model=Model.GPT_4_O, override=True)
+    result = llm_service._select_language_model(language_model=Model.GPT_5_MINI, override=True)
 
     assert isinstance(result, FakeOpenAI)
-    assert llm_service.config.model == Model.GPT_4_O, "Config model should be updated when override=True"
-    assert result.kwargs["model"] == Model.GPT_4_O.value
+    assert llm_service.config.model == Model.GPT_5_MINI, "Config model should be updated when override=True"
+    assert result.kwargs["model"] == Model.GPT_5_MINI.value
 
 
 def test_select_language_model_without_override_ignores_language_model_arg(llm_service, monkeypatch):
@@ -571,7 +571,7 @@ def test_select_language_model_without_override_ignores_language_model_arg(llm_s
 
     monkeypatch.setattr("src.services.llm_service.ChatAnthropic", FakeAnthropic)
 
-    result = llm_service._select_language_model(language_model=Model.GPT_4_O, override=False)
+    result = llm_service._select_language_model(language_model=Model.GPT_5_MINI, override=False)
 
     assert isinstance(result, FakeAnthropic)
     assert (
@@ -585,7 +585,7 @@ def test_select_language_model_propagates_initialization_error(llm_service, monk
 
     from src.configuration.models import Model
 
-    llm_service.config.model = Model.GPT_4_O
+    llm_service.config.model = Model.GPT_5_MINI
 
     def exploding_constructor(**_):
         raise RuntimeError("init failure")
