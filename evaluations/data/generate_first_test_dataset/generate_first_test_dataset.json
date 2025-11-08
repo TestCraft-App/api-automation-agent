@@ -1,0 +1,292 @@
+{
+  "dataset_name": "generate_first_test_dataset",
+  "test_cases": [
+    {
+      "test_id": "test_001",
+      "name": "create_user",
+      "api_definition_file": "users_post_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "services/test_001_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for a POST endpoint to create a user",
+        "Use the UserService.createUser method with UserModel type",
+        "Assert that the status code is 201",
+        "Assert that the response data contains the created user's id, name, and email using optional chaining (e.g., response.data?.id)",
+        "Generate random values for required fields (email) to avoid collisions"
+      ]
+    },
+    {
+      "test_id": "test_002",
+      "name": "list_users",
+      "api_definition_file": "users_get_api.yaml",
+      "model_files": [
+        "responses/UserListResponse.ts",
+        "services/test_002_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for the GET /users endpoint that retrieves a paginated list of users",
+        "Call UserService.getUsers",
+        "Assert that the response contains an array of users with id, name, and email",
+        "Verify that the total count in the response is a positive integer"
+      ]
+    },
+    {
+      "test_id": "test_003",
+      "name": "get_user_by_id",
+      "api_definition_file": "users_get_by_id_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_003_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for the GET /users/{userId} endpoint that retrieves a single user",
+        "Call UserService.getUserById with a valid user id (since the service does note provide a create user method, the id has to be inferred or hardcoded)",
+        "Assert that the response status is 200",
+        "Assert that the response data matches the user's id, name, and email using optional chaining (e.g., response.data?.name)"
+      ]
+    },
+    {
+      "test_id": "test_004",
+      "name": "update_user",
+      "api_definition_file": "users_put_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "requests/UpdateUserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_004_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the update target",
+        "Test the main positive scenario for the PUT /users/{userId} endpoint that updates an existing user",
+        "Call UserService.updateUser with the created user's id and a payload typed as UpdateUserModel",
+        "Assert that the update response status is 200",
+        "Assert that the response data keeps the same id and reflects the updated name and email using optional chaining (e.g., response.data?.email)",
+        "Use new values (e.g., a randomized email) to verify the update actually changed the stored data"
+      ]
+    },
+    {
+      "test_id": "test_005",
+      "name": "patch_user",
+      "api_definition_file": "users_patch_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "requests/PatchUserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_005_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the patch target",
+        "Test the main positive scenario for the PATCH /users/{userId} endpoint that performs a partial update",
+        "Call UserService.patchUser with the created user's id and a payload typed as PatchUserModel that only changes a subset of fields",
+        "Assert that the patch response status is 200",
+        "Assert that the response data keeps the same id and updates only the provided fields using optional chaining (e.g., response.data?.name)",
+        "Verify that fields not included in the patch payload remain unchanged from the originally created user"
+      ]
+    },
+    {
+      "test_id": "test_006",
+      "name": "delete_user",
+      "api_definition_file": "users_delete_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_006_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the delete target",
+        "Test the main positive scenario for the DELETE /users/{userId} endpoint that removes an existing user",
+        "Call UserService.deleteUser with the created user's id",
+        "Assert that the delete response status is 204"
+      ]
+    },
+    {
+      "test_id": "test_007",
+      "name": "get_user_by_id_with_precondition",
+      "api_definition_file": "users_get_by_id_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_007_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook",
+        "Test the main positive scenario for the GET /users/{userId} endpoint that retrieves a single user",
+        "Call UserService.getUserById with the id from the created user",
+        "Assert that the response status is 200",
+        "Assert that the response data matches the created user's id, name, and email using optional chaining (e.g., response.data?.name)"
+      ]
+    },
+    {
+      "test_id": "test_008",
+      "name": "get_user_by_id_with_postcondition",
+      "api_definition_file": "users_get_by_id_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_008_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook",
+        "Test the main positive scenario for the GET /users/{userId} endpoint that retrieves a single user",
+        "Call UserService.getUserById with the id from the created user",
+        "Assert that the response status is 200",
+        "Assert that the response data matches the created user's id, name, and email using optional chaining (e.g., response.data?.name)",
+        "Delete the created user using UserService.deleteUser inside an after or afterEach hook"
+      ]
+    },
+    {
+      "test_id": "test_009",
+      "name": "update_user_with_postcondition",
+      "api_definition_file": "users_put_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "requests/UpdateUserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_009_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the update target",
+        "Test the main positive scenario for the PUT /users/{userId} endpoint that updates an existing user",
+        "Call UserService.updateUser with the created user's id and a payload typed as UpdateUserModel",
+        "Assert that the update response status is 200",
+        "Assert that the response data keeps the same id and reflects the updated name and email using optional chaining (e.g., response.data?.email)",
+        "Use new values (e.g., a randomized email) to verify the update actually changed the stored data",
+        "Delete the created user using UserService.deleteUser inside an after or afterEach hook"
+      ]
+    },
+    {
+      "test_id": "test_010",
+      "name": "delete_user_with_get_check",
+      "api_definition_file": "users_delete_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_008_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the delete target",
+        "Test the main positive scenario for the DELETE /users/{userId} endpoint that removes an existing user",
+        "Call UserService.deleteUser with the created user's id",
+        "Assert that the delete response status is 204",
+        "Attempt to retrieve the deleted user using UserService.getUserById and assert that it results in a 404 or equivalent error response"
+      ]
+    },
+    {
+      "test_id": "test_011",
+      "name": "create_user_with_get_check",
+      "api_definition_file": "users_post_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "services/test_007_UserService.ts",
+        "responses/UserResponse.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for a POST endpoint to create a user",
+        "Use the UserService.createUser method with UserModel type",
+        "Assert that the status code is 201",
+        "Assert that the response data contains the created user's id, name, and email using optional chaining (e.g., response.data?.id)",
+        "Generate random values for required fields (email) to avoid collisions",
+        "Attempt to retrieve the created user using UserService.getUserById and assert that it results in a 200 or equivalent success response"
+      ]
+    },
+    {
+      "test_id": "test_012",
+      "name": "create_user_with_postcondition",
+      "api_definition_file": "users_post_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "services/test_006_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for a POST endpoint to create a user",
+        "Use the UserService.createUser method with UserModel type",
+        "Assert that the status code is 201",
+        "Assert that the response data contains the created user's id, name, and email using optional chaining (e.g., response.data?.id)",
+        "Generate random values for required fields (email) to avoid collisions",
+        "Delete the created user using UserService.deleteUser inside an after or afterEach hook"
+      ]
+    },
+    {
+      "test_id": "test_013",
+      "name": "update_user_with_get_check",
+      "api_definition_file": "users_put_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "requests/UpdateUserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_013_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the update target",
+        "Test the main positive scenario for the PUT /users/{userId} endpoint that updates an existing user",
+        "Call UserService.updateUser with the created user's id and a payload typed as UpdateUserModel",
+        "Assert that the update response status is 200",
+        "Assert that the response data keeps the same id and reflects the updated name and email using optional chaining (e.g., response.data?.email)",
+        "Use new values (e.g., a randomized email) to verify the update actually changed the stored data",
+        "Attempt to retrieve the updated user using UserService.getUserById and assert that the response data keeps the same id and reflects the updated name and email"
+      ]
+    },
+    {
+      "test_id": "test_014",
+      "name": "patch_user_with_get_check",
+      "api_definition_file": "users_patch_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "requests/PatchUserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_014_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the patch target",
+        "Test the main positive scenario for the PATCH /users/{userId} endpoint that performs a partial update",
+        "Call UserService.patchUser with the created user's id and a payload typed as PatchUserModel that only changes a subset of fields",
+        "Assert that the patch response status is 200",
+        "Assert that the response data keeps the same id and updates only the provided fields using optional chaining (e.g., response.data?.name)",
+        "Verify that fields not included in the patch payload remain unchanged from the originally created user",
+        "Attempt to retrieve the patched user using UserService.getUserById and assert that the response data keeps the same id and updates only the provided fields"
+      ]
+    },
+    {
+      "test_id": "test_015",
+      "name": "list_users_with_precondition",
+      "api_definition_file": "users_get_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "responses/UserListResponse.ts",
+        "services/test_015_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook",
+        "Test the main positive scenario for the GET /users endpoint that retrieves a paginated list of users",
+        "Call UserService.getUsers",
+        "Assert that the response contains an array of users with id, name, and email",
+        "Verify that the total count in the response is a positive integer",
+        "Verify that the user created is included in the response"
+      ]
+    },
+    {
+      "test_id": "test_016",
+      "name": "patch_user_with_postcondition",
+      "api_definition_file": "users_patch_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "requests/PatchUserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_016_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the patch target",
+        "Test the main positive scenario for the PATCH /users/{userId} endpoint that performs a partial update",
+        "Call UserService.patchUser with the created user's id and a payload typed as PatchUserModel that only changes a subset of fields",
+        "Assert that the patch response status is 200",
+        "Assert that the response data keeps the same id and updates only the provided fields using optional chaining (e.g., response.data?.name)",
+        "Verify that fields not included in the patch payload remain unchanged from the originally created user",
+        "Delete the created user using UserService.deleteUser inside an after or afterEach hook"
+      ]
+    }
+  ]
+}
+

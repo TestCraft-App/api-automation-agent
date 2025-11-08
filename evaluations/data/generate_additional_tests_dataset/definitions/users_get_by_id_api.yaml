@@ -1,0 +1,71 @@
+openapi: 3.0.0
+info:
+  title: User API
+  version: 1.0.0
+  description: API for retrieving a user by ID
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+paths:
+  /users/{userId}:
+    get:
+      summary: Retrieve a user by ID
+      description: Returns a single user that matches the provided identifier
+      operationId: getUserById
+      tags:
+        - users
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Unique identifier of the user to retrieve
+      responses:
+        "200":
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message describing why the user could not be found
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - email
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique identifier for the user
+          example: 101
+        name:
+          type: string
+          description: User's full name
+          example: Alex Johnson
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: alex.johnson@example.com
+        age:
+          type: integer
+          format: int32
+          description: User's age
+          minimum: 0
+          maximum: 150
+          example: 33

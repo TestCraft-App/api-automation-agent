@@ -1,0 +1,37 @@
+openapi: 3.0.0
+info:
+  title: User API
+  version: 1.0.0
+  description: API for deleting an existing user
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+paths:
+  /users/{userId}:
+    delete:
+      summary: Delete a user
+      description: Permanently removes an existing user resource
+      operationId: deleteUser
+      tags:
+        - users
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Unique identifier of the user to delete
+      responses:
+        "204":
+          description: User deleted successfully
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Reason the user could not be located
