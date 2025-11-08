@@ -3,7 +3,7 @@
 import getpass
 import os
 import shutil
-from typing import Optional, Tuple
+from typing import Optional
 from pathlib import Path
 
 
@@ -50,7 +50,7 @@ class InteractiveSetup:
 
         try:
             shutil.copy2(example_env_path, env_path)
-            print(f"✅ Created .env file from example.env")
+            print("✅ Created .env file from example.env")
             return True
         except Exception as e:
             print(f"❌ Error creating .env file: {e}")
@@ -108,7 +108,7 @@ class InteractiveSetup:
     def get_api_key(provider: dict, input_func=None) -> str:
         """Get API key from user."""
         print(f"\n🔑 ENTER {provider['name'].upper()} API KEY")
-        print(f"Get your API key from:")
+        print("Get your API key from:")
         if provider["name"] == "OpenAI":
             print("https://platform.openai.com/api-keys")
         else:
@@ -164,7 +164,7 @@ class InteractiveSetup:
             with open(env_path, "w") as f:
                 f.writelines(updated_lines)
 
-            print(f"✅ Configuration saved to .env file")
+            print("✅ Configuration saved to .env file")
             print(f"   Provider: {provider['name']}")
             print(f"   Model: {model}")
 
