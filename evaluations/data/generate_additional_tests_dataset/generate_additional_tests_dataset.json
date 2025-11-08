@@ -8,13 +8,14 @@
       "api_definition_file": "users_post_api.yaml",
       "model_files": [
         "requests/UserModel.ts",
-        "services/test_001_UserService.ts"
+        "services/UserService.ts"
       ],
       "evaluation_criteria": [
         "A test that creates a user when name and email are valid",
         "A test that creates a user with optional age omitted",
         "A test that creates a user with age at minimum boundary (0)",
         "A test that creates a user with age at maximum boundary (150)",
+        "A test that tries to get the created user by its id and verifies it was created successfully",
         "A test that rejects a request missing required name field",
         "A test that rejects a request missing required email field",
         "A test that rejects a request with empty name value",
@@ -27,9 +28,160 @@
         "A test that rejects a request using unsupported content type (e.g., text/plain)",
         "A test that rejects a request when required User schema properties are null",
         "A test that validates JSON response matches User schema on success",
-        "A test that validates a 400 status code with error message for invalid payload"
+        "A test that validates a 400 status code with error message for invalid payload",
+        "All users created in the test suite are deleted inside an after or afterEach hook"
       ],
       "first_test_file": "Post-CreateUser.spec.ts"
+    },
+    {
+      "case_type": "generate_additional_tests",
+      "test_id": "test_002",
+      "name": "list_users",
+      "api_definition_file": "users_get_api.yaml",
+      "model_files": [
+        "responses/UserListResponse.ts",
+        "services/UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "A test that retrieves users without any query parameters",
+        "A test that retrieves users filtered by an exact email address",
+        "A test that retrieves users with pagination using page 1 and default pageSize",
+        "A test that retrieves users with page set to the minimum allowed value (1)",
+        "A test that retrieves users with pageSize set to the minimum allowed value (1)",
+        "A test that retrieves users with pageSize set to the maximum allowed value (100)",
+        "A test that verifies the response includes total count aligned with returned data",
+        "A test that rejects a request with an email filter in an invalid format",
+        "A test that rejects a request with page set to zero",
+        "A test that rejects a request with page set to a negative number",
+        "A test that rejects a request with page set to a non-integer value",
+        "A test that rejects a request with pageSize set to zero",
+        "A test that rejects a request with pageSize set to a negative number",
+        "A test that rejects a request with pageSize greater than the maximum allowed (101)",
+        "A test that rejects a request with pageSize set to a non-integer value",
+        "A test that rejects a request containing an unexpected additional query parameter",
+        "All users created in the test suite (if any) are deleted inside an after or afterEach hook"
+      ],
+      "first_test_file": "Get-GetUsers.spec.ts"
+    },
+    {
+      "case_type": "generate_additional_tests",
+      "test_id": "test_003",
+      "name": "get_user_by_id",
+      "api_definition_file": "users_get_by_id_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "responses/UserResponse.ts",
+        "services/UserService.ts" 
+      ],
+      "evaluation_criteria": [
+        "A test that retrieves a user by a valid existing ID",
+        "A test that verifies the response body matches the User schema fields",
+        "A test that verifies the userId path parameter must be provided",
+        "A test that rejects a request when userId is not an integer",
+        "A test that rejects a request when userId is negative",
+        "A test that rejects a request when userId is zero",
+        "A test that rejects a request when userId is provided as text",
+        "A test that returns 404 when the userId does not match any user",
+        "All users created in the test suite are deleted inside an after or afterEach hook"
+      ],
+      "first_test_file": "Get-GetUserById.spec.ts"
+    },
+    {
+      "case_type": "generate_additional_tests",
+      "test_id": "test_004",
+      "name": "update_user",
+      "api_definition_file": "users_put_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "requests/UpdateUserModel.ts",
+        "responses/UserResponse.ts",
+        "services/UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "A test that updates an existing user with valid name and email",
+        "A test that updates an existing user while omitting the optional age field",
+        "A test that updates an existing user with age set to the minimum allowed value (0)",
+        "A test that updates an existing user with age set to the maximum allowed value (150)",
+        "A test that tries to get the updated user by its id and verifies it was updated successfully",
+        "A test that verifies the successful response body matches the User schema and reflects submitted changes",
+        "A test that rejects an update request missing the required name field",
+        "A test that rejects an update request missing the required email field",
+        "A test that rejects an update request containing an empty name value",
+        "A test that rejects an update request containing an empty email value",
+        "A test that rejects an update request with an invalid email format",
+        "A test that rejects an update request with age below the minimum (negative)",
+        "A test that rejects an update request with age above the maximum (151)",
+        "A test that rejects an update request with age provided as a non-integer value",
+        "A test that rejects an update request where required fields are explicitly null",
+        "A test that rejects an update request containing unexpected additional top-level properties",
+        "A test that rejects an update request using an unsupported content type (e.g., text/plain)",
+        "A test that rejects an update request when userId is not a valid integer",
+        "A test that rejects an update request when userId is zero or negative",
+        "A test that returns 404 when the userId does not resolve to an existing user",
+        "All users created in the test suite are deleted inside an after or afterEach hook"
+      ],
+      "first_test_file": "Put-UpdateUser.spec.ts"
+    },
+    {
+      "case_type": "generate_additional_tests",
+      "test_id": "test_005",
+      "name": "patch_user",
+      "api_definition_file": "users_patch_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "requests/PatchUserModel.ts",
+        "responses/UserResponse.ts",
+        "services/UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "A test that patches a user updating only the name field",
+        "A test that tries to get the patched user by its id and verifies it was patched successfully",
+        "A test that patches a user updating only the email field",
+        "A test that patches a user updating only the age field",
+        "A test that patches a user updating name and email together",
+        "A test that patches a user updating email and age together",
+        "A test that patches a user updating name and age together",
+        "A test that patches a user with valid values for all fields",
+        "A test that omits name, email, and age and leaves the user unchanged",
+        "A test that verifies the patched user response conforms to the User schema",
+        "A test that rejects a patch request with name provided as an empty string",
+        "A test that rejects a patch request with email provided as an empty string",
+        "A test that rejects a patch request with an invalid email format",
+        "A test that rejects a patch request with age below the minimum (negative)",
+        "A test that rejects a patch request with age above the maximum (151)",
+        "A test that rejects a patch request with age provided as a non-integer value",
+        "A test that rejects a patch request where a provided field is explicitly null",
+        "A test that rejects a patch request containing unexpected additional top-level properties",
+        "A test that rejects a patch request using an unsupported content type (e.g., text/plain)",
+        "A test that rejects a patch request when userId is not a valid integer",
+        "A test that rejects a patch request when userId is zero or negative",
+        "A test that returns 404 when the userId does not resolve to an existing user",
+        "All users created in the test suite are deleted inside an after or afterEach hook"
+      ],
+      "first_test_file": "Patch-PatchUser.spec.ts"
+    },
+    {
+      "case_type": "generate_additional_tests",
+      "test_id": "test_006",
+      "name": "delete_user",
+      "api_definition_file": "users_delete_api.yaml",
+      "model_files": [
+        "requests/UserModel.ts",
+        "responses/UserResponse.ts",
+        "services/UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "A test that deletes a user with a valid existing ID",
+        "A test that verifies the API returns 204 with no response body on successful delete",
+        "A test that verifies the user is no longer retrievable after a successful delete",
+        "A test that rejects a delete request when userId is not an integer",
+        "A test that rejects a delete request when userId is zero",
+        "A test that rejects a delete request when userId is negative",
+        "A test that rejects a delete request when userId is provided as text",
+        "A test that returns 404 when the userId does not match any user",
+        "A test that handles repeated delete requests for the same user gracefully"
+      ],
+      "first_test_file": "Delete-DeleteUser.spec.ts"
     }
   ]
 }
