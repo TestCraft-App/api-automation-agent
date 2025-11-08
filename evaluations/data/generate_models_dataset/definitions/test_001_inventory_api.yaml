@@ -1,0 +1,40 @@
+openapi: 3.0.0
+info:
+  title: Inventory API
+  version: 1.0.0
+paths:
+  /inventory/items:
+    get:
+      summary: List inventory items
+      operationId: listInventoryItems
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InventoryItem'
+components:
+  schemas:
+    InventoryItem:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the item
+        name:
+          type: string
+          description: Name of the item
+        quantity:
+          type: integer
+          description: Quantity in stock
+        tags:
+          type: array
+          items:
+            type: string
+          description: Tags describing the item

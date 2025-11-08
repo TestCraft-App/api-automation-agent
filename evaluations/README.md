@@ -6,7 +6,7 @@ This evaluation suite provides infrastructure for evaluating LLMService generati
 
 The evaluation suite allows you to:
 - Define test cases with API definitions and evaluation criteria
-- Run `generate_first_test` (other generation methods comming soon)
+- Run evaluations for `generate_first_test` and `generate_models`
 - Automatically grade generated files using LLM-based evaluation
 - Generate detailed reports of evaluation results
 
@@ -27,14 +27,8 @@ evaluations/
 │   ├── model_grader.py            # LLM-based grading service
 │   └── evaluation_runner.py       # Main evaluation orchestration
 └── data/
-    └── generate_first_test_dataset/               # Example dataset folder
-        ├── generate_first_test_dataset.json       # Dataset file (must match folder name)
-        ├── definitions/            # API definition files
-        │   └── user_post_api.yaml
-        └── models/                 # Model files (TypeScript)
-            ├── requests/
-            ├── responses/
-            └── services/
+    ├── generate_first_test_dataset/               # Example first-test dataset
+    └── generate_models_dataset/                   # Example models dataset
 ```
 
 ## Usage
@@ -44,7 +38,7 @@ evaluations/
 1. Create a dataset folder (e.g., `evaluations/data/generate_first_test_dataset/`)
 2. Create a dataset JSON file named `{folder_name}.json` (e.g., `generate_first_test_dataset.json`)
 3. Place API definition files in the `definitions/` subfolder
-4. Place model files (TypeScript) in the `models/` subfolder
+4. Place model files (TypeScript) in the `models/` subfolder (leave empty if not needed, e.g., for `generate_models`)
 
 See `README.md` inside data folder for more details on test data requirements. 
 
@@ -80,9 +74,10 @@ Each run appends a timestamp to `{dataset_name}`, e.g. `my_dataset_20251107_1530
 
 See `evaluations/data/README.md` for detailed information about the dataset format and structure.
 
-## Example Dataset
+## Example Datasets
 
-See `evaluations/data/generate_first_test_dataset/` for a complete example of a dataset folder structure.
+- `evaluations/data/generate_first_test_dataset/` – sample dataset for `generate_first_test`
+- `evaluations/data/generate_models_dataset/` – sample dataset for `generate_models`
 
 ## Model Grading
 
@@ -105,12 +100,16 @@ This evaluation:
 5. Grades it against the evaluation criteria using model grading
 6. Returns a structured result
 
+### `generate_models`
+
+This evaluation:
+1. Loads the API definition from the `definitions/` folder within the dataset folder
+2. Runs `generate_models` to produce TypeScript model files
+3. Reads the generated models files content
+4. Grades the generated models against the evaluation criteria using model grading
+5. Returns a structured result
+
 ## Future Evaluations
 
-The infrastructure is designed to support additional evaluation methods:
-- `generate_models`
-- `generate_additional_tests`
-- `fix_typescript`
-
-These can be added by extending the `EvaluationRunner` class.
+The infrastructure is designed to support additional evaluation methods (e.g., `generate_additional_tests`, `fix_typescript`). These can be added by extending the `EvaluationRunner` class.
 

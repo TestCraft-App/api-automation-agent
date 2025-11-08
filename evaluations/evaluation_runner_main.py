@@ -68,9 +68,9 @@ def save_evaluation_results(results, output_dir: str, dataset_name: str) -> str:
 
 def print_evaluation_summary(results):
     """Print a summary of evaluation results to console."""
-    print("\n" + "-" * 80)
+    print("\n" + "-" * 120)
     print("DETAILED RESULTS")
-    print("-" * 80)
+    print("-" * 120)
 
     for result in results.results:
         status_symbol = {
@@ -95,9 +95,9 @@ def print_evaluation_summary(results):
             if result.grade_result.reasoning:
                 print(f"  Score Reasoning: {result.grade_result.reasoning}")
 
-    print("\n" + "=" * 80)
+    print("\n" + "=" * 120)
     print("EVALUATION SUMMARY")
-    print("=" * 80)
+    print("=" * 120)
     print(f"Dataset: {results.dataset_name}")
     print(f"Total Test Cases: {results.total_test_cases}")
     print(f"Graded: {results.graded_count}")
@@ -111,7 +111,7 @@ def print_evaluation_summary(results):
     if results.generated_files_path:
         print(f"Generated Files: {results.generated_files_path}")
 
-    print("=" * 80)
+    print("=" * 120)
 
 
 def parse_args() -> argparse.Namespace:
@@ -178,7 +178,6 @@ def main():
         test_data_folder=args.test_data_folder,
     )
 
-    print(f"\nRunning evaluation for dataset: {dataset.dataset_name}")
     results = evaluation_runner.run_evaluation(dataset)
 
     print(f"\nSaving results to: {args.output_dir}")

@@ -1,7 +1,10 @@
 """Models for evaluation datasets."""
 
-from typing import List, Optional
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict
+
+
+EvaluationType = Literal["generate_first_test", "generate_models"]
 
 
 class EvaluationTestCase(BaseModel):
@@ -9,6 +12,10 @@ class EvaluationTestCase(BaseModel):
 
     model_config = ConfigDict(protected_namespaces=())
 
+    case_type: EvaluationType = Field(
+        default="generate_first_test",
+        description="Type of evaluation to run (e.g., 'generate_first_test', 'generate_models')",
+    )
     test_id: str = Field(description="Unique identifier for the test case (e.g., 'test_001')")
     name: str = Field(description="Name of the test case")
     api_definition_file: str = Field(
@@ -18,11 +25,12 @@ class EvaluationTestCase(BaseModel):
         )
     )
     model_files: List[str] = Field(
+        default_factory=list,
         description=(
             "List of model file paths relative to the models folder. "
             "Filenames may start with a test prefix such as 'test_001_' "
             "which will be removed automatically (e.g., 'requests/test_001_UserModel.ts')."
-        )
+        ),
     )
     evaluation_criteria: List[str] = Field(
         description="List of criteria used to evaluate if the generated test meets requirements"

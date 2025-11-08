@@ -165,10 +165,11 @@ class EvaluationRunner:
                 reasoning="The generate_first_test method returned an empty list",
             )
 
-        first_file = generated_files[0]
-        file_content = first_file.fileContent
+        combined_content = "\n\n".join(
+            f"// File: {file.path}\n{file.fileContent}" for file in generated_files
+        )
 
-        return self.model_grader.grade(file_content, evaluation_criteria)
+        return self.model_grader.grade(combined_content, evaluation_criteria)
 
     def evaluate_generate_first_test(
         self, test_case: EvaluationTestCase, output_dir: str
@@ -258,6 +259,77 @@ class EvaluationRunner:
         finally:
             self.config.destination_folder = original_destination
 
+    def evaluate_generate_models(self, test_case: EvaluationTestCase, output_dir: str) -> EvaluationResult:
+        """
+        Evaluate the generate_models method for a single test case.
+        """
+        self.logger.info(f"Evaluating models for test case: {test_case.test_id} - {test_case.name}")
+
+        api_definition_content = self._load_api_definition(test_case.api_definition_file)
+        if not api_definition_content:
+            return EvaluationResult(
+                test_id=test_case.test_id,
+                test_case_name=test_case.name,
+                api_definition_file=test_case.api_definition_file,
+                status="ERROR",
+                error_message=f"Failed to load API definition file: {test_case.api_definition_file}",
+                evaluation_criteria=test_case.evaluation_criteria,
+            )
+
+        original_destination = self.config.destination_folder
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+        os.makedirs(output_dir, exist_ok=True)
+
+        try:
+            self.config.destination_folder = output_dir
+
+            generated_model_specs = self.llm_service.generate_models(api_definition_content)
+
+            if not generated_model_specs:
+                return EvaluationResult(
+                    test_id=test_case.test_id,
+                    test_case_name=test_case.name,
+                    api_definition_file=test_case.api_definition_file,
+                    status="NOT_EVALUATED",
+                    error_message="No models were generated",
+                    evaluation_criteria=test_case.evaluation_criteria,
+                )
+
+            file_specs = [
+                FileSpec(path=model_spec.path, fileContent=model_spec.fileContent)
+                for model_spec in generated_model_specs
+            ]
+
+            grade_result = self._evaluate_generated_files(file_specs, test_case.evaluation_criteria)
+            status = "GRADED" if grade_result else "NOT_EVALUATED"
+
+            return EvaluationResult(
+                test_id=test_case.test_id,
+                test_case_name=test_case.name,
+                api_definition_file=test_case.api_definition_file,
+                status=status,
+                generated_files=[spec.path for spec in file_specs],
+                grade_result=grade_result,
+                evaluation_criteria=test_case.evaluation_criteria,
+            )
+
+        except Exception as e:
+            self.logger.error(
+                f"Error during model evaluation of test case {test_case.test_id} - {test_case.name}: {e}",
+                exc_info=True,
+            )
+            return EvaluationResult(
+                test_id=test_case.test_id,
+                test_case_name=test_case.name,
+                api_definition_file=test_case.api_definition_file,
+                status="ERROR",
+                error_message=str(e),
+                evaluation_criteria=test_case.evaluation_criteria,
+            )
+        finally:
+            self.config.destination_folder = original_destination
+
     def run_evaluation(self, dataset: EvaluationDataset) -> EvaluationRunResult:
         """
         Run evaluation on all test cases in a dataset.
@@ -269,7 +341,7 @@ class EvaluationRunner:
             EvaluationRunResult with aggregated results
         """
         self.logger.info(f"Starting evaluation run for dataset: {dataset.dataset_name}")
-        self.logger.info(f"Number of test cases: {len(dataset.test_cases)}")
+        self.logger.info(f"Number of test cases: {len(dataset.test_cases)}\n")
 
         usage_before = self.llm_service.get_aggregated_usage_metadata().model_copy(deep=True)
 
@@ -290,7 +362,26 @@ class EvaluationRunner:
 
         for test_case in dataset.test_cases:
             test_output_dir = os.path.join(base_output_dir, test_case.test_id)
-            result = self.evaluate_generate_first_test(test_case, test_output_dir)
+
+            if test_case.case_type == "generate_models":
+                result = self.evaluate_generate_models(test_case, test_output_dir)
+            elif test_case.case_type == "generate_first_test":
+                result = self.evaluate_generate_first_test(test_case, test_output_dir)
+            else:
+                self.logger.error(
+                    "Unknown evaluation type '%s' for test %s",
+                    test_case.case_type,
+                    test_case.test_id,
+                )
+                result = EvaluationResult(
+                    test_id=test_case.test_id,
+                    test_case_name=test_case.name,
+                    api_definition_file=test_case.api_definition_file,
+                    status="ERROR",
+                    error_message=f"Unknown evaluation type '{test_case.case_type}'",
+                    evaluation_criteria=test_case.evaluation_criteria,
+                )
+
             results.append(result)
 
             if result.status == "GRADED":
@@ -303,7 +394,7 @@ class EvaluationRunner:
             if result.grade_result and result.grade_result.score is not None:
                 scores.append(result.grade_result.score)
 
-            self.logger.info(f"Test case '{test_case.name}': {result.status}")
+            self.logger.info(f"Test case '{test_case.name}': {result.status}\n")
 
         self.logger.info(
             "Evaluation run completed. Graded: %s, Not Evaluated: %s, Errors: %s",

@@ -14,21 +14,22 @@ from src.utils.logger import Logger
 class ModelGrader:
     """Service for evaluating generated files using LLM-based grading."""
 
-    GRADING_PROMPT_TEMPLATE = """You are an expert evaluator for API test automation code.
+    GRADING_PROMPT_TEMPLATE = """You are an expert evaluator for TypeScript automation code.
 
-Your task is to evaluate whether a generated TypeScript test file meets the specified evaluation criteria.
+Your task is to evaluate whether the generated TypeScript file(s) meet the specified evaluation criteria.
+Each file is prefixed by a comment of the form `// File: path`.
 
-## Generated Test File Content:
+## Generated TypeScript Files:
 {generated_file_content}
 
 ## Evaluation Criteria:
 {evaluation_criteria}
 
 ## Instructions:
-1. Carefully review the generated test file content
-2. Assess each evaluation criterion individually and determine if it is met
-3. Assign an overall score between 0.0 and 1.0 based on how well the criteria are satisfied
-4. Summarize how the score was determined in the reasoning section
+1. Carefully review every generated file provided above.
+2. Assess each evaluation criterion individually and determine if it is met.
+3. Assign an overall score between 0.0 and 1.0 based on how well the criteria are satisfied.
+4. Summarize how the score was determined in the reasoning section.
 
 ## Response Format:
 You must respond with a JSON object in this exact format:

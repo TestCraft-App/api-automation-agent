@@ -35,6 +35,7 @@ A dataset file should be a JSON file with the following structure:
   "dataset_name": "generate_first_test_dataset",
   "test_cases": [
     {
+      "case_type": "generate_first_test",
       "test_id": "test_001",
       "name": "create_user_post_endpoint",
       "api_definition_file": "test_001_user_post_api.yaml",
@@ -55,10 +56,11 @@ A dataset file should be a JSON file with the following structure:
 
 - `dataset_name`: Name of the evaluation dataset (should match the folder name)
 - `test_cases`: Array of test cases
+  - `case_type`: Type of evaluation to run. Supported values: `"generate_first_test"` (default) and `"generate_models"`.
   - `test_id`: **Required** unique identifier for the test case (e.g., "test_001"). This is used to organize generated artifacts and file prefixes.
   - `name`: Unique name for the test case
   - `api_definition_file`: Name of the API definition file (YAML/JSON) in the `definitions/` folder. **Must be prefixed with test_id** (e.g., "test_001_user_post_api.yaml").
-  - `model_files`: **Required** list of model file paths relative to the `models/` folder. Filenames may optionally start with a `test_###_` prefix (e.g., "requests/test_001_UserModel.ts"); if present, the prefix is removed automatically and "src/models/" is prepended when creating GeneratedModel objects for evaluation.
+  - `model_files`: List of model file paths relative to the `models/` folder. Filenames may optionally start with a `test_###_` prefix (e.g., "requests/test_001_UserModel.ts"); if present, the prefix is removed automatically and "src/models/" is prepended when creating GeneratedModel objects for evaluation. Leave empty if no seed model files are required (e.g., for `generate_models` evaluations).
   - `evaluation_criteria`: Ordered list of specific criteria the generated test should satisfy
 
 ## API Definition Files
