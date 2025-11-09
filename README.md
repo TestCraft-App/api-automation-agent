@@ -6,10 +6,10 @@ An open-source AI Agent that automatically generates an automation framework fro
 
 - Generates type-safe service and data models
 - Generates test suites for every endpoint
-- Reviewes and fixes code issues and ensures code quality and best practices
+- Reviews and fixes code issues and ensures code quality and best practices
 - Includes code formatting and linting
 - Runs tests with detailed reporting and assertions
-- Migrates Postman collections to an open source automation framework, mantaining test structure and run order.
+- Migrates Postman collections to an open source automation framework, maintaining test structure and run order
 
 ## Usage
 
@@ -133,7 +133,9 @@ The agent accepts either:
 
 ### Options
 
-- `--destination-folder`: Specify output directory (default: ./generated-framework\_[timestamp])
+- `--destination-folder`: Specify output directory (default:
+  ./generated-
+  framework_[timestamp])
 - `--use-existing-framework`: Use an existing framework instead of creating a new one
 - `--endpoints`: Generate framework for specific endpoints (can specify multiple)
 - `--generate`: Specify what to generate (default: models_and_tests)
@@ -146,16 +148,17 @@ The agent accepts either:
 
 ### Examples
 
-````bash
+```bash
 # Generate framework from a local file
 ./api-agent api-spec.yaml
 python ./main.py api-spec.yaml
+```
 
 ```bash
 # Generate framework from a URL
 ./api-agent https://api.example.com/swagger.json
 python ./main.py https://api.example.com/swagger.json
-````
+```
 
 ```bash
 # Generate list root endpoints
@@ -175,10 +178,11 @@ python ./main.py api-spec.yaml
 python ./main.py api-spec.yaml --use-existing-framework --destination-folder ./my-api-framework --endpoints /user /store
 ```
 
-````bash
+```bash
 # Generate only data and service models for all endpoints
 ./api-agent api-spec.yaml --generate models
 python ./main.py api-spec.yaml --generate models
+```
 
 ```bash
 # Generate models and first test for each endpoint in a custom folder
@@ -234,16 +238,17 @@ The migration works best with well-structured APIs where:
 
 ### Usage
 
-````bash
+```bash
 # Migrate a Postman collection to TypeScript test framework
 ./api-agent path/to/postman_collection.json --destination-folder ./my-api-tests
 python ./main.py path/to/postman_collection.json --destination-folder ./my-api-tests
+```
 
 ## Testing the Agent
 
 To try out the agent without using your own API specification, you can use one of the following test APIs:
 
-- [CatCafe API](https://github.com/CodingRainbowCat/CatCafeProject): Test API created by [@CodingRainbowCat](https://github.com/CodingRainbowCat) epecifically for testing the agent. You can check the repo to run it locally. It's very useful since it can be easily modified to test different scenarios.
+- [CatCafe API](https://github.com/CodingRainbowCat/CatCafeProject): Test API created by [@CodingRainbowCat](https://github.com/CodingRainbowCat) specifically for testing the agent. You can check the repo to run it locally. It's very useful since it can be easily modified to test different scenarios.
 - [Pet Store API](https://petstore.swagger.io/#/): Public test API
 
 ### Examples
@@ -264,10 +269,10 @@ python ./main.py http://localhost:3000/swagger.json --endpoints /adopters
 python ./main.py https://petstore.swagger.io/v2/swagger.json --endpoints /store
 ```
 
-These are simple and small examples that includes basic CRUD operations and are ideal for testing the agent's capabilities.
+These are simple and small examples that include basic CRUD operations and are ideal for testing the agent's capabilities.
 Estimated cost (with claude-sonnet-4-5-20250929) to run each example above: US$ ~0.3
 
-You can combine endpoints to test larger scenarios.:
+You can combine endpoints to test larger scenarios:
 
 ```bash
 ./api-agent http://localhost:3000/swagger.json --endpoints /adopters /pet
@@ -381,7 +386,7 @@ class MyClass:
         pass
 ```
 
-#### For Wrapper
+#### Wrapping Loops
 
 The `checkpoint_iter` method of the `Checkpoint` class can be used to wrap a for-loop and automatically save and restore progress. This is useful for long-running loops where you want to ensure progress is not lost.
 
@@ -398,7 +403,7 @@ class MyClass:
     def my_loop_function(self, items):
         for item in self.checkpoint.checkpoint_iter(items, "my_loop", self.state):
             self.state["info"].append(item)
-         print(self.state)
+        print(self.state)
 ```
 
 In the example above, the `checkpoint_iter` method is used to wrap the for-loop. The `self.state` dictionary is passed as the third argument to the `checkpoint_iter` method. This dictionary needs to be in the format of a dict with a state. The iteration will start from where it left off (index) and restore the last state of the third variable.
