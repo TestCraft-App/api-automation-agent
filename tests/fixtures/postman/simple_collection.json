@@ -1,0 +1,103 @@
+{
+  "info": {
+    "name": "Simple API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "BASEURL",
+      "value": "https://api.example.com"
+    },
+    {
+      "key": "API_KEY",
+      "value": "test-api-key-123"
+    }
+  ],
+  "item": [
+    {
+      "name": "Get Users",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{BASEURL}}/users?page=1&limit=10",
+          "host": ["{{BASEURL}}"],
+          "path": ["users"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{API_KEY}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "console.log('Pre-request script for Get Users');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create User",
+      "request": {
+        "method": "POST",
+        "url": "{{BASEURL}}/users",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\": \"John Doe\", \"email\": \"john@example.com\", \"age\": 30}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201', function() {",
+              "  pm.response.to.have.status(201);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Products",
+      "request": {
+        "method": "GET",
+        "url": "{{BASEURL}}/products?category=electronics"
+      },
+      "event": []
+    }
+  ]
+}
+

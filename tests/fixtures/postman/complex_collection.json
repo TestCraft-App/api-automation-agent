@@ -1,0 +1,222 @@
+{
+  "info": {
+    "name": "Complex API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "BASEURL",
+      "value": "https://api.complex.com"
+    },
+    {
+      "key": "AUTH_TOKEN",
+      "value": "bearer-token-xyz"
+    },
+    {
+      "key": "API_VERSION",
+      "value": "v1"
+    }
+  ],
+  "item": [
+    {
+      "name": "User Service",
+      "item": [
+        {
+          "name": "List All Users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{BASEURL}}/users?status=active&role=admin",
+              "query": [
+                {
+                  "key": "status",
+                  "value": "active"
+                },
+                {
+                  "key": "role",
+                  "value": "admin"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.environment.set('timestamp', Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Response has users array', function() {",
+                  "  const data = pm.response.json();",
+                  "  pm.expect(data).to.have.property('users');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create New User",
+          "request": {
+            "method": "POST",
+            "url": "{{BASEURL}}/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\": \"testuser\", \"email\": \"test@example.com\", \"profile\": {\"firstName\": \"Test\", \"lastName\": \"User\", \"age\": 25}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.environment.set('userId', response.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "url": "{{BASEURL}}/users/{{userId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"updated@example.com\", \"status\": \"inactive\"}"
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": "{{BASEURL}}/users/{{userId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Product Service",
+      "item": [
+        {
+          "name": "Products",
+          "item": [
+            {
+              "name": "Get All Products",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{BASEURL}}/products?page=1&limit=50",
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "50"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create Product",
+              "request": {
+                "method": "POST",
+                "url": "{{BASEURL}}/products",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"name\": \"Widget\", \"price\": 19.99, \"inventory\": {\"quantity\": 100, \"warehouse\": \"A1\"}, \"tags\": [\"electronics\", \"gadgets\"]}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "console.log('Creating product...');",
+                      "pm.variables.set('productName', 'Widget-' + Date.now());"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Product created successfully', function() {",
+                      "  pm.response.to.have.status(201);",
+                      "  const data = pm.response.json();",
+                      "  pm.expect(data).to.have.property('id');",
+                      "  pm.environment.set('productId', data.id);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get Product By ID",
+              "request": {
+                "method": "GET",
+                "url": "{{BASEURL}}/products/{{productId}}"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Categories",
+          "item": [
+            {
+              "name": "List Categories",
+              "request": {
+                "method": "GET",
+                "url": "{{BASEURL}}/categories"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Order Service",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "url": "{{BASEURL}}/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"userId\": \"123\", \"items\": [{\"productId\": \"456\", \"quantity\": 2}], \"total\": 100}"
+            }
+          }
+        },
+        {
+          "name": "Get Order Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{BASEURL}}/orders/{{orderId}}?includeItems=true",
+              "query": [
+                {
+                  "key": "includeItems",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+
