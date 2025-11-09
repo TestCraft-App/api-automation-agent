@@ -1,5 +1,5 @@
 from src.processors.postman.postman_utils import PostmanUtils
-from src.processors.postman.models import RequestData, VerbInfo
+from src.processors.postman.models import RequestData
 
 
 def test_extract_variables_with_valid_data():

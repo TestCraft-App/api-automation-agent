@@ -1,6 +1,5 @@
 import json
 import pytest
-from pathlib import Path
 
 from src.processors.postman_processor import PostmanProcessor
 from src.processors.postman.models import RequestData, VerbInfo
