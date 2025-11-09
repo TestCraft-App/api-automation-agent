@@ -38,11 +38,10 @@ class TestCheckpointSystemIntegration:
 
         restored_state = checkpoint.restore()
 
-        assert restored_state is not None or restored_state == {}
-        if restored_state:
-            assert restored_state.get("counter") == 42
-            assert restored_state.get("data") == ["item1", "item2", "item3"]
-            assert restored_state.get("config", {}).get("key") == "value"
+        assert restored_state is not None
+        assert restored_state.get("counter") == 42
+        assert restored_state.get("data") == ["item1", "item2", "item3"]
+        assert restored_state.get("config", {}).get("key") == "value"
 
         checkpoint.clear()
 
