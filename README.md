@@ -130,9 +130,7 @@ The agent accepts either:
 
 ### Options
 
-- `--destination-folder`: Specify output directory (default:
-  ./generated-
-  framework_[timestamp])
+- `--destination-folder`: Specify output directory (default: ./generated-framework_[timestamp])
 - `--use-existing-framework`: Use an existing framework instead of creating a new one
 - `--endpoints`: Generate framework for specific endpoints (can specify multiple)
 - `--generate`: Specify what to generate (default: models_and_tests)
