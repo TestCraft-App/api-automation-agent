@@ -5,7 +5,7 @@ info:
   description: |
     Enterprise Orders Management API with environment validation.
 
-    ⚠️ CRITICAL TESTING REQUIREMENT ⚠️
+    CRITICAL TESTING REQUIREMENT
 
     This API requires environment validation before running any tests to ensure compatibility
     and prevent test failures due to misconfigured environments.
