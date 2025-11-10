@@ -67,11 +67,31 @@ python evaluations/evaluation_runner_main.py \
   --test-data-folder evaluations/data/generate_models_dataset
 ```
 
+To run specific test cases only, use the `--test-ids` flag:
+
+```bash
+# Run a single test case
+python evaluations/evaluation_runner_main.py \
+  --test-data-folder evaluations/data/generate_first_test_dataset \
+  --test-ids test_001
+
+# Run multiple specific test cases (method 1)
+python evaluations/evaluation_runner_main.py \
+  --test-data-folder evaluations/data/generate_first_test_dataset \
+  --test-ids test_001 --test-ids test_003
+
+# Run multiple specific test cases (method 2 - comma-separated)
+python evaluations/evaluation_runner_main.py \
+  --test-data-folder evaluations/data/generate_first_test_dataset \
+  --test-ids test_001,test_002,test_003
+```
+
 ### Arguments
 
 - `--test-data-folder`: Path to the dataset folder (required). The dataset JSON file should be named `{folder_name}.json` inside this folder.
 - `--output-dir`: Directory to save evaluation results (default: `evaluations/reports`)
 - `--llm`: Optional override for the LLM model to use (e.g., `--llm GPT_5`)
+- `--test-ids`: Optional filter to run specific test cases by test ID. Can be specified multiple times or as a comma-separated list (e.g., `--test-ids test_001 --test-ids test_002` or `--test-ids test_001,test_002`)
 
 ### 3. Review Results
 

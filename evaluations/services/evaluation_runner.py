@@ -496,19 +496,35 @@ class EvaluationRunner:
         finally:
             self.config.destination_folder = original_destination
 
-    def run_evaluation(self, dataset: EvaluationDataset) -> EvaluationRunResult:
+    def run_evaluation(
+        self, dataset: EvaluationDataset, test_ids_filter: Optional[List[str]] = None
+    ) -> EvaluationRunResult:
         """
         Run evaluation on all test cases in a dataset.
 
         Args:
             dataset: The evaluation dataset to run
+            test_ids_filter: Optional list of test IDs to filter by. If provided, only test cases
+                           with matching test_id will be evaluated.
 
         Returns:
             EvaluationRunResult with aggregated results
         """
+        test_cases = dataset.test_cases
+        if test_ids_filter:
+            test_cases = [tc for tc in dataset.test_cases if tc.test_id in test_ids_filter]
+            if not test_cases:
+                self.logger.warning(
+                    f"No test cases found matching filter: {test_ids_filter}. "
+                    f"Available test IDs: {[tc.test_id for tc in dataset.test_cases]}"
+                )
+            else:
+                filtered_ids = [tc.test_id for tc in test_cases]
+                self.logger.info(f"Filtered to {len(test_cases)} test case(s): {filtered_ids}")
+
         self.logger.info(f"\nStarting evaluation run for dataset: {dataset.dataset_name}")
         print(f"Using LLM model: {self.config.model.name} ({self.config.model.value})")
-        self.logger.info(f"Number of test cases: {len(dataset.test_cases)}\n")
+        self.logger.info(f"Number of test cases: {len(test_cases)}\n")
 
         usage_before = self.llm_service.get_aggregated_usage_metadata().model_copy(deep=True)
 
@@ -527,7 +543,7 @@ class EvaluationRunner:
         )
         os.makedirs(base_output_dir, exist_ok=True)
 
-        for test_case in dataset.test_cases:
+        for test_case in test_cases:
             test_output_dir = os.path.join(base_output_dir, test_case.test_id)
 
             if test_case.case_type == "generate_models":
@@ -582,7 +598,7 @@ class EvaluationRunner:
         return EvaluationRunResult(
             dataset_name=dataset.dataset_name,
             llm_model=self.config.model.value,
-            total_test_cases=len(dataset.test_cases),
+            total_test_cases=len(test_cases),
             graded_count=graded_count,
             not_evaluated_count=not_evaluated_count,
             error_count=error_count,
