@@ -3,6 +3,7 @@
 import os
 import re
 import shutil
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import List, Optional, Sequence
 
@@ -33,6 +34,7 @@ class EvaluationRunner:
         file_service: FileService,
         test_data_folder: str,
         model_grader: Optional[ModelGrader] = None,
+        max_workers: int = 4,
     ):
         """
         Initialize the Evaluation Runner.
@@ -43,6 +45,7 @@ class EvaluationRunner:
             file_service: FileService instance for file operations
             test_data_folder: Path to folder containing test data (API definition files)
             model_grader: Optional ModelGrader instance. If not provided, will create one.
+            max_workers: Maximum number of parallel workers for test execution (default: 4)
         """
         self.config = config
         self.llm_service = llm_service
@@ -50,6 +53,7 @@ class EvaluationRunner:
         self.test_data_folder = test_data_folder
         self.logger = Logger.get_logger(__name__)
         self.model_grader = model_grader or ModelGrader(config)
+        self.max_workers = max_workers
 
     def _load_api_definition(self, api_definition_file: str) -> Optional[str]:
         """
@@ -496,19 +500,74 @@ class EvaluationRunner:
         finally:
             self.config.destination_folder = original_destination
 
-    def run_evaluation(self, dataset: EvaluationDataset) -> EvaluationRunResult:
+    def _evaluate_single_test_case(
+        self, test_case: EvaluationTestCase, base_output_dir: str
+    ) -> EvaluationResult:
+        """
+        Evaluate a single test case based on its type.
+
+        Args:
+            test_case: The test case to evaluate
+            base_output_dir: Base directory for output files
+
+        Returns:
+            EvaluationResult for the test case
+        """
+        test_output_dir = os.path.join(base_output_dir, test_case.test_id)
+
+        if test_case.case_type == "generate_models":
+            result = self.evaluate_generate_models(test_case, test_output_dir)
+        elif test_case.case_type == "generate_first_test":
+            result = self.evaluate_generate_first_test(test_case, test_output_dir)
+        elif test_case.case_type == "generate_additional_tests":
+            result = self.evaluate_generate_additional_tests(test_case, test_output_dir)
+        else:
+            self.logger.error(
+                "Unknown evaluation type '%s' for test %s",
+                test_case.case_type,
+                test_case.test_id,
+            )
+            result = EvaluationResult(
+                test_id=test_case.test_id,
+                test_case_name=test_case.name,
+                api_definition_file=test_case.api_definition_file,
+                status="ERROR",
+                error_message=f"Unknown evaluation type '{test_case.case_type}'",
+                evaluation_criteria=test_case.evaluation_criteria,
+            )
+
+        self.logger.info(f"Test case '{test_case.name}': {result.status}")
+        return result
+
+    def run_evaluation(
+        self, dataset: EvaluationDataset, test_ids_filter: Optional[List[str]] = None
+    ) -> EvaluationRunResult:
         """
         Run evaluation on all test cases in a dataset.
 
         Args:
             dataset: The evaluation dataset to run
+            test_ids_filter: Optional list of test IDs to filter by. If provided, only test cases
+                           with matching test_id will be evaluated.
 
         Returns:
             EvaluationRunResult with aggregated results
         """
+        test_cases = dataset.test_cases
+        if test_ids_filter:
+            test_cases = [tc for tc in dataset.test_cases if tc.test_id in test_ids_filter]
+            if not test_cases:
+                self.logger.warning(
+                    f"No test cases found matching filter: {test_ids_filter}. "
+                    f"Available test IDs: {[tc.test_id for tc in dataset.test_cases]}"
+                )
+            else:
+                filtered_ids = [tc.test_id for tc in test_cases]
+                self.logger.info(f"Filtered to {len(test_cases)} test case(s): {filtered_ids}")
+
         self.logger.info(f"\nStarting evaluation run for dataset: {dataset.dataset_name}")
         print(f"Using LLM model: {self.config.model.name} ({self.config.model.value})")
-        self.logger.info(f"Number of test cases: {len(dataset.test_cases)}\n")
+        self.logger.info(f"Number of test cases: {len(test_cases)}\n")
 
         usage_before = self.llm_service.get_aggregated_usage_metadata().model_copy(deep=True)
 
@@ -527,43 +586,46 @@ class EvaluationRunner:
         )
         os.makedirs(base_output_dir, exist_ok=True)
 
-        for test_case in dataset.test_cases:
-            test_output_dir = os.path.join(base_output_dir, test_case.test_id)
+        self.logger.info(f"Running test cases in parallel with {self.max_workers} workers")
 
-            if test_case.case_type == "generate_models":
-                result = self.evaluate_generate_models(test_case, test_output_dir)
-            elif test_case.case_type == "generate_first_test":
-                result = self.evaluate_generate_first_test(test_case, test_output_dir)
-            elif test_case.case_type == "generate_additional_tests":
-                result = self.evaluate_generate_additional_tests(test_case, test_output_dir)
-            else:
-                self.logger.error(
-                    "Unknown evaluation type '%s' for test %s",
-                    test_case.case_type,
-                    test_case.test_id,
-                )
-                result = EvaluationResult(
-                    test_id=test_case.test_id,
-                    test_case_name=test_case.name,
-                    api_definition_file=test_case.api_definition_file,
-                    status="ERROR",
-                    error_message=f"Unknown evaluation type '{test_case.case_type}'",
-                    evaluation_criteria=test_case.evaluation_criteria,
-                )
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            future_to_test = {
+                executor.submit(self._evaluate_single_test_case, test_case, base_output_dir): test_case
+                for test_case in test_cases
+            }
 
-            results.append(result)
+            for future in as_completed(future_to_test):
+                test_case = future_to_test[future]
+                try:
+                    result = future.result()
+                    results.append(result)
 
-            if result.status == "GRADED":
-                graded_count += 1
-            elif result.status == "NOT_EVALUATED":
-                not_evaluated_count += 1
-            else:
-                error_count += 1
+                    if result.status == "GRADED":
+                        graded_count += 1
+                    elif result.status == "NOT_EVALUATED":
+                        not_evaluated_count += 1
+                    else:
+                        error_count += 1
 
-            if result.grade_result and result.grade_result.score is not None:
-                scores.append(result.grade_result.score)
+                    if result.grade_result and result.grade_result.score is not None:
+                        scores.append(result.grade_result.score)
 
-            self.logger.info(f"Test case '{test_case.name}': {result.status}\n")
+                except Exception as e:
+                    self.logger.error(
+                        f"Unexpected error processing test case {test_case.test_id}: {e}",
+                        exc_info=True,
+                    )
+                    # Create an error result for the failed test case
+                    error_result = EvaluationResult(
+                        test_id=test_case.test_id,
+                        test_case_name=test_case.name,
+                        api_definition_file=test_case.api_definition_file,
+                        status="ERROR",
+                        error_message=f"Unexpected error during parallel execution: {str(e)}",
+                        evaluation_criteria=test_case.evaluation_criteria,
+                    )
+                    results.append(error_result)
+                    error_count += 1
 
         self.logger.info(
             "Evaluation run completed. Graded: %s, Not Evaluated: %s, Errors: %s",
@@ -582,7 +644,7 @@ class EvaluationRunner:
         return EvaluationRunResult(
             dataset_name=dataset.dataset_name,
             llm_model=self.config.model.value,
-            total_test_cases=len(dataset.test_cases),
+            total_test_cases=len(test_cases),
             graded_count=graded_count,
             not_evaluated_count=not_evaluated_count,
             error_count=error_count,

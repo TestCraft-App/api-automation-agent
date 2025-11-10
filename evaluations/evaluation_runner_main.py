@@ -150,6 +150,18 @@ def parse_args() -> argparse.Namespace:
         help="Override the LLM model to use. Choices: %(choices)s. Example: --llm GPT_5",
     )
 
+    parser.add_argument(
+        "--test-ids",
+        type=str,
+        action="append",
+        help=(
+            "Optional: Filter test cases by test ID. "
+            "Provide this flag multiple times for multiple test IDs, or supply a comma-separated list. "
+            "Example: --test-ids test_001 --test-ids test_002 or --test-ids test_001,test_002. "
+            "If not provided, all test cases will be run."
+        ),
+    )
+
     return parser.parse_args()
 
 
@@ -167,6 +179,14 @@ def main():
     if not dataset_folders:
         print("Error: No dataset folders provided.")
         sys.exit(1)
+
+    test_ids_filter: list[str] | None = None
+    if args.test_ids:
+        test_ids_filter = []
+        for entry in args.test_ids:
+            parts = [part.strip() for part in entry.split(",") if part.strip()]
+            test_ids_filter.extend(parts)
+        print(f"Filtering to test IDs: {', '.join(test_ids_filter)}")
 
     os.makedirs(args.output_dir, exist_ok=True)
 
@@ -213,7 +233,7 @@ def main():
             test_data_folder=dataset_folder,
         )
 
-        results = evaluation_runner.run_evaluation(dataset)
+        results = evaluation_runner.run_evaluation(dataset, test_ids_filter=test_ids_filter)
 
         print(f"\nSaving results to: {args.output_dir}")
         results_path = save_evaluation_results(results, args.output_dir, dataset.dataset_name)
