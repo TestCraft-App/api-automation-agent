@@ -1,5 +1,6 @@
 from typing import Any, List, Optional
 
+from langchain_aws.chat_models.bedrock_converse import ChatBedrockConverse
 import pydantic
 from langchain_anthropic import ChatAnthropic
 from langchain_core.language_models import BaseLanguageModel
@@ -14,7 +15,7 @@ from ..ai_tools.models.file_spec import FileSpec, file_specs_to_json, convert_to
 from ..ai_tools.models.model_file_spec import convert_to_model_file_spec, ModelFileSpec
 from ..configuration.config import Config
 from ..configuration.data_sources import DataSource
-from ..configuration.models import Model, ModelCost
+from ..configuration.models import Model, ModelCost, Provider
 from ..models import GeneratedModel, APIModel
 from ..models.api_model import api_models_to_json
 from ..models.usage_data import LLMCallUsageData, AggregatedUsageMetadata
@@ -77,10 +78,14 @@ class LLMService:
             BaseLanguageModel: Configured language model
         """
         try:
-            if language_model and override:
-                self.config.model = language_model
-            if self.config.model.is_anthropic():
-                return ChatAnthropic(
+            llm_factory = {
+                Provider.OPENAI: lambda: ChatOpenAI(
+                    model=self.config.model.value,
+                    temperature=1,
+                    max_retries=3,
+                    api_key=pydantic.SecretStr(self.config.openai_api_key),
+                ),
+                Provider.ANTHROPIC: lambda: ChatAnthropic(
                     model_name=self.config.model.value,
                     temperature=1,
                     api_key=pydantic.SecretStr(self.config.anthropic_api_key),
@@ -88,13 +93,17 @@ class LLMService:
                     stop=None,
                     max_retries=3,
                     max_tokens_to_sample=8192,
-                )
-            return ChatOpenAI(
-                model=self.config.model.value,
-                temperature=1,
-                max_retries=3,
-                api_key=pydantic.SecretStr(self.config.openai_api_key),
-            )
+                ),
+                Provider.BEDROCK: lambda: ChatBedrockConverse(
+                    model=self.config.model.value,
+                    temperature=1,
+                    aws_access_key_id=pydantic.SecretStr(self.config.aws_access_key_id),
+                    aws_secret_access_key=pydantic.SecretStr(self.config.aws_secret_access_key),
+                ),
+            }.get(self.config.model.provider)
+
+            return llm_factory()
+
         except Exception as e:
             self.logger.error(f"Model initialization error: {e}")
             raise
@@ -154,7 +163,7 @@ class LLMService:
 
             if tools:
                 tool_choice = "auto"
-                if self.config.model.is_anthropic():
+                if self.config.model.provider in (Provider.BEDROCK, Provider.ANTHROPIC):
                     if must_use_tool:
                         tool_choice = "any"
                 else:
