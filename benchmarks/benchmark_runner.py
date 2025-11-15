@@ -260,6 +260,7 @@ def _generate_csv_report(
         "Duration",
         "Input Tokens",
         "Output Tokens",
+        "Fix Attempts",
         "Total Cost ($)",
     ]
     table_data = []
@@ -280,6 +281,7 @@ def _generate_csv_report(
             formatted_duration,
             llm_usage.total_input_tokens if llm_usage else "N/A",
             llm_usage.total_output_tokens if llm_usage else "N/A",
+            llm_usage.total_fix_attempts if llm_usage else "N/A",
             formatted_cost,
         ]
         table_data.append(row)
@@ -317,6 +319,7 @@ def _print_tabulate_report(
         "Duration",
         "Input Tokens",
         "Output Tokens",
+        "Fix Attempts",
         "Total Cost ($)",
     ]
     table_data = []
@@ -337,6 +340,7 @@ def _print_tabulate_report(
             formatted_duration,
             llm_usage.total_input_tokens if llm_usage else "N/A",
             llm_usage.total_output_tokens if llm_usage else "N/A",
+            llm_usage.total_fix_attempts if llm_usage else "N/A",
             formatted_cost,
         ]
         table_data.append(row)

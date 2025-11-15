@@ -22,6 +22,7 @@ class AggregatedUsageMetadata(BaseModel):
     total_tokens: int = 0
     total_cache_details: CacheDetails = Field(default_factory=CacheDetails)
     total_cost: float = 0.0
+    total_fix_attempts: int = 0
     call_details: List[LLMCallUsageData] = Field(default_factory=list)
 
     def add_call_usage(self, usage_data: LLMCallUsageData):
@@ -35,3 +36,9 @@ class AggregatedUsageMetadata(BaseModel):
             self.total_cache_details.cache_read += usage_data.input_token_details.cache_read
             self.total_cache_details.cache_creation += usage_data.input_token_details.cache_creation
         self.call_details.append(usage_data)
+
+    def increment_fix_attempts(self, count: int = 1):
+        """Increment the total number of fix attempts recorded for this run."""
+        if count < 0:
+            raise ValueError("count must be non-negative")
+        self.total_fix_attempts += count

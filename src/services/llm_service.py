@@ -290,6 +290,7 @@ class LLMService:
             self.logger.info(f"  - {file.path}")
 
         try:
+            self.aggregated_usage_metadata.increment_fix_attempts()
             self.create_ai_chain(
                 PromptConfig.FIX_TYPESCRIPT,
                 tools=[FileCreationTool(self.config, self.file_service, are_models=are_models)],
