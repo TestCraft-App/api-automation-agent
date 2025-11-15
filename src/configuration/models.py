@@ -14,6 +14,7 @@ class Model(Enum):
     )
     GPT_4_1 = ("gpt-4.1", ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=8.0))
     GPT_5 = ("gpt-5", ModelCost(input_cost_per_million_tokens=1.25, output_cost_per_million_tokens=10.0))
+    GPT_5_1 = ("gpt-5.1", ModelCost(input_cost_per_million_tokens=1.25, output_cost_per_million_tokens=10.0))
     CLAUDE_SONNET_4 = (
         "claude-sonnet-4-20250514",
         ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),

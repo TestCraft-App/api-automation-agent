@@ -147,7 +147,7 @@ def parse_args() -> argparse.Namespace:
         "--llm",
         type=str,
         choices=[model.name for model in Model],
-        help="Override the LLM model to use. Choices: %(choices)s. Example: --llm GPT_5",
+        help="Override the LLM model to use. Choices: %(choices)s. Example: --llm GPT_5_1",
     )
 
     parser.add_argument(

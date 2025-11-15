@@ -94,11 +94,12 @@ This project supports both Anthropic and OpenAI language models:
 
 **OpenAI**
 
-- GPT-5 (gpt-5) - **Recommended**
+- GPT-5.1 (gpt-5.1) - **Recommended**
+- GPT-5 (gpt-5)
 - GPT-4.1 (gpt-4.1)
 - GPT-5 Mini (gpt-5-mini)
 
-> **⚠️ Security Warning**: Our evaluations have demonstrated that OpenAI models (GPT-5, GPT-4.1, GPT-5 Mini) are vulnerable to prompt injection attacks when processing malicious API specifications. Attackers can embed instructions in API descriptions that trick the model into generating code that exfiltrates credentials, makes unauthorized HTTP requests, or executes arbitrary code. **Use OpenAI models with caution when processing API definitions from untrusted sources.** See the [prompt injection evaluation dataset](evaluations/data/prompt_injection_dataset/) for detailed test cases and examples of these vulnerabilities.
+> **⚠️ Security Warning**: Our evaluations have demonstrated that OpenAI models (GPT-5.1, GPT-5, GPT-4.1, GPT-5 Mini) are vulnerable to prompt injection attacks when processing malicious API specifications. Attackers can embed instructions in API descriptions that trick the model into generating code that exfiltrates credentials, makes unauthorized HTTP requests, or executes arbitrary code. **Use OpenAI models with caution when processing API definitions from untrusted sources.** See the [prompt injection evaluation dataset](evaluations/data/prompt_injection_dataset/) for detailed test cases and examples of these vulnerabilities.
 
 You can configure your preferred model in the `.env` file:
 

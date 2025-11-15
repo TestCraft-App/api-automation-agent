@@ -24,8 +24,8 @@ class InteractiveSetup:
         "2": {
             "name": "OpenAI",
             "env_key": "OPENAI_API_KEY",
-            "models": ["gpt-5", "gpt-5-mini", "gpt-4.1"],
-            "default_model": "gpt-5",
+            "models": ["gpt-5.1", "gpt-5", "gpt-5-mini", "gpt-4.1"],
+            "default_model": "gpt-5.1",
         },
     }
 
