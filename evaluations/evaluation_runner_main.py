@@ -103,6 +103,34 @@ def _parse_llms(llm_string: str) -> List[Model]:
     return valid_llms
 
 
+def _build_summary_rows(
+    run_results: List[Tuple[EvaluationRunResult, str]],
+) -> List[dict]:
+    """
+    Build a list of summary rows (dicts) for all dataset/LLM evaluation runs.
+
+    Keys mirror the columns printed in the console summary table.
+    """
+    rows: List[dict] = []
+    for results, json_path in run_results:
+        rows.append(
+            {
+                "dataset": results.dataset_name,
+                "llm_model": results.llm_model,
+                "test_cases": results.total_test_cases,
+                "graded": results.graded_count,
+                "output_tokens": results.total_output_tokens,
+                "total_cost": results.total_cost,
+                "average_score": results.average_score,
+                "results_json_path": os.path.normpath(json_path),
+                "generated_files_path": (
+                    os.path.normpath(results.generated_files_path) if results.generated_files_path else None
+                ),
+            }
+        )
+    return rows
+
+
 def _print_tabulated_summary(
     run_results: List[Tuple[EvaluationRunResult, str]],
 ) -> None:
@@ -126,18 +154,20 @@ def _print_tabulated_summary(
         "Average Score",
     ]
 
+    summary_rows = _build_summary_rows(run_results)
     table_data: List[list] = []
-    for results, _ in run_results:
-        avg_score_text = f"{results.average_score:.2f}" if results.average_score is not None else "N/A"
-        cost_text = f"{results.total_cost:.4f}"
+    for row in summary_rows:
+        avg_score = row["average_score"]
+        avg_score_text = f"{avg_score:.2f}" if avg_score is not None else "N/A"
+        cost_text = f'{row["total_cost"]:.4f}'
 
         table_data.append(
             [
-                results.dataset_name,
-                results.llm_model,
-                results.total_test_cases,
-                results.graded_count,
-                results.total_output_tokens,
+                row["dataset"],
+                row["llm_model"],
+                row["test_cases"],
+                row["graded"],
+                row["output_tokens"],
                 cost_text,
                 avg_score_text,
             ]
@@ -298,8 +328,18 @@ def main():
 
             run_results.append((results, results_path))
 
+    summary_rows = _build_summary_rows(run_results)
+
     _print_tabulated_summary(run_results)
     _print_result_paths(run_results)
+
+    if summary_rows:
+        summary_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        summary_filename = f"evaluation_results_summary_{summary_timestamp}.json"
+        summary_path = os.path.join(args.output_dir, summary_filename)
+        with open(summary_path, "w", encoding="utf-8") as f:
+            json.dump(summary_rows, f, indent=2)
+        print(f"\nSummary JSON saved to: {os.path.normpath(summary_path)}")
 
 
 if __name__ == "__main__":
