@@ -33,6 +33,7 @@ class EvaluationRunner:
         llm_service: LLMService,
         file_service: FileService,
         test_data_folder: str,
+        grader_config: Optional[Config] = None,
         model_grader: Optional[ModelGrader] = None,
         max_workers: int = 4,
     ):
@@ -40,10 +41,11 @@ class EvaluationRunner:
         Initialize the Evaluation Runner.
 
         Args:
-            config: Configuration object
+            config: Configuration object for the tested model
             llm_service: LLMService instance for generating tests
             file_service: FileService instance for file operations
             test_data_folder: Path to folder containing test data (API definition files)
+            grader_config: Optional Config object for the grader model. If not provided, uses config.
             model_grader: Optional ModelGrader instance. If not provided, will create one.
             max_workers: Maximum number of parallel workers for test execution (default: 4)
         """
@@ -52,7 +54,8 @@ class EvaluationRunner:
         self.file_service = file_service
         self.test_data_folder = test_data_folder
         self.logger = Logger.get_logger(__name__)
-        self.model_grader = model_grader or ModelGrader(config)
+        grader_config_to_use = grader_config or config
+        self.model_grader = model_grader or ModelGrader(grader_config_to_use)
         self.max_workers = max_workers
 
     def _load_api_definition(self, api_definition_file: str) -> Optional[str]:
@@ -566,7 +569,7 @@ class EvaluationRunner:
                 self.logger.info(f"Filtered to {len(test_cases)} test case(s): {filtered_ids}")
 
         self.logger.info(f"Starting evaluation run for dataset: {dataset.dataset_name}")
-        print(f"Using LLM model: {self.config.model.name} ({self.config.model.value})")
+        print(f"Evaluating model: {self.config.model.name} ({self.config.model.value})")
         self.logger.info(f"Number of test cases: {len(test_cases)}\n")
 
         usage_before = self.llm_service.get_aggregated_usage_metadata().model_copy(deep=True)
