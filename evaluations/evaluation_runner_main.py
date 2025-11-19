@@ -1,6 +1,7 @@
 """Main entry point for running evaluations."""
 
 import argparse
+import copy
 import json
 import os
 import sys
@@ -245,6 +246,17 @@ def parse_args() -> argparse.Namespace:
         ),
     )
 
+    parser.add_argument(
+        "--grader",
+        type=str,
+        help=(
+            "Optional: LLM model to use for grading. "
+            f"Choices: {', '.join(_get_llm_choices())}. "
+            "If not provided, uses GRADER_MODEL from .env (or MODEL if GRADER_MODEL is not set). "
+            "Example: --grader CLAUDE_SONNET_4_5"
+        ),
+    )
+
     return parser.parse_args()
 
 
@@ -253,6 +265,24 @@ def main():
     load_dotenv(override=True)
 
     args = parse_args()
+
+    grader_model: Optional[Model] = None
+    if args.grader:
+        try:
+            grader_model = Model[args.grader]
+        except KeyError:
+            available_models = _get_llm_choices()
+            print(f"Error: Invalid grader model: {args.grader}. Choices are: {', '.join(available_models)}")
+            sys.exit(1)
+    else:
+        grader_model_env = os.getenv("GRADER_MODEL") or os.getenv("MODEL")
+        if grader_model_env:
+            if grader_model_env in [model.value for model in Model]:
+                grader_model = next(m for m in Model if m.value == grader_model_env)
+            else:
+                grader_model = Model.CLAUDE_SONNET_4_5
+        else:
+            grader_model = Model.CLAUDE_SONNET_4_5
 
     dataset_folders: list[str] = []
     for entry in args.test_data_folder:
@@ -297,18 +327,23 @@ def main():
 
         models_to_run: List[Optional[Model]] = llm_overrides or [None]
 
-        for override_model in models_to_run:
-            print("Initializing services...")
-            config_adapter = DevConfigAdapter()
-            processors_adapter = ProcessorsAdapter(config=config_adapter.config)
-            container = Container(config_adapter=config_adapter, processors_adapter=processors_adapter)
-            container.init_resources()
+        print("Initializing services...")
+        config_adapter = DevConfigAdapter()
+        processors_adapter = ProcessorsAdapter(config=config_adapter.config)
+        container = Container(config_adapter=config_adapter, processors_adapter=processors_adapter)
+        container.init_resources()
 
-            config: Config = container.config()
+        base_config: Config = container.config()
+        Logger.configure_logger(base_config)
+
+        grader_config = copy.deepcopy(base_config)
+        grader_config.update({"model": grader_model})
+        print(f"Grader model: {grader_model.name} ({grader_model.value})\n")
+
+        for override_model in models_to_run:
+            config: Config = copy.deepcopy(base_config)
             if override_model is not None:
                 config.update({"model": override_model})
-
-            Logger.configure_logger(config)
 
             file_service = FileService()
             llm_service = LLMService(config, file_service)
@@ -318,6 +353,7 @@ def main():
                 llm_service=llm_service,
                 file_service=file_service,
                 test_data_folder=dataset_folder,
+                grader_config=grader_config,
             )
 
             results = evaluation_runner.run_evaluation(dataset, test_ids_filter=test_ids_filter)

@@ -90,7 +90,8 @@ python evaluations/evaluation_runner_main.py \
 
 - `--test-data-folder`: Path to the dataset folder (required). The dataset JSON file should be named `{folder_name}.json` inside this folder.
 - `--output-dir`: Directory to save evaluation results (default: `evaluations/reports`)
-- `--llms`: Optional comma-separated list of LLM models to evaluate (e.g., `--llms GPT_5_1,CLAUDE_SONNET_4_5`). If omitted, the default model from your configuration is used.
+- `--llms`: Optional comma-separated list of LLM models to evaluate (e.g., `--llms GPT_5_1,CLAUDE_SONNET_4_5`). If omitted, the default model from your configuration is used. **Note**: This parameter only affects the models being tested, not the grader model.
+- `--grader`: Optional LLM model to use for grading (e.g., `--grader CLAUDE_SONNET_4_5`). If not provided, uses `GRADER_MODEL` from `.env` (or `MODEL` if `GRADER_MODEL` is not set). The grader model is independent of the tested models.
 - `--test-ids`: Optional filter to run specific test cases by test ID. Can be specified multiple times or as a comma-separated list (e.g., `--test-ids test_001 --test-ids test_002` or `--test-ids test_001,test_002`)
 
 ### 3. Review Results
@@ -132,7 +133,29 @@ The evaluation uses LLM-based grading to assess whether generated files meet the
 - Uses an LLM to evaluate compliance
 - Returns a structured result with score, detailed criterion-by-criterion evaluation, and reasoning
 
-The grading model uses the same configuration as the generation model (from your `.env` file).
+The grading model is **independent** of the tested models. This allows you to:
+- Use a consistent grader across different model evaluations for fair comparison
+- Use a more capable (or cheaper) model specifically for grading
+- Configure the grader separately from the models being tested
+
+### Configuring the Grader Model
+
+The grader model can be configured in three ways (in order of precedence):
+
+1. **Command-line argument**: `--grader CLAUDE_SONNET_4_5`
+2. **Environment variable**: `GRADER_MODEL=claude-sonnet-4-5-20250929` in your `.env` file
+3. **Fallback**: Uses `MODEL` from your `.env` file if `GRADER_MODEL` is not set
+
+**Example**: To test multiple models but use a consistent grader:
+
+```bash
+python evaluations/evaluation_runner_main.py \
+  --test-data-folder evaluations/data/generate_models_dataset \
+  --llms GPT_5_1,CLAUDE_SONNET_4_5 \
+  --grader CLAUDE_SONNET_4_5
+```
+
+This will test both `GPT_5_1` and `CLAUDE_SONNET_4_5` for generation, but use `CLAUDE_SONNET_4_5` for all grading.
 
 ## Current Evaluations
 
