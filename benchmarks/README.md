@@ -28,6 +28,7 @@ For each LLM, the benchmark collects the following metrics:
     - `total_tokens`: Sum of total input and output tokens.
     - `total_cost`: Estimated cost for the LLM usage during the benchmark run, in USD.
     - `total_cache_details`: Contains `cache_read` (tokens read from cache) and `cache_creation` (tokens written to cache) counts.
+    - `total_fix_attempts`: Number of times the agent attempted to run its TypeScript auto-fix flow (`fix_typescript`) after compiler failures.
     - `call_details`: A list detailing token usage and cost for each individual call to the LLM.
 
 ## Setup
@@ -65,8 +66,8 @@ python benchmarks/benchmark_runner.py --openapi-spec <path_to_openapi_spec> --ll
 
 *   `--openapi-spec` (Required): Path to the OpenAPI specification file (e.g., `path/to/your/api.yaml`).
 *   `--llms` (Required): A comma-separated list of LLM models to benchmark. Do not use spaces between names.
-    *   Available choices: `GPT_5`, `GPT_4_1`, `GPT_5_MINI`, `CLAUDE_SONNET_4`, `CLAUDE_SONNET_4_5`, `CLAUDE_HAIKU_4_5` (these are derived from the `Model` enum in `src/configuration/models.py`).
-    *   Example: `GPT_5,CLAUDE_SONNET_4_5`
+    *   Available choices: `GPT_5_1`, `GPT_5`, `GPT_4_1`, `GPT_5_MINI`, `CLAUDE_SONNET_4`, `CLAUDE_SONNET_4_5`, `CLAUDE_HAIKU_4_5` (these are derived from the `Model` enum in `src/configuration/models.py`).
+    *   Example: `GPT_5_1,CLAUDE_SONNET_4_5`
 *   `--endpoints` (Optional): Specific endpoints to target from the OpenAPI specification. If not provided, all endpoints will be targeted.
     *   Example: `/users/{id}`
 *   `--output-dir` (Optional): Directory to save benchmark reports and generated frameworks.
@@ -78,10 +79,10 @@ python benchmarks/benchmark_runner.py --openapi-spec <path_to_openapi_spec> --ll
 **Example Usage**:
 
 ```bash
-python benchmarks/benchmark_runner.py --openapi-spec http://localhost:3000/swagger.json --endpoints /adopters --llms GPT_5,CLAUDE_SONNET_4_5 --output-dir ./benchmark_run_results
+python benchmarks/benchmark_runner.py --openapi-spec http://localhost:3000/swagger.json --endpoints /adopters --llms GPT_5_1,CLAUDE_SONNET_4_5 --output-dir ./benchmark_run_results
 ```
 
-This command will run the benchmark using the `http://localhost:3000/swagger.json` API definition, targeting the `/adopters` endpoint for the `GPT_5` and `CLAUDE_SONNET_4_5` models, saving results to the `./benchmark_run_results` directory.
+This command will run the benchmark using the `http://localhost:3000/swagger.json` API definition, targeting the `/adopters` endpoint for the `GPT_5_1` and `CLAUDE_SONNET_4_5` models, saving results to the `./benchmark_run_results` directory.
 
 > **Important Note on Cost**: Running benchmarks, especially with multiple LLMs and/or large OpenAPI specifications (i.e., many endpoints), can incur significant costs due to API calls to the language models. It is highly recommended to start by targeting a single endpoint or a small set of endpoints, as shown in the example above, to understand the potential cost before running benchmarks against an entire API specification. Refer to your LLM provider's pricing page for details on token costs.
 
@@ -101,7 +102,7 @@ Upon completion, the benchmark tool generates a detailed JSON report and prints 
 
 3.  **Summary Table (Console Output)**:
     *   A human-readable table is printed directly to the console, summarizing the key results for each LLM.
-    *   It includes: LLM Model, Test Files, Skipped Files, Runnable Files, Tests Executed, Passed Tests, Tests for Review, Duration, Input Tokens, Output Tokens, and Total Cost.
+    *   It includes: LLM Model, Test Files, Skipped Files, Runnable Files, Tests Executed, Passed Tests, Tests for Review, Duration, Input Tokens, Output Tokens, Fix Attempts, and Total Cost.
     *   This provides a quick overview of the performance and a reference to the detailed JSON report.
 
 **How to Use the Metrics**:
@@ -112,6 +113,7 @@ Upon completion, the benchmark tool generates a detailed JSON report and prints 
 *   **Evaluate `total_tests_executed`, `passed_tests`, and `review_tests`**: These numbers give insight into the quality and correctness of the generated tests. A high number of `review_tests` suggests that while tests were generated, they might not be valid or might require manual correction.
 *   **Analyze `Duration`**: Compare how long each LLM takes to complete the generation and testing process.
 *   **Inspect `total_input_tokens`, `total_output_tokens`, and `total_cost`**: These metrics help in understanding the verbosity and cost-effectiveness of different LLMs for the generation task. The detailed `call_details` in the JSON report can provide further insights into token consumption patterns.
+*   **Monitor `total_fix_attempts`**: This counts how often the agent had to invoke its automatic TypeScript repair loop. A higher number generally indicates more compiler failures that required intervention and can highlight fragile generations.
 *   **Check `Status` and `Error Message`**: For any `FAILED` runs, these fields will help diagnose problems specific to that LLM or its configuration.
 *   **Inspect `Framework Output Path`**: Manually review the generated code in this directory to qualitatively assess the structure, readability, and comprehensiveness of the tests generated by each LLM.
 

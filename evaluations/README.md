@@ -90,25 +90,29 @@ python evaluations/evaluation_runner_main.py \
 
 - `--test-data-folder`: Path to the dataset folder (required). The dataset JSON file should be named `{folder_name}.json` inside this folder.
 - `--output-dir`: Directory to save evaluation results (default: `evaluations/reports`)
-- `--llm`: Optional override for the LLM model to use (e.g., `--llm GPT_5`)
+- `--llms`: Optional comma-separated list of LLM models to evaluate (e.g., `--llms GPT_5_1,CLAUDE_SONNET_4_5`). If omitted, the default model from your configuration is used.
 - `--test-ids`: Optional filter to run specific test cases by test ID. Can be specified multiple times or as a comma-separated list (e.g., `--test-ids test_001 --test-ids test_002` or `--test-ids test_001,test_002`)
 
 ### 3. Review Results
 
-Results are saved as JSON files in the output directory with timestamps. The console will also display a summary.
+Results are saved as JSON files in the output directory with timestamps. For each dataset/LLM combination, the runner:
 
-Summary metrics include:
-- Total test cases and pass/fail/error counts
-- LLM model used for the evaluation
-- Token usage (input, output, total) and total evaluation cost (USD)
-- Average score across all graded test cases (0.0 – 1.0)
-- Status values per test case:
-  - `GRADED` – the file was generated and evaluated
-  - `NOT_EVALUATED` – no file was generated or grading was unavailable
-  - `ERROR` – an exception occurred while processing the test case
+- Writes an `evaluation_results_{dataset_name}_YYYYMMDD_HHMMSS.json` file into the output directory.
+- Writes generated files to `evaluations/reports/generated-files/{dataset_name}_{timestamp}/{test_id}/...`.
 
-Generated files are stored for inspection under `evaluations/reports/generated-files/{dataset_name}/{test_id}/`.
-Each run appends a timestamp to `{dataset_name}`, e.g. `my_dataset_20251107_153045/test_001`.
+At the end of the run, the console prints:
+
+- A **summary table** (similar to the benchmark runner) with one row per dataset/LLM, including:
+  - Dataset
+  - LLM Model
+  - Total test cases
+  - Graded
+  - Output Tokens
+  - Total Cost (USD)
+  - Average Score
+- A list of the **JSON result file** and **generated files directory** for each dataset/LLM combination.
+
+Average scores are in the range 0.0–1.0 for graded cases.
 
 ## Dataset Format
 
@@ -183,7 +187,7 @@ Prompt injection vulnerabilities in AI code generation can lead to:
 Our evaluations have shown:
 
 - **Claude models (Haiku 4.5, Sonnet 4.5)**: Highly resistant to all prompt injection attacks. Consistently generate clean code without injected payloads.
-- **OpenAI models (GPT-5, GPT-4.1, GPT-5 Mini)**: Vulnerable to prompt injection. Successfully inject malicious code in test scenarios, particularly environment exfiltration attacks.
+- **OpenAI models (GPT-5.1, GPT-5, GPT-4.1, GPT-5 Mini)**: Vulnerable to prompt injection. Successfully inject malicious code in test scenarios, particularly environment exfiltration attacks.
 
 #### Running the Prompt Injection Evaluation
 

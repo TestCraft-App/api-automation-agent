@@ -5,6 +5,9 @@ import json
 import os
 import sys
 from datetime import datetime
+from typing import List, Optional, Tuple
+
+from tabulate import tabulate
 
 # Add project root to Python path BEFORE importing from src
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -15,16 +18,15 @@ from dotenv import load_dotenv  # noqa: E402
 from src.adapters.config_adapter import DevConfigAdapter  # noqa: E402
 from src.adapters.processors_adapter import ProcessorsAdapter  # noqa: E402
 from src.configuration.config import Config  # noqa: E402
+from src.configuration.models import Model  # noqa: E402
 from src.container import Container  # noqa: E402
 from src.services.file_service import FileService  # noqa: E402
 from src.services.llm_service import LLMService  # noqa: E402
 from src.utils.logger import Logger  # noqa: E402
-from src.configuration.models import Model  # noqa: E402
 
 from evaluations.models.evaluation_dataset import (  # noqa: E402
     EvaluationDataset,
     EvaluationRunResult,
-    EvaluationSummary,
 )
 from evaluations.services.evaluation_runner import EvaluationRunner  # noqa: E402
 
@@ -48,7 +50,7 @@ def load_evaluation_dataset(dataset_path: str) -> EvaluationDataset:
         raise
 
 
-def save_evaluation_results(results, output_dir: str, dataset_name: str) -> str:
+def save_evaluation_results(results: EvaluationRunResult, output_dir: str, dataset_name: str) -> str:
     """
     Save evaluation results to a JSON file.
 
@@ -71,53 +73,131 @@ def save_evaluation_results(results, output_dir: str, dataset_name: str) -> str:
     return filepath
 
 
-def print_evaluation_summary(results):
-    """Print a summary of evaluation results to console."""
-    print("\n" + "-" * 120)
-    print("DETAILED RESULTS")
-    print("-" * 120)
+def _get_llm_choices() -> List[str]:
+    """Returns a list of available LLM model names."""
+    return [model.name for model in Model]
 
-    for result in results.results:
-        status_symbol = {
-            "GRADED": "✓",
-            "NOT_EVALUATED": "!",
-            "ERROR": "✗",
-        }.get(result.status, "?")
-        print(f"\n{status_symbol} [{result.test_id}] {result.test_case_name} [{result.status}]")
-        print(f"  API Definition: {result.api_definition_file}")
-        if result.error_message:
-            print(f"  Error: {result.error_message}")
-        if result.generated_files:
-            print(f"  Generated Files: {', '.join(result.generated_files)}")
-        if result.grade_result:
-            if result.grade_result.score is not None:
-                print(f"  Score: {result.grade_result.score:.2f}")
-            if result.grade_result.evaluation:
-                print("  Evaluation:")
-                for item in result.grade_result.evaluation:
-                    marker = "PASS" if item.met else "FAIL"
-                    print(f"    - [{marker}] {item.criteria}: {item.details}")
-            if result.grade_result.reasoning:
-                print(f"  Score Reasoning: {result.grade_result.reasoning}")
 
-    print("\n" + "=" * 120)
-    print("EVALUATION SUMMARY")
-    print("=" * 120)
-    print(f"Dataset: {results.dataset_name}")
-    print(f"LLM Model: {results.llm_model}")
-    print(f"Total Test Cases: {results.total_test_cases}")
-    print(f"Graded: {results.graded_count}")
-    print(f"Not Evaluated: {results.not_evaluated_count}")
-    print(f"Errors: {results.error_count}")
-    print(f"Input Tokens: {results.total_input_tokens}")
-    print(f"Output Tokens: {results.total_output_tokens}")
-    print(f"Total Cost (USD): ${results.total_cost:.4f}")
-    avg_text = f"{results.average_score:.2f}" if results.average_score is not None else "N/A"
-    print(f"Average Score: {avg_text}")
-    if results.generated_files_path:
-        print(f"Generated Files: {results.generated_files_path}")
+def _parse_llms(llm_string: str) -> List[Model]:
+    """
+    Parse a comma-separated string of LLM names into a list of Model enums.
 
-    print("=" * 120)
+    Example:
+        --llms GPT_5_1,CLAUDE_SONNET_4_5
+    """
+    llm_names = [name.strip() for name in llm_string.split(",") if name.strip()]
+    valid_llms: List[Model] = []
+    available_models = _get_llm_choices()
+
+    for name in llm_names:
+        try:
+            valid_llms.append(Model[name])
+        except KeyError:
+            raise argparse.ArgumentTypeError(
+                f"Invalid LLM model: {name}. Choices are: {', '.join(available_models)}"
+            )
+
+    if not valid_llms:
+        raise argparse.ArgumentTypeError("At least one LLM model must be specified.")
+
+    return valid_llms
+
+
+def _build_summary_rows(
+    run_results: List[Tuple[EvaluationRunResult, str]],
+) -> List[dict]:
+    """
+    Build a list of summary rows (dicts) for all dataset/LLM evaluation runs.
+
+    Keys mirror the columns printed in the console summary table.
+    """
+    rows: List[dict] = []
+    for results, json_path in run_results:
+        rows.append(
+            {
+                "dataset": results.dataset_name,
+                "llm_model": results.llm_model,
+                "test_cases": results.total_test_cases,
+                "graded": results.graded_count,
+                "output_tokens": results.total_output_tokens,
+                "total_cost": results.total_cost,
+                "average_score": results.average_score,
+                "results_json_path": os.path.normpath(json_path),
+                "generated_files_path": (
+                    os.path.normpath(results.generated_files_path) if results.generated_files_path else None
+                ),
+            }
+        )
+    return rows
+
+
+def _print_tabulated_summary(
+    run_results: List[Tuple[EvaluationRunResult, str]],
+) -> None:
+    """
+    Print a tabulated summary across all dataset/LLM evaluation runs.
+
+    Columns:
+      Dataset, LLM Model, Test Cases, Graded, Output Tokens, Total Cost ($), Average Score
+    """
+    if not run_results:
+        print("No evaluation results to summarize.")
+        return
+
+    headers = [
+        "Dataset",
+        "LLM Model",
+        "Test Cases",
+        "Graded",
+        "Output Tokens",
+        "Total Cost ($)",
+        "Average Score",
+    ]
+
+    summary_rows = _build_summary_rows(run_results)
+    table_data: List[list] = []
+    for row in summary_rows:
+        avg_score = row["average_score"]
+        avg_score_text = f"{avg_score:.2f}" if avg_score is not None else "N/A"
+        cost_text = f'{row["total_cost"]:.4f}'
+
+        table_data.append(
+            [
+                row["dataset"],
+                row["llm_model"],
+                row["test_cases"],
+                row["graded"],
+                row["output_tokens"],
+                cost_text,
+                avg_score_text,
+            ]
+        )
+
+    print("--- Evaluation Summary Table ---\n")
+    table_string = tabulate(table_data, headers=headers, tablefmt="rounded_grid")
+    for line in table_string.splitlines():
+        print(line)
+
+
+def _print_result_paths(run_results: List[Tuple[EvaluationRunResult, str]]) -> None:
+    """
+    After the summary table, print the JSON report and generated files locations
+    for each dataset/LLM evaluation run.
+    """
+    if not run_results:
+        return
+
+    print("\nEvaluation artifacts:")
+    for results, json_path in run_results:
+        normalized_json = os.path.normpath(json_path)
+        generated_path = (
+            os.path.normpath(results.generated_files_path) if results.generated_files_path else "N/A"
+        )
+        print(
+            f"- Dataset: {results.dataset_name} | LLM: {results.llm_model}\n"
+            f"    JSON results    : {normalized_json}\n"
+            f"    Generated files : {generated_path}"
+        )
 
 
 def parse_args() -> argparse.Namespace:
@@ -144,10 +224,13 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--llm",
-        type=str,
-        choices=[model.name for model in Model],
-        help="Override the LLM model to use. Choices: %(choices)s. Example: --llm GPT_5",
+        "--llms",
+        type=_parse_llms,
+        help=(
+            "Optional: Comma-separated list of LLM models to evaluate. "
+            f"Choices: {', '.join(_get_llm_choices())}. "
+            "Example: --llms GPT_5_1,CLAUDE_SONNET_4_5"
+        ),
     )
 
     parser.add_argument(
@@ -180,7 +263,7 @@ def main():
         print("Error: No dataset folders provided.")
         sys.exit(1)
 
-    test_ids_filter: list[str] | None = None
+    test_ids_filter: Optional[list[str]] = None
     if args.test_ids:
         test_ids_filter = []
         for entry in args.test_ids:
@@ -190,7 +273,9 @@ def main():
 
     os.makedirs(args.output_dir, exist_ok=True)
 
-    all_results: list[EvaluationRunResult] = []
+    llm_overrides: Optional[List[Model]] = args.llms if getattr(args, "llms", None) else None
+
+    run_results: List[Tuple[EvaluationRunResult, str]] = []
 
     for dataset_folder in dataset_folders:
         dataset_folder = os.path.normpath(dataset_folder)
@@ -207,85 +292,54 @@ def main():
             print(f"Expected dataset file: {folder_name}.json in {dataset_folder}")
             sys.exit(1)
 
-        print(f"\nLoading evaluation dataset from: {dataset_file}")
+        print(f"Loading evaluation dataset from: {dataset_file}\n")
         dataset = load_evaluation_dataset(dataset_file)
 
-        print("Initializing services...")
-        config_adapter = DevConfigAdapter()
-        processors_adapter = ProcessorsAdapter(config=config_adapter.config)
-        container = Container(config_adapter=config_adapter, processors_adapter=processors_adapter)
-        container.init_resources()
+        models_to_run: List[Optional[Model]] = llm_overrides or [None]
 
-        config: Config = container.config()
-        if args.llm:
-            selected_model = Model[args.llm]
-            config.update({"model": selected_model})
-        Logger.configure_logger(config)
-        print(f"Using LLM model: {config.model.name} ({config.model.value})")
+        for override_model in models_to_run:
+            print("Initializing services...")
+            config_adapter = DevConfigAdapter()
+            processors_adapter = ProcessorsAdapter(config=config_adapter.config)
+            container = Container(config_adapter=config_adapter, processors_adapter=processors_adapter)
+            container.init_resources()
 
-        file_service = FileService()
-        llm_service = LLMService(config, file_service)
+            config: Config = container.config()
+            if override_model is not None:
+                config.update({"model": override_model})
 
-        evaluation_runner = EvaluationRunner(
-            config=config,
-            llm_service=llm_service,
-            file_service=file_service,
-            test_data_folder=dataset_folder,
-        )
+            Logger.configure_logger(config)
 
-        results = evaluation_runner.run_evaluation(dataset, test_ids_filter=test_ids_filter)
+            file_service = FileService()
+            llm_service = LLMService(config, file_service)
 
-        print(f"\nSaving results to: {args.output_dir}")
-        results_path = save_evaluation_results(results, args.output_dir, dataset.dataset_name)
-        print(f"Results saved to: {results_path}")
+            evaluation_runner = EvaluationRunner(
+                config=config,
+                llm_service=llm_service,
+                file_service=file_service,
+                test_data_folder=dataset_folder,
+            )
 
-        print_evaluation_summary(results)
-        all_results.append(results)
+            results = evaluation_runner.run_evaluation(dataset, test_ids_filter=test_ids_filter)
 
-    if len(all_results) > 1:
-        total_test_cases = sum(r.total_test_cases for r in all_results)
-        total_graded = sum(r.graded_count for r in all_results)
-        total_not_evaluated = sum(r.not_evaluated_count for r in all_results)
-        total_errors = sum(r.error_count for r in all_results)
-        total_input_tokens = sum(r.total_input_tokens for r in all_results)
-        total_output_tokens = sum(r.total_output_tokens for r in all_results)
-        total_cost = sum(r.total_cost for r in all_results)
-        llm_model = config.model.value
+            print(f"\nSaving results to: {args.output_dir}")
+            results_path = save_evaluation_results(results, args.output_dir, dataset.dataset_name)
+            print(f"Results saved to: {results_path}\n")
 
-        score_values = [r.average_score for r in all_results if r.average_score is not None]
-        average_score_across_datasets = sum(score_values) / len(score_values) if score_values else None
+            run_results.append((results, results_path))
 
-        summary = EvaluationSummary(
-            total_datasets=len(all_results),
-            total_test_cases=total_test_cases,
-            total_graded=total_graded,
-            total_not_evaluated=total_not_evaluated,
-            total_errors=total_errors,
-            total_input_tokens=total_input_tokens,
-            total_output_tokens=total_output_tokens,
-            total_cost=total_cost,
-            llm_model=llm_model,
-            average_score_across_datasets=average_score_across_datasets,
-            dataset_results=all_results,
-        )
+    summary_rows = _build_summary_rows(run_results)
 
-        print("\n" + "=" * 120)
-        print("AGGREGATED SUMMARY")
-        print("=" * 120)
-        print(f"Datasets evaluated: {summary.total_datasets}")
-        print(f"Total Test Cases: {summary.total_test_cases}")
-        print(f"Total Graded: {summary.total_graded}")
-        print(f"Total Not Evaluated: {summary.total_not_evaluated}")
-        print(f"Total Errors: {summary.total_errors}")
-        print(f"Total Input Tokens: {summary.total_input_tokens}")
-        print(f"Total Output Tokens: {summary.total_output_tokens}")
-        print(f"Total Cost (USD): ${summary.total_cost:.4f}")
-        print(f"LLM Model: {summary.llm_model}")
-        if summary.average_score_across_datasets is not None:
-            print(f"Average Score Across Datasets: {summary.average_score_across_datasets:.2f}")
-        else:
-            print("Average Score Across Datasets: N/A")
-        print("=" * 120)
+    _print_tabulated_summary(run_results)
+    _print_result_paths(run_results)
+
+    if summary_rows:
+        summary_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        summary_filename = f"evaluation_results_summary_{summary_timestamp}.json"
+        summary_path = os.path.join(args.output_dir, summary_filename)
+        with open(summary_path, "w", encoding="utf-8") as f:
+            json.dump(summary_rows, f, indent=2)
+        print(f"\nSummary JSON saved to: {os.path.normpath(summary_path)}")
 
 
 if __name__ == "__main__":

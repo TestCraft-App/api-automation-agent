@@ -565,7 +565,7 @@ class EvaluationRunner:
                 filtered_ids = [tc.test_id for tc in test_cases]
                 self.logger.info(f"Filtered to {len(test_cases)} test case(s): {filtered_ids}")
 
-        self.logger.info(f"\nStarting evaluation run for dataset: {dataset.dataset_name}")
+        self.logger.info(f"Starting evaluation run for dataset: {dataset.dataset_name}")
         print(f"Using LLM model: {self.config.model.name} ({self.config.model.value})")
         self.logger.info(f"Number of test cases: {len(test_cases)}\n")
 

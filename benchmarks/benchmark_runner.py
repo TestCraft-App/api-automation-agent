@@ -260,6 +260,7 @@ def _generate_csv_report(
         "Duration",
         "Input Tokens",
         "Output Tokens",
+        "Fix Attempts",
         "Total Cost ($)",
     ]
     table_data = []
@@ -280,6 +281,7 @@ def _generate_csv_report(
             formatted_duration,
             llm_usage.total_input_tokens if llm_usage else "N/A",
             llm_usage.total_output_tokens if llm_usage else "N/A",
+            llm_usage.total_fix_attempts if llm_usage else "N/A",
             formatted_cost,
         ]
         table_data.append(row)
@@ -317,6 +319,7 @@ def _print_tabulate_report(
         "Duration",
         "Input Tokens",
         "Output Tokens",
+        "Fix Attempts",
         "Total Cost ($)",
     ]
     table_data = []
@@ -337,6 +340,7 @@ def _print_tabulate_report(
             formatted_duration,
             llm_usage.total_input_tokens if llm_usage else "N/A",
             llm_usage.total_output_tokens if llm_usage else "N/A",
+            llm_usage.total_fix_attempts if llm_usage else "N/A",
             formatted_cost,
         ]
         table_data.append(row)
@@ -383,7 +387,8 @@ def run_benchmark(args: argparse.Namespace, benchmark_logger: logging.Logger) ->
         benchmark_logger.info(f"Attempting to load results from: {args.load_results}")
         try:
             with open(args.load_results, "r") as f:
-                benchmark_results = json.load(f)
+                loaded_data = json.load(f)
+            benchmark_results = [BenchmarkResult(**result) for result in loaded_data]
             benchmark_logger.info(
                 f"Successfully loaded {len(benchmark_results)} result(s) from {args.load_results}"
             )
@@ -394,6 +399,11 @@ def run_benchmark(args: argparse.Namespace, benchmark_logger: logging.Logger) ->
             benchmark_logger.error(
                 f"Error: Could not decode JSON from {args.load_results}. "
                 f"Ensure it is a valid JSON report. Exiting."
+            )
+            sys.exit(1)
+        except Exception as e:
+            benchmark_logger.error(
+                f"Error: Could not parse benchmark results from {args.load_results}. " f"Error: {e}. Exiting."
             )
             sys.exit(1)
     else:

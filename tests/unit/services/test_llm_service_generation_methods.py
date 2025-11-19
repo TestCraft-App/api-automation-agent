@@ -656,6 +656,7 @@ def test_fix_typescript_invokes_creation_tool_regular(monkeypatch, llm_service):
     tool = captured["tools"][0]
     assert getattr(tool, "name", "") == "create_files"
     assert getattr(tool, "are_models", True) is False
+    assert llm_service.get_aggregated_usage_metadata().total_fix_attempts == 1
 
 
 def test_fix_typescript_invokes_creation_tool_models(monkeypatch, llm_service):
