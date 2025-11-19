@@ -277,16 +277,10 @@ def main():
     else:
         grader_model_env = os.getenv("GRADER_MODEL") or os.getenv("MODEL")
         if grader_model_env:
-            grader_model = None
-            for model in Model:
-                if model.value == grader_model_env:
-                    grader_model = model
-                    break
-            if grader_model is None:
-                try:
-                    grader_model = Model[grader_model_env.upper()]
-                except KeyError:
-                    grader_model = Model.CLAUDE_SONNET_4_5
+            if grader_model_env in [model.value for model in Model]:
+                grader_model = next(m for m in Model if m.value == grader_model_env)
+            else:
+                grader_model = Model.CLAUDE_SONNET_4_5
         else:
             grader_model = Model.CLAUDE_SONNET_4_5
 
