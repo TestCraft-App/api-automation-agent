@@ -74,6 +74,7 @@ You must respond with a JSON object in this exact format:
         # Directly create the model instance (same logic as LLMService._select_language_model)
         import pydantic
         from langchain_anthropic import ChatAnthropic
+        from langchain_google_genai import ChatGoogleGenerativeAI
         from langchain_openai import ChatOpenAI
 
         try:
@@ -86,6 +87,13 @@ You must respond with a JSON object in this exact format:
                     stop=None,
                     max_retries=3,
                     max_tokens_to_sample=8192,
+                )
+            if self.config.model.is_google():
+                return ChatGoogleGenerativeAI(
+                    model=self.config.model.value,
+                    temperature=1,
+                    google_api_key=pydantic.SecretStr(self.config.google_api_key),
+                    max_retries=3,
                 )
             return ChatOpenAI(
                 model=self.config.model.value,
