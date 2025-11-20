@@ -69,11 +69,12 @@ Download the standalone executable:
    ```
    OPENAI_API_KEY=your_openai_api_key_here
    ANTHROPIC_API_KEY=your_anthropic_api_key_here
+   GOOGLE_API_KEY=your_gemini_api_key_here
    ```
 
 ## Large Language Models
 
-This project supports both Anthropic and OpenAI language models:
+This project supports Anthropic, OpenAI, and Google Generative AI language models:
 
 ### Default Model
 
@@ -98,6 +99,10 @@ This project supports both Anthropic and OpenAI language models:
 - GPT-5 (gpt-5)
 - GPT-4.1 (gpt-4.1)
 - GPT-5 Mini (gpt-5-mini)
+
+**Google Generative AI**
+
+- Gemini 3 Pro Preview (gemini-3-pro-preview)
 
 > **⚠️ Security Warning**: Our evaluations have demonstrated that OpenAI models (GPT-5.1, GPT-5, GPT-4.1, GPT-5 Mini) are vulnerable to prompt injection attacks when processing malicious API specifications. Attackers can embed instructions in API descriptions that trick the model into generating code that exfiltrates credentials, makes unauthorized HTTP requests, or executes arbitrary code. **Use OpenAI models with caution when processing API definitions from untrusted sources.** See the [prompt injection evaluation dataset](evaluations/data/prompt_injection_dataset/) for detailed test cases and examples of these vulnerabilities.
 

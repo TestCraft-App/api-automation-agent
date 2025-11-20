@@ -5,6 +5,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 
 from .file_service import FileService, get_resource_path
@@ -89,6 +90,13 @@ class LLMService:
                     max_retries=3,
                     max_tokens_to_sample=8192,
                 )
+            if self.config.model.is_google():
+                return ChatGoogleGenerativeAI(
+                    model=self.config.model.value,
+                    temperature=1,
+                    google_api_key=pydantic.SecretStr(self.config.google_api_key),
+                    max_retries=3,
+                )
             return ChatOpenAI(
                 model=self.config.model.value,
                 temperature=1,
@@ -154,7 +162,7 @@ class LLMService:
 
             if tools:
                 tool_choice = "auto"
-                if self.config.model.is_anthropic():
+                if self.config.model.is_anthropic() or self.config.model.is_google():
                     if must_use_tool:
                         tool_choice = "any"
                 else:

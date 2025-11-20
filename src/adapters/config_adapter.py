@@ -22,6 +22,7 @@ class BaseConfigAdapter(containers.DeclarativeContainer):
         config.langchain_debug = os.getenv("LANGCHAIN_DEBUG", "False").title() == "True"
         config.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY", "")
         config.openai_api_key = os.getenv("OPENAI_API_KEY", "")
+        config.google_api_key = os.getenv("GOOGLE_API_KEY", "")
         config.destination_folder = os.getenv(
             "DESTINATION_FOLDER",
             f"./generated/generated-framework_{datetime.now().strftime('%Y%m%d-%H%M%S')}",
