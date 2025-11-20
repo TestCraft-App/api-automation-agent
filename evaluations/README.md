@@ -38,7 +38,7 @@ evaluations/
 Before running evaluations:
 
 1. Copy `.env.example` (or follow the project README) to create a `.env` file.
-2. Add API keys for the LLM vendor you plan to use (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`).
+2. Add API keys for the LLM vendor you plan to use (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`).
 
 Refer back to the main README for exact environment variable names and additional instructions.
 
