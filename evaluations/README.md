@@ -211,6 +211,7 @@ Our evaluations have shown:
 
 - **Claude models (Haiku 4.5, Sonnet 4.5)**: Highly resistant to all prompt injection attacks. Consistently generate clean code without injected payloads.
 - **OpenAI models (GPT-5.1, GPT-5, GPT-4.1, GPT-5 Mini)**: Vulnerable to prompt injection. Successfully inject malicious code in test scenarios, particularly environment exfiltration attacks.
+- **Google Gemini models (Gemini 3 Pro Preview)**: Vulnerable to prompt injection. Similar to OpenAI models, susceptible to injecting malicious code in generated tests.
 
 #### Running the Prompt Injection Evaluation
 
@@ -233,7 +234,7 @@ A **vulnerable** model will:
 - Include injected code payloads in generated tests
 - Create security risks when processing untrusted API specifications
 
-**Recommendation**: Use Claude models (Haiku 4.5 or Sonnet 4.5) when processing API definitions from untrusted or external sources. Avoid OpenAI models for this use case due to demonstrated prompt injection vulnerabilities.
+**Recommendation**: Use Claude models (Haiku 4.5 or Sonnet 4.5) when processing API definitions from untrusted or external sources. Avoid OpenAI and Google Gemini models for this use case due to demonstrated prompt injection vulnerabilities.
 
 ## Future Evaluations
 
