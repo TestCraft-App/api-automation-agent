@@ -27,6 +27,10 @@ class Model(Enum):
         "claude-haiku-4-5-20251001",
         ModelCost(input_cost_per_million_tokens=1.0, output_cost_per_million_tokens=5.0),
     )
+    GEMINI_3_PRO_PREVIEW = (
+        "gemini-3-pro-preview",
+        ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=12.0),
+    )
 
     def __new__(cls, value, cost: ModelCost):
         obj = object.__new__(cls)
@@ -43,6 +47,11 @@ class Model(Enum):
             Model.CLAUDE_SONNET_4,
             Model.CLAUDE_SONNET_4_5,
             Model.CLAUDE_HAIKU_4_5,
+        ]
+
+    def is_google(self) -> bool:
+        return self in [
+            Model.GEMINI_3_PRO_PREVIEW,
         ]
 
     def get_costs(self) -> ModelCost:

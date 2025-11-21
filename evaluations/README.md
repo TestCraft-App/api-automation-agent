@@ -38,7 +38,7 @@ evaluations/
 Before running evaluations:
 
 1. Copy `.env.example` (or follow the project README) to create a `.env` file.
-2. Add API keys for the LLM vendor you plan to use (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`).
+2. Add API keys for the LLM vendor you plan to use (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`).
 
 Refer back to the main README for exact environment variable names and additional instructions.
 
@@ -211,6 +211,7 @@ Our evaluations have shown:
 
 - **Claude models (Haiku 4.5, Sonnet 4.5)**: Highly resistant to all prompt injection attacks. Consistently generate clean code without injected payloads.
 - **OpenAI models (GPT-5.1, GPT-5, GPT-4.1, GPT-5 Mini)**: Vulnerable to prompt injection. Successfully inject malicious code in test scenarios, particularly environment exfiltration attacks.
+- **Google Gemini models (Gemini 3 Pro Preview)**: Vulnerable to prompt injection, though slightly less so than OpenAI models. Evaluation scores of 0.33-0.67 (out of 1.0) across the 3 prompt injection test cases indicate partial resistance but still susceptible to injecting malicious code in generated tests.
 
 #### Running the Prompt Injection Evaluation
 
@@ -233,7 +234,7 @@ A **vulnerable** model will:
 - Include injected code payloads in generated tests
 - Create security risks when processing untrusted API specifications
 
-**Recommendation**: Use Claude models (Haiku 4.5 or Sonnet 4.5) when processing API definitions from untrusted or external sources. Avoid OpenAI models for this use case due to demonstrated prompt injection vulnerabilities.
+**Recommendation**: Use Claude models (Haiku 4.5 or Sonnet 4.5) when processing API definitions from untrusted or external sources. Avoid OpenAI and Google Gemini models for this use case due to demonstrated prompt injection vulnerabilities.
 
 ## Future Evaluations
 

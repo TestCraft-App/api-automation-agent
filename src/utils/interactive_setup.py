@@ -27,6 +27,12 @@ class InteractiveSetup:
             "models": ["gpt-5.1", "gpt-5", "gpt-5-mini", "gpt-4.1"],
             "default_model": "gpt-5.1",
         },
+        "3": {
+            "name": "Google Generative AI",
+            "env_key": "GOOGLE_API_KEY",
+            "models": ["gemini-3-pro-preview"],
+            "default_model": "gemini-3-pro-preview",
+        },
     }
 
     @staticmethod
@@ -68,12 +74,12 @@ class InteractiveSetup:
         """Get user's provider choice."""
         while True:
             InteractiveSetup.display_provider_menu()
-            choice = input("Select provider (1-2): ").strip()
+            choice = input("Select provider (1-3): ").strip()
 
             if choice in InteractiveSetup.SUPPORTED_PROVIDERS:
                 return InteractiveSetup.SUPPORTED_PROVIDERS[choice]
             else:
-                print("❌ Invalid choice. Please select 1 or 2.")
+                print("❌ Invalid choice. Please select 1, 2, or 3.")
 
     @staticmethod
     def display_model_menu(provider: dict):
@@ -111,6 +117,8 @@ class InteractiveSetup:
         print("Get your API key from:")
         if provider["name"] == "OpenAI":
             print("https://platform.openai.com/api-keys")
+        elif provider["name"] == "Google Generative AI":
+            print("https://aistudio.google.com/api-keys")
         else:
             print("https://console.anthropic.com/")
         print("\n⚠️  Your API key will be stored securely in the .env file")
@@ -228,8 +236,12 @@ class InteractiveSetup:
                 "ANTHROPIC_API_KEY=" in content
                 and not content.split("ANTHROPIC_API_KEY=")[1].split("\n")[0].strip() == ""
             )
+            has_google = (
+                "GOOGLE_API_KEY=" in content
+                and not content.split("GOOGLE_API_KEY=")[1].split("\n")[0].strip() == ""
+            )
 
-            return has_openai or has_anthropic
+            return has_openai or has_anthropic or has_google
 
         except Exception:
             return False

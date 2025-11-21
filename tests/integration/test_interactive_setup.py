@@ -1,9 +1,7 @@
-import os
 import tempfile
 import shutil
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-import pytest
+from unittest.mock import patch
 
 from src.utils.interactive_setup import InteractiveSetup
 
@@ -22,6 +20,7 @@ class TestInteractiveSetupIntegration:
 MODEL=claude-sonnet-4-20250514
 OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
+GOOGLE_API_KEY=
 DEBUG=False
 LANGCHAIN_DEBUG=False
 """
@@ -195,7 +194,7 @@ DEBUG=False
         def mock_api_key_input(prompt):
             return "sk-test-key"
 
-        with patch("builtins.input", side_effect=["3", "1", ""]):
+        with patch("builtins.input", side_effect=["4", "1", ""]):
             with patch("builtins.print"):
                 result = InteractiveSetup.run_interactive_setup(input_func=mock_api_key_input)
 
@@ -226,9 +225,10 @@ class TestInteractiveSetupConfiguration:
         providers = InteractiveSetup.SUPPORTED_PROVIDERS
 
         assert isinstance(providers, dict)
-        assert len(providers) == 2
+        assert len(providers) == 3
         assert "1" in providers
         assert "2" in providers
+        assert "3" in providers
 
     def test_openai_provider_configuration(self):
         """Test OpenAI provider configuration."""
