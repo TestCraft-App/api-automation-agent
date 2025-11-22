@@ -74,16 +74,9 @@ Download the standalone executable:
 
 ## Large Language Models
 
-This project supports Anthropic, OpenAI, and Google Generative AI language models:
+This project supports Anthropic, OpenAI, and Google Generative AI language models.
 
-### Default Model
-
-**Claude Haiku 4.5** (claude-haiku-4-5-20251001) is the default and recommended model. For complex tasks, try Claude Sonnet 4.5 (more expensive)
-
-- Provides superior code generation and understanding
-- Offers the best balance of performance and cost
-- **Strongly recommended**: Other models may not provide satisfactory results for this specific use case
-- **Security Note**: Our evaluations have shown that Claude models are significantly more resistant to prompt injection attacks compared to OpenAI models when processing API definitions. This is particularly important when working with API specifications from untrusted sources. See the [prompt injection evaluation dataset](evaluations/data/prompt_injection_dataset/) for details.
+**Security Note**: Claude models are significantly more resistant to prompt injection attacks compared to OpenAI or Google models when processing API definitions. This is particularly important when working with API specifications from untrusted sources. See the [prompt injection evaluation dataset](evaluations/data/prompt_injection_dataset/) for details.
 
 ### Supported Models
 
@@ -100,19 +93,17 @@ This project supports Anthropic, OpenAI, and Google Generative AI language model
 - GPT-4.1 (gpt-4.1)
 - GPT-5 Mini (gpt-5-mini)
 
-**Google Generative AI**
+**Google**
 
 - Gemini 3 Pro Preview (gemini-3-pro-preview)
-
-> **⚠️ Security Warning**: Our evaluations have demonstrated that OpenAI models (GPT-5.1, GPT-5, GPT-4.1, GPT-5 Mini) are vulnerable to prompt injection attacks when processing malicious API specifications. Attackers can embed instructions in API descriptions that trick the model into generating code that exfiltrates credentials, makes unauthorized HTTP requests, or executes arbitrary code. **Use OpenAI models with caution when processing API definitions from untrusted sources.** See the [prompt injection evaluation dataset](evaluations/data/prompt_injection_dataset/) for detailed test cases and examples of these vulnerabilities.
 
 You can configure your preferred model in the `.env` file:
 
 ```env
-MODEL=gpt-5-mini
+MODEL=gpt-5.1
 ```
 
-> **Important**: Before using any model, please check the current pricing and costs on the respective provider's website (Anthropic or OpenAI). Model costs can vary significantly and may impact your usage budget.
+> **Important**: Before using any model, check the current pricing and costs on the respective provider's website (Anthropic, OpenAI, or Google). Model costs can vary significantly and may impact your usage budget.
 
 ## Running the Agent
 
