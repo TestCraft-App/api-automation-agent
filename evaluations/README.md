@@ -50,7 +50,7 @@ Refer back to the main README for exact environment variable names and additiona
 4. Place model files (TypeScript) in the `models/` subfolder (leave empty if not needed, e.g., for `generate_models`)
 5. (Optional) Place seed test files in the `tests/` subfolder when using `generate_additional_tests`
 
-See `README.md` inside data folder for more details on test data requirements. 
+See [Test Data Documentation](./data/README.md) for more details on test data requirements. 
 
 ### 2. Run Evaluation
 
@@ -117,7 +117,7 @@ Average scores are in the range 0.0–1.0 for graded cases.
 
 ## Dataset Format
 
-See `evaluations/data/README.md` for detailed information about the dataset format and structure.
+See [Test Data Documentation](./data/README.md) for detailed information about the dataset format and structure.
 
 ## Example Datasets
 
