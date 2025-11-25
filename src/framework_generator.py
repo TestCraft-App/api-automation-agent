@@ -1,17 +1,18 @@
 import signal
 import sys
 import traceback
-from typing import List, Dict, Optional, cast
+from typing import Dict, List, Optional, cast
 
 from .ai_tools.models.file_spec import FileSpec
 from .configuration.config import Config, GenerationOptions
 from .configuration.data_sources import DataSource
-from .models import APIDefinition, APIPath, APIVerb, ModelInfo, GeneratedModel
+from .models import APIDefinition, APIPath, APIVerb, GeneratedModel, ModelInfo
 from .models.usage_data import AggregatedUsageMetadata
 from .processors.api_processor import APIProcessor
 from .processors.postman_processor import PostmanProcessor
 from .services.command_service import CommandService
 from .services.file_service import FileService
+from .services.framework_state_manager import FrameworkStateManager
 from .services.llm_service import LLMService
 from .utils.checkpoint import Checkpoint
 from .utils.logger import Logger
@@ -35,6 +36,7 @@ class FrameworkGenerator:
         self.test_files_count = 0
         self.logger = Logger.get_logger(__name__)
         self.checkpoint = Checkpoint(self, "framework_generator", self.config.destination_folder)
+        self.state_manager = FrameworkStateManager(self.config, self.file_service)
 
         signal.signal(signal.SIGINT, self._handle_interrupt)
         signal.signal(signal.SIGTERM, self._handle_interrupt)
@@ -64,6 +66,20 @@ class FrameworkGenerator:
             }
         )
 
+    def _build_path_verbs_map(self, api_verbs: List[APIVerb]) -> Dict[str, List[str]]:
+        verbs_by_path: Dict[str, List[str]] = {}
+        for verb in api_verbs:
+            path_key = self.api_processor.get_api_verb_rootpath(verb)
+            if not path_key:
+                continue
+            verb_name = self.api_processor.get_api_verb_name(verb)
+            verb_path = self.api_processor.get_api_verb_path(verb)
+            verbs_by_path.setdefault(path_key, []).append(f"{verb_path} - {verb_name.upper()}")
+        return verbs_by_path
+
+    def _update_model_info_collection(self, lookup: Dict[str, ModelInfo], model_info: ModelInfo) -> None:
+        lookup[model_info.path] = model_info
+
     def restore_state(self, namespace: str):
         self.checkpoint.namespace = namespace
         self.checkpoint.restore(restore_object=True)
@@ -79,6 +95,66 @@ class FrameworkGenerator:
         except Exception as e:
             self._log_error("Error processing API definition", e)
             raise
+
+    def check_and_prompt_for_existing_endpoints(self, api_definition: APIDefinition) -> None:
+        """
+        Check for existing paths and verbs, inform the user, and prompt for action.
+
+        Args:
+            api_definition: The processed API definition
+
+        Note:
+            This function will exit the program (sys.exit(1)) if the user chooses option 3.
+        """
+        api_paths = self.api_processor.get_api_paths(api_definition)
+        api_verbs = self.api_processor.get_api_verbs(api_definition)
+
+        existing_paths: Dict[str, List[str]] = {}
+        for path in api_paths:
+            path_name = self.api_processor.get_api_path_name(path)
+            if self.state_manager.framework_state.are_models_generated_for_path(path_name):
+                existing_paths[path_name] = []
+
+        for verb in api_verbs:
+            verb_rootpath = self.api_processor.get_api_verb_rootpath(verb)
+
+            if verb_rootpath and self.state_manager.framework_state.are_tests_generated_for_verb(verb):
+                if verb_rootpath not in existing_paths:
+                    existing_paths[verb_rootpath] = []
+                existing_paths[verb_rootpath].append(f"{verb.path} - {verb.verb.upper()}")
+
+        if not existing_paths:
+            return
+
+        self.logger.info("\n⚠️ Models and tests already exist in the framework state for:\n")
+        for path, verbs in existing_paths.items():
+            if verbs:
+                self.logger.info(f"Service: {path}")
+                for verb_str in verbs:
+                    self.logger.info(f"  • {verb_str}")
+            else:
+                self.logger.info(f"• {path}")
+
+        while True:
+            self.logger.info("\nHow would you like to proceed?")
+            self.logger.info("  1. Override existing files")
+            self.logger.info("  2. Skip existing files")
+            self.logger.info("  3. Exit and modify command")
+
+            user_input = input("\nEnter your choice (1/2/3): ").strip()
+
+            if user_input == "1":
+                self.config.override = True
+                self.logger.info("\n✓ Override mode enabled. Existing files will be regenerated.")
+                return
+            elif user_input == "2":
+                self.logger.info("\n✓ Skip mode enabled. Existing files will be preserved.\n")
+                return
+            elif user_input == "3":
+                self.logger.info("\nExiting. Please modify your command and try again.")
+                sys.exit(1)
+            else:
+                self.logger.warning("Invalid choice. Please enter 1, 2, or 3.")
 
     @Checkpoint.checkpoint()
     def setup_framework(self, api_definition: APIDefinition):
@@ -115,20 +191,35 @@ class FrameworkGenerator:
         """Process the API definitions and generate models and tests"""
         try:
             self.logger.info("\nProcessing API definitions")
-            all_generated_models = {"info": []}
+
+            self.check_and_prompt_for_existing_endpoints(api_definition)
+
+            preloaded_models = self.state_manager.get_preloaded_model_info()
+            all_generated_models = {"info": preloaded_models}
+            model_info_lookup = {info.path: info for info in preloaded_models}
 
             api_paths = self.api_processor.get_api_paths(api_definition)
             api_verbs = self.api_processor.get_api_verbs(api_definition)
 
             for path in self.checkpoint.checkpoint_iter(api_paths, "generate_paths", all_generated_models):
+                path_name = self.api_processor.get_api_path_name(path)
+
+                if not self.state_manager.should_generate_models_for_path(path_name):
+                    continue
+
                 models = self._generate_models(path)
                 if models:
                     model_info = ModelInfo(
-                        path=self.api_processor.get_api_path_name(path),
+                        path=path_name,
                         files=[model.path + " - " + model.summary for model in models],
                         models=models,
                     )
-                    all_generated_models["info"].append(model_info)
+                    self._update_model_info_collection(model_info_lookup, model_info)
+                    all_generated_models["info"] = list(model_info_lookup.values())
+                    self.state_manager.update_models_state(
+                        path=path_name,
+                        models=models,
+                    )
                     self.logger.debug(
                         "Generated models for path: " + self.api_processor.get_api_path_name(path)
                     )
@@ -138,13 +229,22 @@ class FrameworkGenerator:
                 GenerationOptions.MODELS_AND_TESTS,
             ):
                 for verb in self.checkpoint.checkpoint_iter(api_verbs, "generate_verbs"):
-                    service_related_to_verb = self.api_processor.get_api_verb_rootpath(verb)
-                    tests = self._generate_tests(verb, all_generated_models["info"], generate_tests)
-                    if not tests:
-                        tests = []
+                    verb_rootpath = self.api_processor.get_api_verb_rootpath(verb)
+
+                    if not self.state_manager.should_generate_tests_verb(verb):
+                        continue
+
+                    tests = self._generate_tests(verb, all_generated_models["info"], generate_tests) or []
+
+                    if tests:
+                        self.state_manager.update_tests_state(
+                            verb,
+                            [file.path for file in tests if not self._is_response_file(file)],
+                        )
+
                     for file in filter(self._is_response_file, tests):
                         for model in all_generated_models["info"]:
-                            if model.path == service_related_to_verb:
+                            if model.path == verb_rootpath:
                                 model.files.append(file.path)
                                 model.models.append(
                                     GeneratedModel(path=file.path, fileContent=file.fileContent, summary="")
