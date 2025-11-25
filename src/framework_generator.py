@@ -192,7 +192,8 @@ class FrameworkGenerator:
         try:
             self.logger.info("\nProcessing API definitions")
 
-            self.check_and_prompt_for_existing_endpoints(api_definition)
+            if self.config.use_existing_framework:
+                self.check_and_prompt_for_existing_endpoints(api_definition)
 
             preloaded_models = self.state_manager.get_preloaded_model_info()
             all_generated_models = {"info": preloaded_models}

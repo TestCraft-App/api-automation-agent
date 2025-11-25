@@ -3,6 +3,7 @@ Integration tests for end-to-end framework generation flow.
 Tests the complete workflow from API definition processing through model and test generation.
 """
 
+import json
 import shutil
 import sys
 import tempfile
@@ -18,6 +19,7 @@ from src.framework_generator import FrameworkGenerator
 from src.services.command_service import CommandService
 from src.services.file_service import FileService
 from src.services.llm_service import LLMService
+from src.utils.checkpoint import Checkpoint
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "fixtures"))
 from tests.fixtures.llm_responses import (  # noqa: E402
@@ -418,3 +420,116 @@ class TestFrameworkGenerationFlow:
         assert hasattr(usage_metadata, "total_input_tokens")
         assert hasattr(usage_metadata, "total_output_tokens")
         assert hasattr(usage_metadata, "total_cost")
+
+    def test_framework_state_saved_and_loaded_between_runs(self):
+        """Ensure framework-state.json captures metadata and can be reloaded."""
+        self.config.generate = GenerationOptions.MODELS_AND_FIRST_TEST
+
+        file_service = FileService()
+        llm_service = self._create_mock_llm_service(file_service)
+        command_service = self._create_mock_command_service()
+
+        processors_adapter = ProcessorsAdapter(config=self.config, file_service=file_service)
+        api_processor = processors_adapter.swagger_processor()
+
+        generator = FrameworkGenerator(
+            config=self.config,
+            llm_service=llm_service,
+            command_service=command_service,
+            file_service=file_service,
+            api_processor=api_processor,
+        )
+
+        api_definition = generator.process_api_definition()
+        generator.setup_framework(api_definition)
+        generator.create_env_file(api_definition)
+        generator.generate(api_definition, self.config.generate)
+
+        state_file = Path(self.config.destination_folder) / "framework-state.json"
+        assert state_file.exists()
+
+        state_payload = json.loads(state_file.read_text(encoding="utf-8"))
+        assert state_payload.get("generated_endpoints")
+
+        self.config.use_existing_framework = True
+        file_service2 = FileService()
+        llm_service2 = self._create_mock_llm_service(file_service2)
+        command_service2 = self._create_mock_command_service()
+
+        processors_adapter2 = ProcessorsAdapter(config=self.config, file_service=file_service2)
+        api_processor2 = processors_adapter2.swagger_processor()
+
+        generator2 = FrameworkGenerator(
+            config=self.config,
+            llm_service=llm_service2,
+            command_service=command_service2,
+            file_service=file_service2,
+            api_processor=api_processor2,
+        )
+        generator2.state_manager.load_state()
+        preloaded_models = generator2.state_manager.get_preloaded_model_info()
+
+        assert preloaded_models, "Existing models should be loaded from state."
+        first_endpoint = preloaded_models[0].path
+        assert first_endpoint == "/pets"
+        assert generator2.state_manager.framework_state.get_endpoint(first_endpoint) is not None
+
+    def test_existing_framework_respects_override_prompt(self, monkeypatch):
+        """Verify that an existing endpoint is skipped when user declines override."""
+        self.config.generate = GenerationOptions.MODELS
+
+        file_service = FileService()
+        llm_service = self._create_mock_llm_service(file_service)
+        command_service = self._create_mock_command_service()
+
+        processors_adapter = ProcessorsAdapter(config=self.config, file_service=file_service)
+        api_processor = processors_adapter.swagger_processor()
+
+        generator = FrameworkGenerator(
+            config=self.config,
+            llm_service=llm_service,
+            command_service=command_service,
+            file_service=file_service,
+            api_processor=api_processor,
+        )
+        api_definition = generator.process_api_definition()
+        generator.setup_framework(api_definition)
+        generator.create_env_file(api_definition)
+        generator.generate(api_definition, self.config.generate)
+
+        # Clear checkpoints to allow second generator to run
+        Checkpoint.clear()
+
+        self.config.use_existing_framework = True
+        self.config.force = False
+
+        file_service2 = FileService()
+        llm_service2 = self._create_mock_llm_service(file_service2)
+        command_service2 = self._create_mock_command_service()
+
+        processors_adapter2 = ProcessorsAdapter(config=self.config, file_service=file_service2)
+        api_processor2 = processors_adapter2.swagger_processor()
+
+        generator2 = FrameworkGenerator(
+            config=self.config,
+            llm_service=llm_service2,
+            command_service=command_service2,
+            file_service=file_service2,
+            api_processor=api_processor2,
+        )
+        generator2.state_manager.load_state()
+        api_definition2 = generator2.process_api_definition()
+
+        prompt_calls = {"count": 0}
+
+        def mock_input(_):
+            prompt_calls["count"] += 1
+            return "2"  # Choose option 2: Skip existing files
+
+        monkeypatch.setattr("builtins.input", mock_input)
+        llm_service2.generate_models.reset_mock()
+
+        generator2.generate(api_definition2, self.config.generate)
+
+        assert prompt_calls["count"] >= 1
+        assert not llm_service2.generate_models.called

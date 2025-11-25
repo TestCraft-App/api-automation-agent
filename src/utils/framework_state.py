@@ -112,8 +112,12 @@ class FrameworkState:
     def update_models(self, path: str, models: Iterable[GeneratedModel]) -> EndpointState:
         model_metadata = [ModelMetadata.from_generated_model(model) for model in models]
 
-        endpoint_state = EndpointState(path=path, models=model_metadata)
-        self.generated_endpoints[path] = endpoint_state
+        endpoint_state = self.generated_endpoints.get(path)
+        if endpoint_state:
+            endpoint_state.models = model_metadata
+        else:
+            endpoint_state = EndpointState(path=path, models=model_metadata)
+            self.generated_endpoints[path] = endpoint_state
         return endpoint_state
 
     def update_tests(self, verb: APIVerb, tests: Iterable[str]) -> EndpointState:
