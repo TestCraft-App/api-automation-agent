@@ -162,14 +162,17 @@ class LLMService:
             prompt_template = ChatPromptTemplate.from_template(self._load_prompt(prompt_path))
 
             if tools:
-                tool_choice = "auto"
-                if self.config.model.provider in (Provider.BEDROCK, Provider.ANTHROPIC):
-                    if must_use_tool:
-                        tool_choice = "any"
+                if self.config.model.provider == Provider.BEDROCK:
+                    llm_with_tools = llm.bind_tools(all_tools)
                 else:
-                    if must_use_tool:
-                        tool_choice = "required"
-                llm_with_tools = llm.bind_tools(all_tools, tool_choice=tool_choice)
+                    tool_choice = "auto"
+                    if self.config.model.provider == Provider.ANTHROPIC:
+                        if must_use_tool:
+                            tool_choice = "any"
+                    else:
+                        if must_use_tool:
+                            tool_choice = "required"
+                    llm_with_tools = llm.bind_tools(all_tools, tool_choice=tool_choice)
             else:
                 llm_with_tools = llm
 
