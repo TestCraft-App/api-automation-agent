@@ -103,3 +103,226 @@ def test_load_ignores_invalid_json(tmp_path: Path):
 
     loaded_state = FrameworkState.load(tmp_path)
     assert loaded_state.generated_endpoints == {}
+
+
+def test_model_metadata_to_dict_with_summary():
+    from src.utils.framework_state import ModelMetadata
+
+    metadata = ModelMetadata(path="test.ts", summary="Test model")
+    result = metadata.to_dict()
+    assert result == {"path": "test.ts", "summary": "Test model"}
+
+
+def test_model_metadata_to_dict_without_summary():
+    from src.utils.framework_state import ModelMetadata
+
+    metadata = ModelMetadata(path="test.ts", summary="")
+    result = metadata.to_dict()
+    assert result == {"path": "test.ts"}
+
+
+def test_model_metadata_from_dict_with_summary():
+    from src.utils.framework_state import ModelMetadata
+
+    data = {"path": "test.ts", "summary": "Test model"}
+    metadata = ModelMetadata.from_dict(data)
+    assert metadata.path == "test.ts"
+    assert metadata.summary == "Test model"
+
+
+def test_model_metadata_from_dict_without_summary():
+    from src.utils.framework_state import ModelMetadata
+
+    data = {"path": "test.ts"}
+    metadata = ModelMetadata.from_dict(data)
+    assert metadata.path == "test.ts"
+    assert metadata.summary == ""
+
+
+def test_model_metadata_from_generated_model():
+    from src.utils.framework_state import ModelMetadata
+
+    model = GeneratedModel(path="test.ts", fileContent="content", summary="Test")
+    metadata = ModelMetadata.from_generated_model(model)
+    assert metadata.path == "test.ts"
+    assert metadata.summary == "Test"
+
+
+def test_endpoint_state_to_dict():
+    from src.utils.framework_state import EndpointState, ModelMetadata
+
+    endpoint = EndpointState(
+        path="/users",
+        verbs=["/users - GET"],
+        models=[ModelMetadata(path="user.ts", summary="User")],
+        tests=["test.ts"],
+    )
+    result = endpoint.to_dict()
+    assert result["path"] == "/users"
+    assert result["verbs"] == ["/users - GET"]
+    assert len(result["models"]) == 1
+    assert result["tests"] == ["test.ts"]
+
+
+def test_endpoint_state_to_dict_empty_lists():
+    from src.utils.framework_state import EndpointState
+
+    endpoint = EndpointState(path="/users")
+    result = endpoint.to_dict()
+    assert result["path"] == "/users"
+    assert result["verbs"] == []
+    assert result["models"] == []
+    assert result["tests"] == []
+
+
+def test_endpoint_state_from_dict():
+    from src.utils.framework_state import EndpointState
+
+    data = {
+        "path": "/users",
+        "verbs": ["/users - GET"],
+        "models": [{"path": "user.ts", "summary": "User"}],
+        "tests": ["test.ts"],
+    }
+    endpoint = EndpointState.from_dict(data)
+    assert endpoint.path == "/users"
+    assert endpoint.verbs == ["/users - GET"]
+    assert len(endpoint.models) == 1
+    assert endpoint.tests == ["test.ts"]
+
+
+def test_endpoint_state_from_dict_missing_fields():
+    from src.utils.framework_state import EndpointState
+
+    data = {"path": "/users"}
+    endpoint = EndpointState.from_dict(data)
+    assert endpoint.path == "/users"
+    assert endpoint.verbs == []
+    assert endpoint.models == []
+    assert endpoint.tests == []
+
+
+def test_load_with_non_existent_file(tmp_path: Path):
+    loaded_state = FrameworkState.load(tmp_path)
+    assert loaded_state.generated_endpoints == {}
+
+
+def test_load_with_invalid_json_structure(tmp_path: Path):
+    state_file = tmp_path / FrameworkState.STATE_FILENAME
+    state_file.write_text('{"invalid": "structure"}', encoding="utf-8")
+
+    loaded_state = FrameworkState.load(tmp_path)
+    assert loaded_state.generated_endpoints == {}
+
+
+def test_load_with_missing_path_in_entry(tmp_path: Path):
+    state_file = tmp_path / FrameworkState.STATE_FILENAME
+    state_file.write_text(
+        '{"generated_endpoints": [{"verbs": ["GET"], "models": []}]}',
+        encoding="utf-8",
+    )
+
+    loaded_state = FrameworkState.load(tmp_path)
+    # Entry without path should be filtered out
+    assert loaded_state.generated_endpoints == {}
+
+
+def test_save_creates_directory(tmp_path: Path):
+    subdir = tmp_path / "subdir"
+    state = FrameworkState()
+    state_file = state.save(subdir)
+    assert state_file.exists()
+    assert subdir.exists()
+
+
+def test_are_models_generated_for_path():
+    state = FrameworkState()
+    assert state.are_models_generated_for_path("/users") is False
+
+    state.update_models(path="/users", models=_create_models())
+    assert state.are_models_generated_for_path("/users") is True
+    assert state.are_models_generated_for_path("/orders") is False
+
+
+def test_are_tests_generated_for_verb_non_existent_endpoint():
+    state = FrameworkState()
+    verb = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
+    assert state.are_tests_generated_for_verb(verb) is False
+
+
+def test_are_tests_generated_for_verb_non_existent_verb():
+    state = FrameworkState()
+    state.update_models(path="/users", models=_create_models())
+    verb = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
+    assert state.are_tests_generated_for_verb(verb) is False
+
+    # Add a different verb
+    post_verb = APIVerb(path="/users", verb="post", root_path="/users", yaml={})
+    state.update_tests(post_verb, ["test.ts"])
+    assert state.are_tests_generated_for_verb(verb) is False
+    assert state.are_tests_generated_for_verb(post_verb) is True
+
+
+def test_update_models_creates_new_endpoint():
+    state = FrameworkState()
+    assert "/users" not in state.generated_endpoints
+
+    state.update_models(path="/users", models=_create_models())
+    assert "/users" in state.generated_endpoints
+    endpoint = state.get_endpoint("/users")
+    assert endpoint is not None
+    assert len(endpoint.models) == 2
+
+
+def test_update_models_updates_existing_endpoint():
+    state = FrameworkState()
+    initial_models = [GeneratedModel(path="old.ts", summary="Old")]
+    state.update_models(path="/users", models=initial_models)
+
+    new_models = _create_models()
+    state.update_models(path="/users", models=new_models)
+
+    endpoint = state.get_endpoint("/users")
+    assert len(endpoint.models) == 2
+    assert endpoint.models[0].path == new_models[0].path
+
+
+def test_update_tests_creates_new_endpoint_if_needed():
+    state = FrameworkState()
+    assert "/users" not in state.generated_endpoints
+
+    verb = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
+    state.update_tests(verb, ["test.ts"])
+
+    assert "/users" in state.generated_endpoints
+    endpoint = state.get_endpoint("/users")
+    assert endpoint is not None
+    assert "/users - GET" in endpoint.verbs
+
+
+def test_update_tests_deduplicates_tests():
+    state = FrameworkState()
+    verb1 = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
+    verb2 = APIVerb(path="/users", verb="post", root_path="/users", yaml={})
+
+    state.update_tests(verb1, ["test1.ts", "test2.ts"])
+    state.update_tests(verb2, ["test2.ts", "test3.ts"])
+
+    endpoint = state.get_endpoint("/users")
+    # Should be sorted and deduplicated
+    assert endpoint.tests == ["test1.ts", "test2.ts", "test3.ts"]
+
+
+def test_get_endpoint_returns_none():
+    state = FrameworkState()
+    assert state.get_endpoint("/non-existent") is None
+
+
+def test_get_endpoint_returns_correct_state():
+    state = FrameworkState()
+    state.update_models(path="/users", models=_create_models())
+
+    endpoint = state.get_endpoint("/users")
+    assert endpoint is not None
+    assert endpoint.path == "/users"
+    assert len(endpoint.models) == 2
