@@ -206,9 +206,11 @@ generated-framework_[timestamp]/    # Or the Destination Folder selected
 
 ## Framework State & Incremental Generation
 
+The framework state management feature enables incremental generation of endpoints one at a time, while preserving all previously generated models as context for subsequent generations. This allows you to generate your test framework in stages, edit tests and models manually, and continue generation later without losing context or regenerating existing artifacts.
+
 - Every framework contains a `framework-state.json` file at its root. This file tracks each generated endpoint, the verbs that were processed, the TypeScript model files (path + summary), and the associated test specs.
 - When you pass `--use-existing-framework`, the agent loads this state file from `--destination-folder` and re-reads the referenced model files from disk so that manually edited models are still used as LLM context.
-- If the user requests to generate an endpoint that is part of the loaded state, the agent prompts the user whether to override it, skip it, o exit.
+- If the user requests to generate an endpoint that is part of the loaded state, the agent prompts the user whether to override it, skip it, or exit.
 - Tests are marked as part of the state file as soon as they are generated, so you can run the agent in multiple stages (e.g., generate models first, return later to add tests) without losing track of your progress.
 
 ## Postman Collection Migration
