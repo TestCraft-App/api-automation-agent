@@ -10,7 +10,7 @@ from src.models.api_verb import APIVerb
 from src.models.generated_model import GeneratedModel
 from src.services.file_service import FileService
 from src.services.framework_state_manager import FrameworkStateManager
-from src.utils.framework_state import FrameworkState
+from src.models.framework_state import FrameworkState
 
 
 @pytest.fixture

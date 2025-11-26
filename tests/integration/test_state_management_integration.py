@@ -20,7 +20,7 @@ from src.models.generated_model import GeneratedModel
 from src.services.command_service import CommandService
 from src.services.file_service import FileService
 from src.services.llm_service import LLMService
-from src.utils.framework_state import FrameworkState
+from src.models.framework_state import FrameworkState
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "fixtures"))
 from tests.fixtures.llm_responses import (  # noqa: E402

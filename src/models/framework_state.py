@@ -7,7 +7,7 @@ from typing import Dict, Iterable, List, Optional
 
 from src.models.api_verb import APIVerb
 
-from ..models.generated_model import GeneratedModel
+from .generated_model import GeneratedModel
 from ..utils.logger import Logger
 
 
@@ -136,3 +136,4 @@ class FrameworkState:
 
     def get_endpoint(self, path: str) -> Optional[EndpointState]:
         return self.generated_endpoints.get(path)
+

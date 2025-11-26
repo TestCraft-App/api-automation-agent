@@ -15,7 +15,7 @@ from src.processors.api_processor import APIProcessor
 from src.services.command_service import CommandService
 from src.services.file_service import FileService
 from src.services.llm_service import LLMService
-from src.utils.framework_state import FrameworkState
+from src.models.framework_state import FrameworkState
 
 
 @pytest.fixture

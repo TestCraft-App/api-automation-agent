@@ -8,7 +8,7 @@ from src.models.api_verb import APIVerb
 from ..configuration.config import Config
 from ..models import GeneratedModel, ModelInfo
 from ..services.file_service import FileService
-from ..utils.framework_state import FrameworkState
+from ..models.framework_state import FrameworkState
 from ..utils.logger import Logger
 
 

@@ -2,7 +2,7 @@ from pathlib import Path
 
 from src.models.api_verb import APIVerb
 from src.models.generated_model import GeneratedModel
-from src.utils.framework_state import FrameworkState
+from src.models.framework_state import FrameworkState
 
 
 def _create_models():
@@ -106,7 +106,7 @@ def test_load_ignores_invalid_json(tmp_path: Path):
 
 
 def test_model_metadata_to_dict_with_summary():
-    from src.utils.framework_state import ModelMetadata
+    from src.models.framework_state import ModelMetadata
 
     metadata = ModelMetadata(path="test.ts", summary="Test model")
     result = metadata.to_dict()
@@ -114,7 +114,7 @@ def test_model_metadata_to_dict_with_summary():
 
 
 def test_model_metadata_to_dict_without_summary():
-    from src.utils.framework_state import ModelMetadata
+    from src.models.framework_state import ModelMetadata
 
     metadata = ModelMetadata(path="test.ts", summary="")
     result = metadata.to_dict()
@@ -122,7 +122,7 @@ def test_model_metadata_to_dict_without_summary():
 
 
 def test_model_metadata_from_dict_with_summary():
-    from src.utils.framework_state import ModelMetadata
+    from src.models.framework_state import ModelMetadata
 
     data = {"path": "test.ts", "summary": "Test model"}
     metadata = ModelMetadata.from_dict(data)
@@ -131,7 +131,7 @@ def test_model_metadata_from_dict_with_summary():
 
 
 def test_model_metadata_from_dict_without_summary():
-    from src.utils.framework_state import ModelMetadata
+    from src.models.framework_state import ModelMetadata
 
     data = {"path": "test.ts"}
     metadata = ModelMetadata.from_dict(data)
@@ -140,7 +140,7 @@ def test_model_metadata_from_dict_without_summary():
 
 
 def test_model_metadata_from_generated_model():
-    from src.utils.framework_state import ModelMetadata
+    from src.models.framework_state import ModelMetadata
 
     model = GeneratedModel(path="test.ts", fileContent="content", summary="Test")
     metadata = ModelMetadata.from_generated_model(model)
@@ -149,7 +149,7 @@ def test_model_metadata_from_generated_model():
 
 
 def test_endpoint_state_to_dict():
-    from src.utils.framework_state import EndpointState, ModelMetadata
+    from src.models.framework_state import EndpointState, ModelMetadata
 
     endpoint = EndpointState(
         path="/users",
@@ -165,7 +165,7 @@ def test_endpoint_state_to_dict():
 
 
 def test_endpoint_state_to_dict_empty_lists():
-    from src.utils.framework_state import EndpointState
+    from src.models.framework_state import EndpointState
 
     endpoint = EndpointState(path="/users")
     result = endpoint.to_dict()
@@ -176,7 +176,7 @@ def test_endpoint_state_to_dict_empty_lists():
 
 
 def test_endpoint_state_from_dict():
-    from src.utils.framework_state import EndpointState
+    from src.models.framework_state import EndpointState
 
     data = {
         "path": "/users",
@@ -192,7 +192,7 @@ def test_endpoint_state_from_dict():
 
 
 def test_endpoint_state_from_dict_missing_fields():
-    from src.utils.framework_state import EndpointState
+    from src.models.framework_state import EndpointState
 
     data = {"path": "/users"}
     endpoint = EndpointState.from_dict(data)
