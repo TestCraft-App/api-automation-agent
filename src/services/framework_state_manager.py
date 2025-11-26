@@ -41,9 +41,7 @@ class FrameworkStateManager:
         if self._framework_state.generated_endpoints:
             endpoint_count = len(self._framework_state.generated_endpoints)
             endpoint_keys = list(self._framework_state.generated_endpoints.keys())
-            self.logger.info(
-                f"🔁 Loaded framework state with {endpoint_count} endpoint(s): {endpoint_keys}"
-            )
+            self.logger.info(f"\n Loaded framework state with {endpoint_count} endpoint(s): {endpoint_keys}")
 
     def _load_models_from_state(self) -> Dict[str, ModelInfo]:
         """
@@ -82,9 +80,6 @@ class FrameworkStateManager:
                 loaded[endpoint.path] = ModelInfo(
                     path=endpoint.path, files=file_entries, models=generated_models
                 )
-
-        if loaded:
-            self.logger.info(f"🔁 Loaded {len(loaded)} endpoint(s) from framework state.")
 
         return loaded
 
