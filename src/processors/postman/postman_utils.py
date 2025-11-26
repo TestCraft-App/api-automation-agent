@@ -1,8 +1,9 @@
 import json
 import re
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Optional
 from urllib.parse import parse_qsl
 
+from src.models.api_path import APIPath
 from src.models.api_verb import APIVerb
 
 from ...processors.postman.models import RequestData, VerbInfo
@@ -26,7 +27,9 @@ class PostmanUtils:
         return variables
 
     @staticmethod
-    def extract_requests(data: Any, path: str = "") -> List[RequestData]:
+    def extract_requests(
+        data: Any, path: str = "", prefixes: Optional[List[str]] = None
+    ) -> List[RequestData]:
         results: List[RequestData] = []
 
         def _walk(item: Any, cur: str):
@@ -36,7 +39,7 @@ class PostmanUtils:
                     for sub in item["item"]:
                         _walk(sub, new_path)
                 elif PostmanUtils.item_is_a_test_case(item):
-                    rd = PostmanUtils.extract_request_data(item, cur)
+                    rd = PostmanUtils.extract_request_data(item, cur, prefixes=prefixes)
                     if rd.name not in {r.name for r in results}:
                         results.append(rd)
                 else:
@@ -50,16 +53,23 @@ class PostmanUtils:
         return results
 
     @staticmethod
-    def extract_request_data(data: Dict[str, Any], current_path: str) -> RequestData:
+    def extract_request_data(
+        data: Dict[str, Any], current_path: str, prefixes: Optional[List[str]] = None
+    ) -> RequestData:
         req = data.get("request", {})
         verb = req.get("method", "")
         raw_url = req.get("url")
         if isinstance(raw_url, dict):
-            path = raw_url.get("raw", "")
+            if "path" in raw_url and isinstance(raw_url["path"], list):
+                path = "/" + "/".join(raw_url["path"])
+            else:
+                path = raw_url.get("raw", "")
         else:
             path = raw_url or ""
 
-        # body
+        # Strip Postman variables like {{BASEURL}} from the path
+        path = re.sub(r"\{\{[^}]+\}\}", "", path)
+
         raw_body = req.get("body", {}).get("raw", "").replace("\r", "").replace("\n", "")
         try:
             body = json.loads(raw_body) if raw_body else {}
@@ -82,7 +92,7 @@ class PostmanUtils:
         return RequestData(
             service="",
             file_path=file_path,
-            path=path,
+            path=APIPath.normalize_path(path, prefixes),
             verb=verb,
             body=body,
             prerequest=prereq,

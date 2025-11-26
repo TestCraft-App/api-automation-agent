@@ -26,6 +26,7 @@ def test_api_path_instantiation():
         ("/api/v1beta/pets", None, "/v1beta/pets"),
         ("/v2/products", None, "/v2/products"),
         ("/pets", None, "/pets"),
+        ("/pets", "/custom", "/pets"),
         ("/users/profile", None, "/users/profile"),
         ("/pets?limit=10", None, "/pets?limit=10"),
         ("/api/v1/", None, "/v1"),
@@ -46,6 +47,11 @@ def test_api_path_instantiation():
 )
 def test_normalize_path(path, prefixes, expected):
     assert APIPath.normalize_path(path, prefixes) == expected
+
+
+def test_normalize_path_custom_prefixes_extend_api():
+    """Test that custom prefixes extend /api instead of replacing it."""
+    assert APIPath.normalize_path("/api/users", ["/beta"]) == "/users"
 
 
 def test_api_path_to_json():

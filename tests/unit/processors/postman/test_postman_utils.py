@@ -97,6 +97,7 @@ def test_extract_requests_with_deeply_nested_folders():
 
     assert len(result) == 1
     assert result[0].file_path == "src/tests/api/v1/getResource"
+    assert result[0].path == "/v1/resource"  # Path normalized: /api prefix removed
 
 
 def test_extract_requests_skips_duplicates():
@@ -138,7 +139,7 @@ def test_extract_request_data_with_dict_url():
     result = PostmanUtils.extract_request_data(data, "/api")
 
     assert result.verb == "POST"
-    assert result.path == "/api/endpoint"
+    assert result.path == "/endpoint"  # Path normalized: /api prefix removed
     assert result.body == {"name": "test"}
     assert result.prerequest == ["console.log('pre')"]
     assert result.script == ["pm.test('ok', () => {})"]
@@ -167,6 +168,33 @@ def test_extract_request_data_with_empty_body():
     result = PostmanUtils.extract_request_data(data, "")
 
     assert result.body == {}
+
+
+def test_extract_request_data_normalizes_api_prefix():
+    """Test that /api prefix is removed by default"""
+    data = {"name": "Test", "request": {"method": "GET", "url": "/api/users"}}
+
+    result = PostmanUtils.extract_request_data(data, "")
+
+    assert result.path == "/users"
+
+
+def test_extract_requests_normalizes_paths():
+    """Test that extract_requests normalizes paths in all requests"""
+    data = {
+        "item": [
+            {"name": "Get Users", "request": {"method": "GET", "url": "/api/users"}},
+            {"name": "Get Orders", "request": {"method": "GET", "url": "/api/v1/orders"}},
+            {"name": "Get Products", "request": {"method": "GET", "url": "/products"}},
+        ]
+    }
+
+    result = PostmanUtils.extract_requests(data)
+
+    assert len(result) == 3
+    assert result[0].path == "/users"  # /api/users -> /users
+    assert result[1].path == "/v1/orders"  # /api/v1/orders -> /v1/orders
+    assert result[2].path == "/products"  # /products unchanged
 
 
 def test_extract_verb_path_info_groups_by_path_and_verb():

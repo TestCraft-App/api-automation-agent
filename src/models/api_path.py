@@ -11,7 +11,7 @@ class APIPath(APIBase):
 
     @staticmethod
     def normalize_path(path: str, prefixes: Optional[List[str]] = None) -> str:
-        """Normalizes the path by removing api and version prefixes."""
+        """Normalizes the path by removing api and prefixes."""
 
         def _format_path(s: str) -> str:
             parts = [p for p in s.split("/") if p]
@@ -28,14 +28,19 @@ class APIPath(APIBase):
         if not normalized_path:
             return path
 
-        prefixes = prefixes or ["/api"]
+        default_prefixes = ["/api"]
+        if prefixes:
+            all_prefixes = default_prefixes + [p for p in prefixes if p not in default_prefixes]
+        else:
+            all_prefixes = default_prefixes
+
         normalized_prefixes = []
-        for pre in prefixes:
+        for pre in all_prefixes:
             normalized_prefixes.append(_format_path(pre))
 
         normalized_prefixes.sort(key=len, reverse=True)
         for prefix in normalized_prefixes:
             if _starts_with_prefix(normalized_path, prefix):
-                return normalized_path[len(prefix):] or "/"
+                return normalized_path[len(prefix) :] or "/"
 
         return normalized_path

@@ -26,7 +26,7 @@ class PostmanProcessor(APIProcessor):
     def process_api_definition(self, api_definition_path: str) -> APIDefinition:
         with open(api_definition_path, encoding="utf-8") as f:
             data = json.load(f)
-        requests = PostmanUtils.extract_requests(data)
+        requests = PostmanUtils.extract_requests(data, prefixes=self.config.prefixes)
         variables = PostmanUtils.extract_variables(data)
         return APIDefinition(definitions=requests, variables=variables)
 
