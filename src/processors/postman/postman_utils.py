@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, List, Optional
 from urllib.parse import parse_qsl
 
 from src.models.api_path import APIPath
@@ -60,8 +60,23 @@ class PostmanUtils:
         verb = req.get("method", "")
         raw_url = req.get("url")
         if isinstance(raw_url, dict):
-            if "path" in raw_url and isinstance(raw_url["path"], list):
+            # Prefer "raw" as it includes query parameters
+            if "raw" in raw_url:
+                path = raw_url.get("raw", "")
+            elif "path" in raw_url and isinstance(raw_url["path"], list):
+                # Reconstruct path from path array and query array
                 path = "/" + "/".join(raw_url["path"])
+                # Add query parameters if present
+                if "query" in raw_url and isinstance(raw_url["query"], list):
+                    query_parts = []
+                    for q in raw_url["query"]:
+                        if isinstance(q, dict) and "key" in q:
+                            key = q.get("key", "")
+                            value = q.get("value", "")
+                            if key:
+                                query_parts.append(f"{key}={value}" if value else key)
+                    if query_parts:
+                        path += "?" + "&".join(query_parts)
             else:
                 path = raw_url.get("raw", "")
         else:
@@ -76,7 +91,6 @@ class PostmanUtils:
         except json.JSONDecodeError:
             body = {}
 
-        # scripts
         prereq: List[str] = []
         script: List[str] = []
         for ev in data.get("event", []):
@@ -85,14 +99,16 @@ class PostmanUtils:
             elif ev.get("listen") == "test":
                 script = ev.get("script", {}).get("exec", [])
 
-        # name & file_path
         name = PostmanUtils.to_camel_case(data.get("name", ""))
         file_path = f"src/tests{current_path}/{name}"
 
+        normalized_path = APIPath.normalize_path(path, prefixes)
+        service = APIVerb.get_root_path(normalized_path)
+
         return RequestData(
-            service="",
+            service=service,
             file_path=file_path,
-            path=APIPath.normalize_path(path, prefixes),
+            path=normalized_path,
             verb=verb,
             body=body,
             prerequest=prereq,
@@ -132,38 +148,12 @@ class PostmanUtils:
         return out
 
     @staticmethod
-    def map_verb_path_pairs_to_services(
-        verb_path_pairs: List[RequestData], no_query_params_routes_grouped_by_service: Dict[str, List[str]]
-    ) -> Dict[str, List[VerbInfo]]:
-        # first group raw paths by service root
-        verb_chunks_with_query_params = PostmanUtils.extract_verb_path_info(verb_path_pairs)
-
-        verb_path_pairs_and_services: Dict[str, List[VerbInfo]] = {}
-        for verb_path_pair in verb_chunks_with_query_params:
-            for service, routes in no_query_params_routes_grouped_by_service.items():
-                if verb_path_pair.path in routes:
-                    if service not in verb_path_pairs_and_services:
-                        verb_path_pairs_and_services[service] = []
-
-                    verb_path_pairs_and_services[service].append(
-                        VerbInfo(
-                            verb=verb_path_pair.verb,
-                            path=verb_path_pair.path,
-                            query_params=verb_path_pair.query_params,
-                            body_attributes=verb_path_pair.body_attributes,
-                            root_path="",
-                        )
-                    )
-        return verb_path_pairs_and_services
-
-    @staticmethod
-    def group_paths_by_service(paths: Iterable[str]) -> Dict[str, List[str]]:
-        out: Dict[str, List[str]] = {}
-        for p in paths:
-            segs = p.split("/", 2)
-            svc = segs[1] if len(segs) > 1 else ""
-            out.setdefault(svc, []).append(p)
-        return out
+    def group_request_data_by_service(requests: List[RequestData]) -> Dict[str, List[RequestData]]:
+        """Group RequestData objects by their service."""
+        requests_by_service: Dict[str, List[RequestData]] = {}
+        for request in requests:
+            requests_by_service.setdefault(request.service, []).append(request)
+        return requests_by_service
 
     @staticmethod
     def accumulate_query_params(all_params: Dict[str, str], qs: str) -> None:

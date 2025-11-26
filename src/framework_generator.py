@@ -10,6 +10,7 @@ from .models import APIDefinition, APIPath, APIVerb, GeneratedModel, ModelInfo
 from .models.usage_data import AggregatedUsageMetadata
 from .processors.api_processor import APIProcessor
 from .processors.postman_processor import PostmanProcessor
+from .processors.postman.models import VerbInfo, RequestData
 from .services.command_service import CommandService
 from .services.file_service import FileService
 from .services.framework_state_manager import FrameworkStateManager
@@ -302,7 +303,7 @@ class FrameworkGenerator:
         self.logger.info(f"   Output Tokens: {usage_metadata.total_output_tokens:,}")
         self.logger.info(f"   Total Cost (USD): ${usage_metadata.total_cost:.4f}")
 
-    def _generate_models(self, api_definition: APIPath | str) -> Optional[List[GeneratedModel]]:
+    def _generate_models(self, api_definition: APIPath | List[VerbInfo]) -> Optional[List[GeneratedModel]]:
         """Generate models for the API definition."""
         try:
             path_name = self.api_processor.get_api_path_name(api_definition)
@@ -315,7 +316,7 @@ class FrameworkGenerator:
 
             self.models_count += len(models_result)
             self._run_code_quality_checks(models_result, are_models=True)
-            self.logger.info(f"Generated {len(models_result)} models for {path_name}")
+            self.logger.info(f"Generated {len(models_result)} models for {path_name}\n")
             return GeneratedModel.from_model_file_specs(models_result)
 
         except Exception as e:
@@ -324,7 +325,7 @@ class FrameworkGenerator:
 
     def _generate_tests(
         self,
-        api_verb: APIVerb,
+        api_verb: APIVerb | RequestData,
         all_models: List[ModelInfo],
         generate_tests: GenerationOptions,
     ) -> Optional[List[FileSpec]]:
@@ -334,6 +335,25 @@ class FrameworkGenerator:
         try:
             relevant_models = self.api_processor.get_relevant_models(all_models, api_verb)
             other_models = self.api_processor.get_other_models(all_models, api_verb)
+
+            self.logger.info("Relevant models:")
+            for model in relevant_models:
+                if hasattr(model, "path"):
+                    self.logger.info(f"  - Path: {getattr(model, 'path', None)}")
+                if hasattr(model, "fileContent"):
+                    file_content = getattr(model, "fileContent", "")
+                    content_preview = file_content[:120].replace("\n", " ") + (
+                        "..." if len(file_content) > 120 else ""
+                    )
+                    self.logger.info(f"    Content (preview): {content_preview}")
+                else:
+                    self.logger.info(f"  - Model: {str(model)}")
+
+            self.logger.info("Other models:")
+            for model in other_models:
+                if hasattr(model, "path"):
+                    self.logger.info(f"  - Path: {getattr(model, 'path', None)}")
+
             self.logger.info(f"\nGenerating first test for path: {verb_path} and verb: {verb_name}")
 
             if other_models:

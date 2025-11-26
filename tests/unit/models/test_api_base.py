@@ -20,7 +20,8 @@ from src.models.api_verb import APIBase
         ("/v2alpha/pets", "/v2alpha/pets"),
         ("/v1", "/v1"),
         ("/void", "/void"),
-        # ("/pets?limit=10", "/pets"), This is not supported, but it's not necessary at this point.
+        ("/pets?limit=10", "/pets"),  # Now supported - query params are stripped
+        ("/users?status=active&role=admin", "/users"),  # Multiple query params
     ],
 )
 def test_get_root_path(path, expected):

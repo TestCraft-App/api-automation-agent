@@ -21,13 +21,13 @@ class PostmanProcessor(APIProcessor):
         self.file_service = file_service
         self.config = config
         self.logger = Logger.get_logger(__name__)
-        self.service_dict = {}
 
     def process_api_definition(self, api_definition_path: str) -> APIDefinition:
         with open(api_definition_path, encoding="utf-8") as f:
             data = json.load(f)
         requests = PostmanUtils.extract_requests(data, prefixes=self.config.prefixes)
         variables = PostmanUtils.extract_variables(data)
+
         return APIDefinition(definitions=requests, variables=variables)
 
     def create_dot_env(self, api_definition: APIDefinition) -> None:
@@ -45,35 +45,37 @@ class PostmanProcessor(APIProcessor):
             f"Generated .env file with variables: {', '.join(var['key'].upper() for var in env_vars)}"
         )
 
-    def get_api_paths(self, api_definition: APIDefinition) -> List[Dict[str, List[VerbInfo]]]:
-        # Get all distinct paths without query params
-        distinct_paths = {item.path.split("?")[0] for item in api_definition.definitions}
+    def get_api_paths(self, api_definition: APIDefinition) -> List[List[VerbInfo]]:
+        """Create VerbInfo objects from RequestData and group by service."""
+        requests_by_service = PostmanUtils.group_request_data_by_service(api_definition.definitions)
 
-        # Group paths by service
-        paths_grouped_by_service = PostmanUtils.group_paths_by_service(distinct_paths)
+        service_dict: Dict[str, List[VerbInfo]] = {}
+        for service, service_requests in requests_by_service.items():
+            verb_infos = PostmanUtils.extract_verb_path_info(service_requests)
+            service_dict[service] = verb_infos
 
-        # Map verbs to services
-        self.service_dict = PostmanUtils.map_verb_path_pairs_to_services(
-            api_definition.definitions, paths_grouped_by_service
-        )
-        return [copy.deepcopy(self.service_dict)]
+        return copy.deepcopy(list(service_dict.values()))
 
-    def get_api_path_name(self, api_path: Dict[str, List[VerbInfo]]) -> str:
-        keys = list(api_path.keys())
-        return keys[0] if len(keys) > 0 else ""
+    def get_api_path_name(self, api_path: List[VerbInfo]) -> str:
+        if not api_path:
+            return ""
+        first_path = api_path[0].path.lstrip("/")
+        if not first_path:
+            return ""
+        return first_path.split("/", 1)[0]
 
     def get_relevant_models(self, all_models: List[ModelInfo], api_verb: RequestData) -> List[GeneratedModel]:
         """Get models relevant to the API verb."""
-        result = []
+        result: List[GeneratedModel] = []
         for model in all_models:
-            if api_verb.service == model.path:
-                result = [GeneratedModel(path=file.fileContent) for file in model.models]
+            if api_verb.service.lstrip("/") == model.path:
+                result.extend(model.models)
         return result
 
     def get_other_models(self, all_models: List[ModelInfo], api_verb: RequestData) -> List[APIModel]:
         result: List[APIModel] = []
         for model in all_models:
-            if model.path != api_verb.service:
+            if model.path != api_verb.service.lstrip("/"):
                 result.append(APIModel(path=model.path, files=model.files))
         return result
 
@@ -86,37 +88,31 @@ class PostmanProcessor(APIProcessor):
     def get_api_verb_name(self, api_verb: APIVerb) -> str:
         return api_verb.verb
 
-    def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb]:
-        verb_chunks_tagged_with_service = copy.deepcopy(api_definition.definitions)
-
-        for verb_chunk in verb_chunks_tagged_with_service:
-            for service, verbs in self.service_dict.items():
-                routes_in_service = [verb.path for verb in verbs]
-                verb_chunk_path_no_query_params = verb_chunk.path.split("?")[0]
-
-                if verb_chunk_path_no_query_params in routes_in_service:
-                    verb_chunk.service = service
-                    break
-
-        return verb_chunks_tagged_with_service
+    def get_api_verbs(self, api_definition: APIDefinition) -> List[RequestData]:
+        """Return all RequestData from the API definition"""
+        return copy.deepcopy(api_definition.definitions)
 
     def get_api_verb_content(self, api_verb: RequestData) -> str:
         return json.dumps(api_verb.to_json())
 
-    def get_api_path_content(self, api_path: Dict[str, List[VerbInfo]]) -> str:
-        content = {}
-        for service, verbs in api_path.items():
-            content[service] = []
-            for verb in verbs:
-                content[service].append(
-                    {
-                        "path": verb.path,
-                        "verb": verb.verb,
-                        "query_params": verb.query_params,
-                        "body_attributes": verb.body_attributes,
-                        "root_path": verb.root_path,
-                    }
-                )
+    def get_api_path_content(self, api_path: List[VerbInfo]) -> str:
+        if not api_path:
+            return json.dumps({})
+
+        service = self.get_api_path_name(api_path)
+        if not service:
+            return json.dumps({})
+        content = {service: []}
+        for verb in api_path:
+            content[service].append(
+                {
+                    "path": verb.path,
+                    "verb": verb.verb,
+                    "query_params": verb.query_params,
+                    "body_attributes": verb.body_attributes,
+                    "root_path": verb.root_path,
+                }
+            )
         return json.dumps(content)
 
     def update_framework_for_postman(self, destination_folder: str, api_definition: APIDefinition):

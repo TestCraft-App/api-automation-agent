@@ -1,7 +1,7 @@
 import json
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 import yaml
 
@@ -62,17 +62,17 @@ class APIProcessor(ABC):
         pass
 
     @abstractmethod
-    def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath] | Dict[str, List[VerbInfo]]:
+    def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath] | List[List[VerbInfo]]:
         """Get all path definitions that should be processed"""
         pass
 
     @abstractmethod
-    def get_api_path_name(self, api_path: APIPath) -> str:
+    def get_api_path_name(self, api_path: APIPath | List[VerbInfo]) -> str:
         """Get the name of the API path"""
         pass
 
     @abstractmethod
-    def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb]:
+    def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb] | List[RequestData]:
         """Get all verb definitions that should be processed"""
         pass
 
@@ -92,7 +92,9 @@ class APIProcessor(ABC):
         pass
 
     @abstractmethod
-    def get_relevant_models(self, all_models: List[ModelInfo], api_verb: APIVerb) -> List[GeneratedModel]:
+    def get_relevant_models(
+        self, all_models: List[ModelInfo], api_verb: APIVerb | RequestData
+    ) -> List[GeneratedModel]:
         """Get models relevant to the API verb"""
         pass
 
@@ -107,6 +109,6 @@ class APIProcessor(ABC):
         pass
 
     @abstractmethod
-    def get_api_path_content(self, api_path: APIPath) -> str:
+    def get_api_path_content(self, api_path: APIPath | List[VerbInfo]) -> str:
         """Get the content of the API path"""
         pass

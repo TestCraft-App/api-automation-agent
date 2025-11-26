@@ -146,6 +146,71 @@ def test_extract_request_data_with_dict_url():
     assert result.file_path == "src/tests/api/testRequest"
 
 
+def test_extract_request_data_with_dict_url_path_and_query_arrays():
+    """Test that extract_request_data correctly reconstructs path with query params
+    from Postman URL dict format."""
+    data = {
+        "name": "Get Users",
+        "request": {
+            "method": "GET",
+            "url": {
+                "raw": "{{BASEURL}}/api/users?page=1&limit=10",
+                "host": ["{{BASEURL}}"],
+                "path": ["users"],
+                "query": [
+                    {"key": "page", "value": "1"},
+                    {"key": "limit", "value": "10"},
+                ],
+            },
+        },
+    }
+
+    result = PostmanUtils.extract_request_data(data, "/api")
+
+    # Path should include query params
+    assert result.verb == "GET"
+    assert result.path == "/users?page=1&limit=10"  # Query params should be included
+    assert "page" in result.path
+    assert "limit" in result.path
+
+
+def test_extract_request_data_with_dict_url_path_array_only():
+    """Test that extract_request_data handles URL dict with path array but no query array."""
+    data = {
+        "name": "Get User",
+        "request": {
+            "method": "GET",
+            "url": {
+                "path": ["users", "123"],
+            },
+        },
+    }
+
+    result = PostmanUtils.extract_request_data(data, None)
+
+    assert result.verb == "GET"
+    assert result.path == "/users/123"  # No query params, just path
+
+
+def test_extract_request_data_with_dict_url_prefers_raw_over_path():
+    """Test that extract_request_data prefers 'raw' field over path array when both are present."""
+    data = {
+        "name": "Test Request",
+        "request": {
+            "method": "GET",
+            "url": {
+                "raw": "/api/users?page=1&limit=10",
+                "path": ["users"],  # Should be ignored when raw is present
+                "query": [{"key": "other", "value": "param"}],  # Should be ignored when raw is present
+            },
+        },
+    }
+
+    result = PostmanUtils.extract_request_data(data, "/api")
+
+    assert result.path == "/users?page=1&limit=10"  # Should use raw, not reconstruct from path+query
+
+
 def test_extract_request_data_with_string_url():
     data = {"name": "Test", "request": {"method": "GET", "url": "/simple/path"}}
 
@@ -316,10 +381,10 @@ def test_extract_verb_path_info_aggregates_body_attributes():
     assert "email" in result[0].body_attributes
 
 
-def test_map_verb_path_pairs_to_services():
+def test_group_request_data_by_service():
     requests = [
         RequestData(
-            service="",
+            service="/users",
             file_path="test1",
             path="/users/123",
             verb="GET",
@@ -329,7 +394,7 @@ def test_map_verb_path_pairs_to_services():
             name="test1",
         ),
         RequestData(
-            service="",
+            service="/orders",
             file_path="test2",
             path="/orders/456",
             verb="GET",
@@ -339,38 +404,15 @@ def test_map_verb_path_pairs_to_services():
             name="test2",
         ),
     ]
-    grouped_paths = {"users": ["/users/123"], "orders": ["/orders/456"]}
 
-    result = PostmanUtils.map_verb_path_pairs_to_services(requests, grouped_paths)
+    result = PostmanUtils.group_request_data_by_service(requests)
 
-    assert "users" in result
-    assert "orders" in result
-    assert len(result["users"]) == 1
-    assert len(result["orders"]) == 1
-    assert result["users"][0].path == "/users/123"
-    assert result["orders"][0].path == "/orders/456"
-
-
-def test_group_paths_by_service():
-    paths = ["/users/123", "/users/456", "/orders/789", "/products/abc"]
-
-    result = PostmanUtils.group_paths_by_service(paths)
-
-    assert "users" in result
-    assert "orders" in result
-    assert "products" in result
-    assert len(result["users"]) == 2
-    assert len(result["orders"]) == 1
-    assert len(result["products"]) == 1
-
-
-def test_group_paths_by_service_with_root_path():
-    paths = ["/", "/api"]
-
-    result = PostmanUtils.group_paths_by_service(paths)
-
-    assert "" in result
-    assert "api" in result
+    assert "/users" in result
+    assert "/orders" in result
+    assert len(result["/users"]) == 1
+    assert len(result["/orders"]) == 1
+    assert result["/users"][0].path == "/users/123"
+    assert result["/orders"][0].path == "/orders/456"
 
 
 def test_accumulate_query_params_with_string_values():

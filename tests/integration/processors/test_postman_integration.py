@@ -97,14 +97,11 @@ class TestSimpleCollectionProcessing:
         api_paths = postman_processor.get_api_paths(api_definition)
 
         assert len(api_paths) > 0
-        service_dict = api_paths[0]
+        service_verbs = api_paths[0]
 
-        assert isinstance(service_dict, dict)
-        assert len(service_dict) > 0
-
-        for service, verbs in service_dict.items():
-            assert isinstance(verbs, list)
-            assert all(isinstance(v, VerbInfo) for v in verbs)
+        assert isinstance(service_verbs, list)
+        assert len(service_verbs) > 0
+        assert all(isinstance(v, VerbInfo) for v in service_verbs)
 
     def test_get_api_verbs_with_service_tags(self, postman_processor, simple_collection_path):
         """Test that API verbs get properly tagged with services"""
@@ -116,6 +113,41 @@ class TestSimpleCollectionProcessing:
 
         assert len(api_verbs) > 0
         assert all(verb.service != "" for verb in api_verbs)
+
+    def test_get_api_paths_and_verbs_path_matching(self, postman_processor, simple_collection_path):
+        """Test that get_api_paths and get_api_verbs correctly match paths with and without query params"""
+        api_definition = postman_processor.process_api_definition(simple_collection_path)
+
+        # Get API paths
+        api_paths = postman_processor.get_api_paths(api_definition)
+
+        # Verify api_paths structure
+        assert len(api_paths) > 0
+        assert all(isinstance(path_group, list) for path_group in api_paths)
+        assert all(isinstance(verb_info, VerbInfo) for path_group in api_paths for verb_info in path_group)
+
+        api_verbs = postman_processor.get_api_verbs(api_definition)
+
+        # Verify all verbs have services assigned
+        assert len(api_verbs) > 0
+        assert all(verb.service != "" for verb in api_verbs), "All verbs should have a service assigned"
+
+        # Build service_dict from api_paths for verification
+        service_dict_paths = {}
+        for path_group in api_paths:
+            service_name = postman_processor.get_api_path_name(path_group)
+            if service_name:
+                root_path = f"/{service_name}"
+                service_dict_paths[root_path] = {verb.path for verb in path_group}
+
+        # Verify each verb's path matches a path in its assigned service
+        for verb in api_verbs:
+            verb_path_no_query = verb.path.split("?")[0]
+            assert verb.service in service_dict_paths, f"Service '{verb.service}' not found in service_dict"
+            assert verb_path_no_query in service_dict_paths[verb.service], (
+                f"Path '{verb_path_no_query}' not found in service '{verb.service}'. "
+                f"Available paths: {service_dict_paths[verb.service]}"
+            )
 
 
 class TestComplexCollectionProcessing:
@@ -144,23 +176,67 @@ class TestComplexCollectionProcessing:
         api_definition = postman_processor.process_api_definition(complex_collection_path)
         api_paths = postman_processor.get_api_paths(api_definition)
 
-        service_dict = api_paths[0]
+        assert len(api_paths) >= 3
 
-        assert len(service_dict) >= 3
-
-        services = set(service_dict.keys())
+        services = {postman_processor.get_api_path_name(path) for path in api_paths}
         assert "users" in services
         assert "products" in services
         assert "orders" in services or "categories" in services
+
+    def test_get_api_verbs_matches_paths_with_query_params_complex_collection(
+        self, postman_processor, complex_collection_path
+    ):
+        """Test that get_api_verbs correctly matches paths with query parameters in complex collection"""
+        api_definition = postman_processor.process_api_definition(complex_collection_path)
+
+        # Get API paths
+        api_paths = postman_processor.get_api_paths(api_definition)
+
+        api_verbs = postman_processor.get_api_verbs(api_definition)
+
+        # Verify all verbs have services assigned
+        assert len(api_verbs) > 0
+        verbs_without_service = [v for v in api_verbs if v.service == ""]
+        assert len(verbs_without_service) == 0, (
+            f"Found {len(verbs_without_service)} verbs without service assignment: "
+            f"{[(v.path, v.verb) for v in verbs_without_service]}"
+        )
+
+        # Build service_dict from api_paths for verification
+        service_dict_paths = {}
+        for path_group in api_paths:
+            service_name = postman_processor.get_api_path_name(path_group)
+            if service_name:
+                root_path = f"/{service_name}"
+                service_dict_paths[root_path] = {verb.path for verb in path_group}
+
+        # Verify that each verb's path (without query params) matches a path in its assigned service
+        for verb in api_verbs:
+            verb_path_no_query = verb.path.split("?")[0]
+            service = verb.service
+
+            # Find the service in service_dict
+            assert (
+                service in service_dict_paths
+            ), f"Service '{service}' not found in service_dict for verb {verb.verb} {verb.path}"
+
+            # Get all paths for this service
+            service_paths = service_dict_paths[service]
+
+            # Verify the verb's path matches
+            assert verb_path_no_query in service_paths, (
+                f"Path '{verb_path_no_query}' (from verb {verb.verb} {verb.path}) "
+                f"not found in service '{service}'. "
+                f"Available paths in service: {service_paths}. "
+                f"Service dict keys: {list(service_dict_paths.keys())}"
+            )
 
     def test_query_params_extracted_from_complex_collection(self, postman_processor, complex_collection_path):
         """Test query parameter extraction and type inference"""
         api_definition = postman_processor.process_api_definition(complex_collection_path)
         api_paths = postman_processor.get_api_paths(api_definition)
 
-        service_dict = api_paths[0]
-
-        all_verbs = [verb for verbs in service_dict.values() for verb in verbs]
+        all_verbs = [verb for service_verbs in api_paths for verb in service_verbs]
         verbs_with_query_params = [v for v in all_verbs if v.query_params]
 
         assert len(verbs_with_query_params) > 0
@@ -174,9 +250,7 @@ class TestComplexCollectionProcessing:
         api_definition = postman_processor.process_api_definition(complex_collection_path)
         api_paths = postman_processor.get_api_paths(api_definition)
 
-        service_dict = api_paths[0]
-
-        all_verbs = [verb for verbs in service_dict.values() for verb in verbs]
+        all_verbs = [verb for service_verbs in api_paths for verb in service_verbs]
         verbs_with_body = [v for v in all_verbs if v.body_attributes and v.verb in ["POST", "PUT"]]
 
         assert len(verbs_with_body) > 0

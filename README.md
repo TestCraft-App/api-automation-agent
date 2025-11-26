@@ -133,13 +133,14 @@ The agent accepts either:
 - `--destination-folder`: Specify output directory (default: ./generated-framework_[timestamp])
 - `--use-existing-framework`: Use an existing framework instead of creating a new one
 - `--endpoints`: Generate framework for specific endpoints (can specify multiple)
+- `--prefixes`: Specify one or more API path prefixes to remove from endpoints (can specify multiple)
 - `--generate`: Specify what to generate (default: models_and_tests)
   - `models`: Generate only the data models
   - `models_and_first_test`: Generate data models and the first test for each endpoint
   - `models_and_tests`: Generate data models and complete test suites
 - `--list-endpoints`: List the endpoints that can be used with the --endpoints flag
 
-> **Note**: The `--endpoints`, `--generate`, `--list-endpoints`, and `--use-existing-framework` options are only available when using Swagger/OpenAPI specifications. When using Postman collections, only the `--destination-folder` parameter is fully supported.
+> **Note**: The `--endpoints`, `--generate`, `--list-endpoints`, and `--use-existing-framework` options are only available when using Swagger/OpenAPI specifications. When using Postman collections, only the `--destination-folder` and `--prefixes` parameters are fully supported.
 
 ### Examples
 
@@ -230,7 +231,7 @@ The API Automation Agent can now convert your Postman collections into TypeScrip
 - Only supports local Postman collection files (no HTTP download support yet)
 - Currently only supports Postman Collection v2.0 format
 - Scripts contained in folders (rather than requests) are not processed
-- Limited CLI support - only the `--destination-folder` parameter is fully supported with Postman collections
+- Limited CLI support - only the `--destination-folder` and `--prefixes` parameter is fully supported with Postman collections
 
 ### Best Practices
 
