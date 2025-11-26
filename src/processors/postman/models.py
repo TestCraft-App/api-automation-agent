@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List
 
 
@@ -44,13 +44,4 @@ class VerbInfo:
     query_params: Dict[str, str]
     body_attributes: Dict[str, Any]
     root_path: str | None
-
-
-@dataclass
-class ServiceVerbs:
-    """
-    A collection of VerbInfo objects belonging to the same service root.
-    """
-
-    service: str
-    verbs: List[VerbInfo] = field(default_factory=list)
+    script: List[str]

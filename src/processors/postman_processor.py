@@ -111,6 +111,7 @@ class PostmanProcessor(APIProcessor):
                     "query_params": verb.query_params,
                     "body_attributes": verb.body_attributes,
                     "root_path": verb.root_path,
+                    "script": verb.script,
                 }
             )
         return json.dumps(content)

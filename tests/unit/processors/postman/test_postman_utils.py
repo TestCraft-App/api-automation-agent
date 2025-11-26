@@ -381,6 +381,152 @@ def test_extract_verb_path_info_aggregates_body_attributes():
     assert "email" in result[0].body_attributes
 
 
+def test_extract_verb_path_info_aggregates_scripts():
+    """Test that scripts are aggregated from multiple requests with the same verb and path."""
+    requests = [
+        RequestData(
+            service="",
+            file_path="test1",
+            path="/users",
+            verb="POST",
+            body={},
+            prerequest=[],
+            script=["pm.test('test1', () => {})", "pm.expect(1).to.equal(1)"],
+            name="test1",
+        ),
+        RequestData(
+            service="",
+            file_path="test2",
+            path="/users",
+            verb="POST",
+            body={},
+            prerequest=[],
+            script=["pm.test('test2', () => {})"],
+            name="test2",
+        ),
+    ]
+
+    result = PostmanUtils.extract_verb_path_info(requests)
+
+    assert len(result) == 1
+    assert len(result[0].script) == 3
+    assert "pm.test('test1', () => {})" in result[0].script
+    assert "pm.expect(1).to.equal(1)" in result[0].script
+    assert "pm.test('test2', () => {})" in result[0].script
+
+
+def test_extract_verb_path_info_scripts_filtered_by_verb():
+    """Test that scripts are only collected from requests matching the current verb."""
+    requests = [
+        RequestData(
+            service="",
+            file_path="test1",
+            path="/users",
+            verb="GET",
+            body={},
+            prerequest=[],
+            script=["pm.test('GET test', () => {})"],
+            name="test1",
+        ),
+        RequestData(
+            service="",
+            file_path="test2",
+            path="/users",
+            verb="POST",
+            body={},
+            prerequest=[],
+            script=["pm.test('POST test', () => {})"],
+            name="test2",
+        ),
+    ]
+
+    result = PostmanUtils.extract_verb_path_info(requests)
+
+    assert len(result) == 2
+    get_verb = next(v for v in result if v.verb == "GET")
+    post_verb = next(v for v in result if v.verb == "POST")
+    assert len(get_verb.script) == 1
+    assert "pm.test('GET test', () => {})" in get_verb.script
+    assert "pm.test('POST test', () => {})" not in get_verb.script
+    assert len(post_verb.script) == 1
+    assert "pm.test('POST test', () => {})" in post_verb.script
+    assert "pm.test('GET test', () => {})" not in post_verb.script
+
+
+def test_extract_verb_path_info_handles_empty_scripts():
+    """Test that empty scripts are handled correctly."""
+    requests = [
+        RequestData(
+            service="",
+            file_path="test1",
+            path="/users",
+            verb="GET",
+            body={},
+            prerequest=[],
+            script=[],
+            name="test1",
+        ),
+        RequestData(
+            service="",
+            file_path="test2",
+            path="/users",
+            verb="GET",
+            body={},
+            prerequest=[],
+            script=["pm.test('test', () => {})"],
+            name="test2",
+        ),
+    ]
+
+    result = PostmanUtils.extract_verb_path_info(requests)
+
+    assert len(result) == 1
+    assert len(result[0].script) == 1
+    assert "pm.test('test', () => {})" in result[0].script
+
+
+def test_extract_verb_path_info_scripts_with_multiple_script_lines():
+    """Test that scripts with multiple lines per request are handled correctly."""
+    requests = [
+        RequestData(
+            service="",
+            file_path="test1",
+            path="/users",
+            verb="POST",
+            body={},
+            prerequest=[],
+            script=[
+                "pm.test('Status code is 200', () => {",
+                "    pm.response.to.have.status(200);",
+                "});",
+            ],
+            name="test1",
+        ),
+        RequestData(
+            service="",
+            file_path="test2",
+            path="/users",
+            verb="POST",
+            body={},
+            prerequest=[],
+            script=[
+                "pm.test('Response has body', () => {",
+                "    pm.expect(pm.response.json()).to.exist;",
+                "});",
+            ],
+            name="test2",
+        ),
+    ]
+
+    result = PostmanUtils.extract_verb_path_info(requests)
+
+    assert len(result) == 1
+    assert len(result[0].script) == 6  # 3 lines from test1 + 3 lines from test2
+    assert "pm.test('Status code is 200', () => {" in result[0].script
+    assert "    pm.response.to.have.status(200);" in result[0].script
+    assert "pm.test('Response has body', () => {" in result[0].script
+
+
 def test_group_request_data_by_service():
     requests = [
         RequestData(

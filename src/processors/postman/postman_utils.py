@@ -11,7 +11,7 @@ from ...processors.postman.models import RequestData, VerbInfo
 
 class PostmanUtils:
     """
-    All pure‐logic for parsing Postman JSON → RequestData, VerbInfo, ServiceVerbs.
+    All pure‐logic for parsing Postman JSON → RequestData, VerbInfo.
     """
 
     numeric_only = r"^\d+$"
@@ -143,6 +143,7 @@ class PostmanUtils:
                         path=base,
                         query_params=qp,
                         body_attributes=body_attrs,
+                        script=[s for m in matches if m.verb == v for s in m.script],
                     )
                 )
         return out

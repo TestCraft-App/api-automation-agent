@@ -6,7 +6,6 @@ from src.processors.postman.models import RequestData, VerbInfo
 from src.configuration.config import Config
 from src.services.file_service import FileService
 from src.models import APIDefinition, ModelInfo, GeneratedModel, APIModel, APIPath
-from src.ai_tools.models.file_spec import FileSpec
 
 
 @pytest.fixture
@@ -250,7 +249,7 @@ def test_get_api_paths_returns_grouped_verb_infos(postman_processor):
 
 
 def test_get_api_path_name_returns_service_name(postman_processor):
-    api_path = [VerbInfo("GET", "/users", {}, {}, "")]
+    api_path = [VerbInfo("GET", "/users", {}, {}, "", [])]
 
     result = postman_processor.get_api_path_name(api_path)
 
@@ -264,9 +263,7 @@ def test_get_api_path_name_with_empty_dict(postman_processor):
 
 
 def test_get_relevant_models_returns_matching_models(postman_processor):
-    model_files = [
-        GeneratedModel(path="User.ts", fileContent="interface User {}", summary="User model")
-    ]
+    model_files = [GeneratedModel(path="User.ts", fileContent="interface User {}", summary="User model")]
     all_models = [
         ModelInfo(path="users", files=["User.ts"], models=model_files),
         ModelInfo(path="orders", files=["Order.ts"], models=[]),
@@ -482,6 +479,7 @@ def test_get_api_path_content_returns_json_string(postman_processor):
             query_params={"include": "string"},
             body_attributes={},
             root_path="/users",
+            script=[],
         )
     ]
 
@@ -500,6 +498,7 @@ def test_get_api_path_content_includes_verb_details(postman_processor):
             query_params={"include": "string"},
             body_attributes={"name": "string"},
             root_path="/users",
+            script=[],
         )
     ]
 
