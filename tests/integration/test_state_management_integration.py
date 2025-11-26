@@ -201,7 +201,7 @@ class TestStateManagementIntegration:
 
         generator2.state_manager.load_state()
 
-        assert len(generator2.state_manager.framework_state.generated_endpoints) > 0
+        assert generator2.state_manager.get_endpoint_count() > 0
 
     def test_preloaded_models_available_in_subsequent_runs(self):
         """Test preloaded models are available in subsequent runs."""
@@ -401,7 +401,7 @@ class TestStateManagementIntegration:
 
         generator.state_manager.load_state()
 
-        assert len(generator.state_manager.framework_state.generated_endpoints) == 0
+        assert generator.state_manager.get_endpoint_count() == 0
 
     def test_missing_state_file_creates_new_state(self):
         """Test missing state file creates new state."""
@@ -421,7 +421,7 @@ class TestStateManagementIntegration:
         )
 
         generator.state_manager.load_state()
-        assert len(generator.state_manager.framework_state.generated_endpoints) == 0
+        assert generator.state_manager.get_endpoint_count() == 0
 
         api_definition = generator.process_api_definition()
         generator.setup_framework(api_definition)

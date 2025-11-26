@@ -56,7 +56,7 @@ class TestFrameworkStateManagerInitialization:
         manager = FrameworkStateManager(temp_config, file_service)
         assert manager.config == temp_config
         assert manager.file_service == file_service
-        assert isinstance(manager.framework_state, FrameworkState)
+        assert isinstance(manager._framework_state, FrameworkState)
         assert manager._state_loaded_models == {}
 
     def test_framework_root_property(self, state_manager, tmp_path):
@@ -88,14 +88,14 @@ class TestFrameworkStateManagerLoadState:
 
         state_manager.load_state()
 
-        assert len(state_manager.framework_state.generated_endpoints) == 1
-        assert "/users" in state_manager.framework_state.generated_endpoints
+        assert state_manager.get_endpoint_count() == 1
+        assert state_manager.get_endpoint_state("/users") is not None
         assert len(state_manager._state_loaded_models) == 1
 
     def test_load_state_when_file_not_exists(self, state_manager):
         """Test loading state when file doesn't exist (creates empty state)."""
         state_manager.load_state()
-        assert len(state_manager.framework_state.generated_endpoints) == 0
+        assert state_manager.get_endpoint_count() == 0
         assert len(state_manager._state_loaded_models) == 0
 
     def test_load_state_with_invalid_json(self, state_manager, tmp_path):
@@ -105,7 +105,7 @@ class TestFrameworkStateManagerLoadState:
 
         state_manager.load_state()
         # Should create empty state
-        assert len(state_manager.framework_state.generated_endpoints) == 0
+        assert state_manager.get_endpoint_count() == 0
 
     def test_load_state_with_missing_model_files(self, state_manager, tmp_path, sample_models):
         """Test loading state when model files don't exist (warning logged)."""
@@ -124,7 +124,7 @@ class TestFrameworkStateManagerLoadState:
             assert mock_warning.called
 
         # State should still be loaded, but no models in _state_loaded_models
-        assert len(state_manager.framework_state.generated_endpoints) == 1
+        assert state_manager.get_endpoint_count() == 1
         assert len(state_manager._state_loaded_models) == 0
 
     def test_load_state_with_valid_model_files(self, state_manager, tmp_path, sample_models):
@@ -289,25 +289,6 @@ class TestFrameworkStateManagerShouldGenerateTestsVerb:
             result = state_manager.should_generate_tests_verb(verb)
             assert result is True
             assert mock_info.called
-
-
-class TestFrameworkStateManagerIsEndpointGenerated:
-    """Test is_endpoint_generated() method."""
-
-    def test_is_endpoint_generated_false(self, state_manager):
-        """Test returning False for non-existent endpoint."""
-        result = state_manager.is_endpoint_generated("/non-existent")
-        assert result is False
-
-    def test_is_endpoint_generated_true(self, state_manager, tmp_path):
-        """Test returning True for existing endpoint."""
-        state = FrameworkState()
-        state.update_models(path="/users", models=[])
-        state.save(tmp_path)
-        state_manager.load_state()
-
-        result = state_manager.is_endpoint_generated("/users")
-        assert result is True
 
 
 class TestFrameworkStateManagerUpdateModelsState:

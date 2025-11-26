@@ -26,7 +26,7 @@ class FrameworkStateManager:
         self.config = config
         self.file_service = file_service
         self.logger = Logger.get_logger(__name__)
-        self.framework_state = FrameworkState()
+        self._framework_state = FrameworkState()
         self._state_loaded_models: Dict[str, ModelInfo] = {}
 
     @property
@@ -36,12 +36,13 @@ class FrameworkStateManager:
 
     def load_state(self):
         """Load framework state from disk and hydrate model metadata."""
-        self.framework_state = FrameworkState.load(self._framework_root)
+        self._framework_state = FrameworkState.load(self._framework_root)
         self._state_loaded_models = self._load_models_from_state()
-        if self.framework_state.generated_endpoints:
+        if self._framework_state.generated_endpoints:
+            endpoint_count = len(self._framework_state.generated_endpoints)
+            endpoint_keys = list(self._framework_state.generated_endpoints.keys())
             self.logger.info(
-                f"🔁 Loaded framework state with {len(self.framework_state.generated_endpoints)} endpoint(s): "
-                f"{list(self.framework_state.generated_endpoints.keys())}"
+                f"🔁 Loaded framework state with {endpoint_count} endpoint(s): {endpoint_keys}"
             )
 
     def _load_models_from_state(self) -> Dict[str, ModelInfo]:
@@ -52,10 +53,10 @@ class FrameworkStateManager:
             Dict[str, ModelInfo]: Mapping of endpoint path to ModelInfo for pre-existing models.
         """
         loaded: Dict[str, ModelInfo] = {}
-        if not self.framework_state.generated_endpoints:
+        if not self._framework_state.generated_endpoints:
             return loaded
 
-        for endpoint in self.framework_state.generated_endpoints.values():
+        for endpoint in self._framework_state.generated_endpoints.values():
             generated_models: List[GeneratedModel] = []
             file_entries: List[str] = []
 
@@ -91,9 +92,33 @@ class FrameworkStateManager:
         """Return previously loaded model info objects."""
         return list(self._state_loaded_models.values())
 
+    def are_models_generated_for_path(self, path_name: str) -> bool:
+        """
+        Check if models have been generated for a given path.
+
+        Args:
+            path_name: The endpoint path to check
+
+        Returns:
+            bool: True if models exist for the path, False otherwise
+        """
+        return self._framework_state.are_models_generated_for_path(path_name)
+
+    def are_tests_generated_for_verb(self, verb: APIVerb) -> bool:
+        """
+        Check if tests have been generated for a given verb.
+
+        Args:
+            verb: The API verb to check
+
+        Returns:
+            bool: True if tests exist for the verb, False otherwise
+        """
+        return self._framework_state.are_tests_generated_for_verb(verb)
+
     def should_generate_models_for_path(self, path_name: str) -> bool:
         """
-        Check if endpoint should be generated, prompting user if it already exists.
+        Check if endpoint should be generated, considering override configuration.
 
         Args:
             path_name: The endpoint path to check
@@ -101,7 +126,7 @@ class FrameworkStateManager:
         Returns:
             bool: True if endpoint should be generated, False otherwise
         """
-        if not self.framework_state.are_models_generated_for_path(path_name):
+        if not self.are_models_generated_for_path(path_name):
             return True
 
         if self.config.override:
@@ -112,9 +137,15 @@ class FrameworkStateManager:
 
     def should_generate_tests_verb(self, verb: APIVerb) -> bool:
         """
-        Check if tests should be generated for a given APIVerb.
+        Check if tests should be generated for a given APIVerb, considering override configuration.
+
+        Args:
+            verb: The API verb to check
+
+        Returns:
+            bool: True if tests should be generated, False otherwise
         """
-        if not self.framework_state.are_tests_generated_for_verb(verb):
+        if not self.are_tests_generated_for_verb(verb):
             return True
 
         if self.config.override:
@@ -125,16 +156,33 @@ class FrameworkStateManager:
 
         return False
 
-    def is_endpoint_generated(self, path_name: str) -> bool:
-        """Check if an endpoint has been generated according to state."""
-        return self.framework_state.are_models_generated_for_path(path_name)
-
     def update_models_state(self, path: str, models: List[GeneratedModel]):
         """Update or create endpoint state for models in the framework state."""
-        self.framework_state.update_models(path=path, models=models)
-        self.framework_state.save(self._framework_root)
+        self._framework_state.update_models(path=path, models=models)
+        self._framework_state.save(self._framework_root)
 
     def update_tests_state(self, verb: APIVerb, tests: List[str]):
         """Update tests for an endpoint in the framework state."""
-        self.framework_state.update_tests(verb, tests)
-        self.framework_state.save(self._framework_root)
+        self._framework_state.update_tests(verb, tests)
+        self._framework_state.save(self._framework_root)
+
+    def get_endpoint_state(self, path: str):
+        """
+        Get the endpoint state for a given path.
+
+        Args:
+            path: The endpoint path to retrieve
+
+        Returns:
+            EndpointState if found, None otherwise
+        """
+        return self._framework_state.get_endpoint(path)
+
+    def get_endpoint_count(self) -> int:
+        """
+        Get the count of generated endpoints in the state.
+
+        Returns:
+            int: Number of endpoints in the state
+        """
+        return len(self._framework_state.generated_endpoints)

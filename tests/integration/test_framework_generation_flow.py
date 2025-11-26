@@ -472,7 +472,7 @@ class TestFrameworkGenerationFlow:
         assert preloaded_models, "Existing models should be loaded from state."
         first_endpoint = preloaded_models[0].path
         assert first_endpoint == "/pets"
-        assert generator2.state_manager.framework_state.get_endpoint(first_endpoint) is not None
+        assert generator2.state_manager.get_endpoint_state(first_endpoint) is not None
 
     def test_existing_framework_respects_override_prompt(self, monkeypatch):
         """Verify that an existing endpoint is skipped when user declines override."""

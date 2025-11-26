@@ -66,17 +66,6 @@ class FrameworkGenerator:
             }
         )
 
-    def _build_path_verbs_map(self, api_verbs: List[APIVerb]) -> Dict[str, List[str]]:
-        verbs_by_path: Dict[str, List[str]] = {}
-        for verb in api_verbs:
-            path_key = self.api_processor.get_api_verb_rootpath(verb)
-            if not path_key:
-                continue
-            verb_name = self.api_processor.get_api_verb_name(verb)
-            verb_path = self.api_processor.get_api_verb_path(verb)
-            verbs_by_path.setdefault(path_key, []).append(f"{verb_path} - {verb_name.upper()}")
-        return verbs_by_path
-
     def _update_model_info_collection(self, lookup: Dict[str, ModelInfo], model_info: ModelInfo) -> None:
         lookup[model_info.path] = model_info
 
@@ -112,13 +101,13 @@ class FrameworkGenerator:
         existing_paths: Dict[str, List[str]] = {}
         for path in api_paths:
             path_name = self.api_processor.get_api_path_name(path)
-            if self.state_manager.framework_state.are_models_generated_for_path(path_name):
+            if self.state_manager.are_models_generated_for_path(path_name):
                 existing_paths[path_name] = []
 
         for verb in api_verbs:
             verb_rootpath = self.api_processor.get_api_verb_rootpath(verb)
 
-            if verb_rootpath and self.state_manager.framework_state.are_tests_generated_for_verb(verb):
+            if verb_rootpath and self.state_manager.are_tests_generated_for_verb(verb):
                 if verb_rootpath not in existing_paths:
                     existing_paths[verb_rootpath] = []
                 existing_paths[verb_rootpath].append(f"{verb.path} - {verb.verb.upper()}")

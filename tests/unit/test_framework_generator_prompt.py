@@ -73,7 +73,7 @@ class TestCheckAndPromptForExistingEndpoints:
     def test_no_existing_endpoints_returns_early(self, generator, api_definition, mock_api_processor):
         """Test returns early when no existing paths/verbs."""
         # Setup: no existing endpoints in state
-        generator.state_manager.framework_state = FrameworkState()
+        generator.state_manager._framework_state = FrameworkState()
 
         # Mock API processor to return empty lists
         mock_api_processor.get_api_paths.return_value = []
@@ -92,7 +92,7 @@ class TestCheckAndPromptForExistingEndpoints:
         # Setup: existing endpoint in state
         state = FrameworkState()
         state.update_models(path="/users", models=[])
-        generator.state_manager.framework_state = state
+        generator.state_manager._framework_state = state
 
         # Mock API processor
         path = Mock(spec=APIPath)
@@ -124,7 +124,7 @@ class TestCheckAndPromptForExistingEndpoints:
         # Setup: existing endpoint in state
         state = FrameworkState()
         state.update_models(path="/users", models=[])
-        generator.state_manager.framework_state = state
+        generator.state_manager._framework_state = state
 
         # Mock API processor
         path = Mock(spec=APIPath)
@@ -153,7 +153,7 @@ class TestCheckAndPromptForExistingEndpoints:
         # Setup: existing endpoint in state
         state = FrameworkState()
         state.update_models(path="/users", models=[])
-        generator.state_manager.framework_state = state
+        generator.state_manager._framework_state = state
 
         # Mock API processor
         path = Mock(spec=APIPath)
@@ -183,7 +183,7 @@ class TestCheckAndPromptForExistingEndpoints:
         # Setup: existing endpoint in state
         state = FrameworkState()
         state.update_models(path="/users", models=[])
-        generator.state_manager.framework_state = state
+        generator.state_manager._framework_state = state
 
         # Mock API processor
         path = Mock(spec=APIPath)
@@ -219,7 +219,7 @@ class TestCheckAndPromptForExistingEndpoints:
         # Setup: existing endpoint in state
         state = FrameworkState()
         state.update_models(path="/users", models=[])
-        generator.state_manager.framework_state = state
+        generator.state_manager._framework_state = state
 
         # Mock API processor
         path = Mock(spec=APIPath)
@@ -247,7 +247,7 @@ class TestCheckAndPromptForExistingEndpoints:
         state = FrameworkState()
         verb = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
         state.update_tests(verb, ["test.ts"])
-        generator.state_manager.framework_state = state
+        generator.state_manager._framework_state = state
 
         # Mock API processor
         mock_api_processor.get_api_paths.return_value = []
@@ -273,7 +273,7 @@ class TestCheckAndPromptForExistingEndpoints:
         # Setup: existing endpoint with models but no verbs
         state = FrameworkState()
         state.update_models(path="/users", models=[])
-        generator.state_manager.framework_state = state
+        generator.state_manager._framework_state = state
 
         # Mock API processor
         path = Mock(spec=APIPath)
@@ -304,7 +304,7 @@ class TestCheckAndPromptForExistingEndpoints:
         verb2 = APIVerb(path="/orders", verb="post", root_path="/orders", yaml={})
         state.update_tests(verb1, ["test1.ts"])
         state.update_tests(verb2, ["test2.ts"])
-        generator.state_manager.framework_state = state
+        generator.state_manager._framework_state = state
 
         # Mock API processor
         path1 = Mock(spec=APIPath)
