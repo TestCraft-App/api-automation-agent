@@ -1,0 +1,364 @@
+## Role
+
+You are an expert developer specializing in TypeScript, with extensive experience in Automation Testing for REST APIs. 
+You will create API automation test code based on Postman request data using a custom testing framework, as detailed below.
+
+## Task
+
+- Your task is to create the Service Model TypeScript file for the path documented on the Postman Request Data section.
+- Include in the Service Model every verb detailed in the Postman Request Data.
+- Parameters to the verbs methods must be of type unknown, to allow to test negative scenarios.
+- Service Models must be placed inside /src/models/services folder in the current working directory.
+- If the path includes a version (e.g. `/v1` or `/v2`), append the version to the service name and to the file name. e.g. `BookingServiceV1.ts`
+- If Request models are required, create separate TypeScript files for them and import them into the Service Model class. Don't declare the models interfaces inside the service model file.
+- If Response models are inferred from the Postman Request Data, create separate TypeScript files for them. The `script` attribute can be of help to determine the the response data model.
+- Models must be placed inside /src/models/requests or /src/models/responses folders in the current working directory.
+- For request models, declare all their properties as optional.
+- Include ".js" in the import statements for modules.
+- You will be penalized for every TS or eslint error.
+
+## Output
+
+The output must contain the function call for all the files generated.
+Generate all files at once.
+Make sure the output is only the function call and nothing else.
+
+## Framework Documentation
+
+### API Automation Framework (TS+Mocha)
+
+TypeScript API automation framework that does its job in a simple but effective way. It is designed to work with HTTP APIs but can be adapted to work with other protocols.
+
+Libraries used:
+
+- Mocha - Test Runner
+- Axios - HTTP client
+- Chai - Assertions
+
+This example uses the [Restful-booker](https://restful-booker.herokuapp.com/apidoc/index.html) API for demonstration purposes.
+
+#### Getting started
+
+The idea behind this framework is to encapsulate endpoints on Service Models, for maintainability and reusability. You can think of Service Models as an analogy of Page Object Models for UI Automation.
+
+#### Service Models
+
+In this framework, Service Models are used to encapsulate the API endpoints you are testing. This abstraction allows for better maintainability and reusability of your test code. The concept here is somewhat similar to the Page Object Model used in UI Automation, where each service model represents a specific set of functionality provided by your API.
+
+##### Understanding `ServiceBase`
+
+The `ServiceBase` class is the foundation of all Service Models. It provides common functionality needed for making API requests and processing responses. When you create a new Service Model, it should extend `ServiceBase` to inherit these capabilities. This approach ensures consistency and reduces boilerplate code in your service models.
+
+Here's what `ServiceBase` offers:
+
+- **API Client Management**: It initializes and holds an instance of the `ApiClient`, ensuring that all service models use the same API client setup.
+- **Base URL Configuration**: It dynamically sets the base URL for API requests using the `BASEURL` from your `.env` file. This allows for flexibility across different environments (e.g., development, staging, production).
+- **Authentication**: The `authenticate` method simplifies the process of authenticating with the API. Once called, it stores the authentication token in the request headers, so subsequent API calls are authenticated. Note that as explained below in the [Authentication](#authentication) section, this is specific to this API, and must be adapted to your use case.
+- **HTTP Methods**: `ServiceBase` provides methods for common HTTP requests (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS). These methods handle the request execution and timing, then format the response into a standardized `Response` object, making it easier to work with.
+
+##### Extending `ServiceBase`
+
+When you create a Service Model, you extend `ServiceBase` and define methods specific to the service you're testing. For example, a `BookingService` might have methods like `getBooking` or `createBooking`. Each method uses the HTTP methods provided by `ServiceBase` to interact with the API.
+
+Here's a simple example of a service model:
+
+```tsx
+import {{ ServiceBase }} from "../../base/ServiceBase.js"; // Import the base class
+
+export class BookingService extends ServiceBase {{
+  constructor() {{
+    super("/booking"); // Set the endpoint path
+  }}
+
+  async getBooking<T>(id: number, config = this.defaultConfig): Promise<Response<T>> {{
+    return await this.get<T>(`${{this.url}}/${{id}}`, config); // Use the inherited GET method
+  }}
+}}
+```
+
+By extending ServiceBase, BookingService gains all the functionalities of making HTTP requests, handling authentication, and standardizing responses, allowing you to focus on the logic specific to the Booking service.
+
+##### Other Models
+
+In addition to **Service Models**, you should declare **Request** and **Response** models as needed. For example, here is the BookingModel that will be used to deserialize the response from the endpoint above.
+
+```tsx
+export interface BookingModel {{
+  id?: number | undefined;
+  firstname?: string | undefined;
+  lastname?: string | undefined;
+  totalprice?: number | undefined;
+  depositpaid?: boolean | undefined;
+  bookingdates?: {{
+    checkin?: string | undefined;
+    checkout?: string | undefined;
+  }};
+  additionalneeds?: string | undefined;
+}}
+```
+
+#### Framework folder structure
+
+```bash
+API-FRAMEWORK
+├── .env
+├── .eslintrc.json
+├── .gitignore
+├── .mocharc.json
+├── .prettierrc.json
+└── src
+    ├── base
+    │  	├── ApiClient.ts
+    │   └── ApiClientBase.ts
+    │   └── ServiceBase.ts
+    ├── models
+    │   ├── requests
+    │   └── responses
+    │   │   └── Response.ts
+    │   └── services
+    │     ├── AuthService.ts
+    │     └── BookingService.ts
+    └── tests
+    │   ├── auth
+    │   │   └── auth.spec.ts
+    │   └── booking
+    │       ├── Post-AddBooking.spec.ts
+    │       ├── Delete-DeleteBooking.spec.ts
+    │       ├── Get-GetBooking.spec.ts
+    │       ├── Get-GetBookingIds.spec.ts
+    │       ├── Patch-PatchBooking.spec.ts
+    │       └── Put-UpdateBooking.spec.ts
+    └── utils
+```
+
+#### Files
+
+##### ServiceBase
+
+```tsx
+import {{ AxiosResponse, type AxiosRequestConfig }} from "axios";
+import {{ ApiClient }} from "./ApiClient.js";
+import {{ Response }} from "../models/responses/Response.js";
+import {{ SessionManager }} from "./SessionManager.js";
+
+export class ServiceBase {{
+  private api: ApiClient;
+  protected url: string;
+  protected defaultConfig: AxiosRequestConfig;
+
+  constructor(endpointPath: string) {{
+    this.api = ApiClient.getInstance();
+    this.url = this.baseUrl + endpointPath;
+    this.defaultConfig = {{}};
+  }}
+
+  get baseUrl(): string {{
+    return process.env["BASEURL"] ?? "";
+  }}
+
+  async authenticate(): Promise<void> {{
+    const username = process.env["USER"];
+    const password = process.env["PASSWORD"];
+
+    if (!username || !password) {{
+      throw new Error("Missing username or password in environment variables.");
+    }}
+
+    const cachedToken = SessionManager.getCachedToken(username, password);
+
+    if (cachedToken) {{
+      this.defaultConfig = {{
+        headers: {{ Authorization: "Bearer " + cachedToken }},
+      }};
+      return;
+    }}
+
+    // AUTHENTICATION EXAMPLE 
+    //
+    // const credentials = {{
+    //   username,
+    //   password,
+    // }};
+    // const response = await this.post<SessionResponse>(`${{this.baseUrl}}/auth`, credentials);
+
+    // SessionManager.storeToken(username, password, response.data.token);
+
+    // this.defaultConfig = {{
+    //   headers: {{ Authorization: "Bearer " + response.data.token }},
+    // }};
+  }}
+
+  protected async get<T>(
+    url: string,
+    config: AxiosRequestConfig = this.defaultConfig,
+  ): Promise<Response<T>> {{
+    const startTime = Date.now();
+    const response = await this.api.client.get<T>(url, config);
+    const endTime = Date.now();
+
+    const customResponse: Response<T> = this.buildResponse<T>(endTime, startTime, response);
+    return customResponse;
+  }}
+
+  protected async post<T>(
+    url: string,
+    data: unknown,
+    config: AxiosRequestConfig = this.defaultConfig,
+  ): Promise<Response<T>> {{
+    const startTime = Date.now();
+    const response = await this.api.client.post<T>(url, data, config);
+    const endTime = Date.now();
+
+    const customResponse: Response<T> = this.buildResponse<T>(endTime, startTime, response);
+    return customResponse;
+  }}
+
+  protected async put<T>(
+    url: string,
+    data: unknown,
+    config: AxiosRequestConfig = this.defaultConfig,
+  ): Promise<Response<T>> {{
+    const startTime = Date.now();
+    const response = await this.api.client.put<T>(url, data, config);
+    const endTime = Date.now();
+
+    const customResponse: Response<T> = this.buildResponse<T>(endTime, startTime, response);
+    return customResponse;
+  }}
+
+  protected async patch<T>(
+    url: string,
+    data: unknown,
+    config: AxiosRequestConfig = this.defaultConfig,
+  ): Promise<Response<T>> {{
+    const startTime = Date.now();
+    const response = await this.api.client.patch<T>(url, data, config);
+    const endTime = Date.now();
+
+    const customResponse: Response<T> = this.buildResponse<T>(endTime, startTime, response);
+    return customResponse;
+  }}
+
+  protected async delete<T>(
+    url: string,
+    config: AxiosRequestConfig = this.defaultConfig,
+  ): Promise<Response<T>> {{
+    const startTime = Date.now();
+    const response = await this.api.client.delete<T>(url, config);
+    const endTime = Date.now();
+
+    const customResponse: Response<T> = this.buildResponse<T>(endTime, startTime, response);
+    return customResponse;
+  }}
+
+  protected async head<T>(
+    url: string,
+    config: AxiosRequestConfig = this.defaultConfig,
+  ): Promise<Response<T>> {{
+    const startTime = Date.now();
+    const response = await this.api.client.head<T>(url, config);
+    const endTime = Date.now();
+
+    const customResponse: Response<T> = this.buildResponse<T>(endTime, startTime, response);
+    return customResponse;
+  }}
+
+  protected async options<T>(
+    url: string,
+    config: AxiosRequestConfig = this.defaultConfig,
+  ): Promise<Response<T>> {{
+    const startTime = Date.now();
+    const response = await this.api.client.options<T>(url, config);
+    const endTime = Date.now();
+
+    const customResponse: Response<T> = this.buildResponse<T>(endTime, startTime, response);
+    return customResponse;
+  }}
+
+  private buildResponse<T>(endTime: number, startTime: number, response: AxiosResponse<T>) {{
+    const responseTime = endTime - startTime;
+
+    const customResponse: Response<T> = {{
+      data: response.data,
+      status: response.status,
+      headers: response.headers,
+      responseTime: responseTime,
+    }};
+    return customResponse;
+  }}
+}}
+```
+
+##### Service Model example
+
+```tsx
+import {{ ServiceBase }} from "../../base/ServiceBase.js";
+import {{ BookingModel }} from "../requests/BookingModel.js";
+import {{ Response }} from "../responses/Response.js";
+
+export class BookingService extends ServiceBase {{
+  constructor() {{
+    super("/booking");
+  }}
+
+  async getBookingIds<T>(
+    params: URLSearchParams = new URLSearchParams(),
+    config = this.defaultConfig,
+  ): Promise<Response<T>> {{
+    config.params = params;
+    return await this.get<T>(this.url, config);
+  }}
+
+  async getBooking<T>(id: unknown, config = this.defaultConfig): Promise<Response<T>> {{
+    return await this.get<T>(`${{this.url}}/${{id}}`, config);
+  }}
+
+  async addBooking<T>(booking: BookingModel, config = this.defaultConfig): Promise<Response<T>> {{
+    return await this.post<T>(this.url, booking, config);
+  }}
+
+  async updateBooking<T>(
+    id: unknown,
+    booking: BookingModel,
+    config = this.defaultConfig,
+  ): Promise<Response<T>> {{
+    return await this.put<T>(`${{this.url}}/${{id}}`, booking, config);
+  }}
+
+  async partialUpdateBooking<T>(
+    id: unknown,
+    booking: BookingModel,
+    config = this.defaultConfig,
+  ): Promise<Response<T>> {{
+    return await this.patch<T>(`${{this.url}}/${{id}}`, booking, config);
+  }}
+
+  async deleteBooking<T>(id: unknown, config = this.defaultConfig): Promise<Response<T>> {{
+    return await this.delete<T>(`${{this.url}}/${{id}}`, config);
+  }}
+}}
+```
+
+##### Request Model example
+
+```tsx
+export interface BookingModel {{
+  id?: number | undefined;
+  firstname?: string | undefined;
+  lastname?: string | undefined;
+  totalprice?: number | undefined;
+  depositpaid?: boolean | undefined;
+  bookingdates?: {{
+    checkin?: string | undefined;
+    checkout?: string | undefined;
+  }};
+  additionalneeds?: string | undefined;
+}}
+```
+
+## Postman Request Data
+
+```yaml
+{api_definition}
+```
+

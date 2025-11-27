@@ -23,7 +23,7 @@ class APIDefinitionSplitter:
         base_yaml = yaml.dump(base_definition, sort_keys=False)
 
         for path, path_data in api_definition.get("paths", {}).items():
-            normalized_path = APIPath.normalize_path(path, prefixes)
+            normalized_path, _ = APIPath.normalize_path(path, prefixes)
 
             api_definition_list.append(
                 APIPath(path=normalized_path, yaml=yaml.dump({path: path_data}, sort_keys=False))

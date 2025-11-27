@@ -336,24 +336,6 @@ class FrameworkGenerator:
             relevant_models = self.api_processor.get_relevant_models(all_models, api_verb)
             other_models = self.api_processor.get_other_models(all_models, api_verb)
 
-            self.logger.info("Relevant models:")
-            for model in relevant_models:
-                if hasattr(model, "path"):
-                    self.logger.info(f"  - Path: {getattr(model, 'path', None)}")
-                if hasattr(model, "fileContent"):
-                    file_content = getattr(model, "fileContent", "")
-                    content_preview = file_content[:120].replace("\n", " ") + (
-                        "..." if len(file_content) > 120 else ""
-                    )
-                    self.logger.info(f"    Content (preview): {content_preview}")
-                else:
-                    self.logger.info(f"  - Model: {str(model)}")
-
-            self.logger.info("Other models:")
-            for model in other_models:
-                if hasattr(model, "path"):
-                    self.logger.info(f"  - Path: {getattr(model, 'path', None)}")
-
             self.logger.info(f"\nGenerating first test for path: {verb_path} and verb: {verb_name}")
 
             if other_models:

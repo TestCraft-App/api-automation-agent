@@ -106,11 +106,11 @@ class PostmanProcessor(APIProcessor):
         for verb in api_path:
             content[service].append(
                 {
+                    "root_path": verb.root_path,
                     "path": verb.path,
                     "verb": verb.verb,
                     "query_params": verb.query_params,
                     "body_attributes": verb.body_attributes,
-                    "root_path": verb.root_path,
                     "script": verb.script,
                 }
             )

@@ -46,12 +46,41 @@ def test_api_path_instantiation():
     ],
 )
 def test_normalize_path(path, prefixes, expected):
-    assert APIPath.normalize_path(path, prefixes) == expected
+    normalized_path, _ = APIPath.normalize_path(path, prefixes)
+    assert normalized_path == expected
 
 
 def test_normalize_path_custom_prefixes_extend_api():
     """Test that custom prefixes extend /api instead of replacing it."""
-    assert APIPath.normalize_path("/api/users", ["/beta"]) == "/users"
+    normalized_path, _ = APIPath.normalize_path("/api/users", ["/beta"])
+    assert normalized_path == "/users"
+
+
+def test_normalize_path_returns_removed_prefix():
+    """Test that normalize_path returns both the normalized path and the removed prefix."""
+    normalized_path, removed_prefix = APIPath.normalize_path("/api/pets", None)
+    assert normalized_path == "/pets"
+    assert removed_prefix == "/api"
+
+    normalized_path, removed_prefix = APIPath.normalize_path("/api/v1/users", None)
+    assert normalized_path == "/v1/users"
+    assert removed_prefix == "/api"
+
+    normalized_path, removed_prefix = APIPath.normalize_path("/public-api/pets", ["/public-api"])
+    assert normalized_path == "/pets"
+    assert removed_prefix == "/public-api"
+
+    normalized_path, removed_prefix = APIPath.normalize_path("/api/v2beta/pets", ["/api", "/api/v2beta"])
+    assert normalized_path == "/pets"
+    assert removed_prefix == "/api/v2beta"
+
+    normalized_path, removed_prefix = APIPath.normalize_path("/pets", None)
+    assert normalized_path == "/pets"
+    assert removed_prefix == ""
+
+    normalized_path, removed_prefix = APIPath.normalize_path("/", None)
+    assert normalized_path == "/"
+    assert removed_prefix == ""
 
 
 def test_api_path_to_json():

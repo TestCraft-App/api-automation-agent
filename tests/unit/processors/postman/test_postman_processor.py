@@ -57,6 +57,7 @@ def sample_request_data():
     return RequestData(
         service="users",
         file_path="src/tests/users/getUser",
+        prefix="",
         path="/users/123",
         verb="GET",
         body={},
@@ -179,7 +180,8 @@ def test_create_dot_env_uppercases_keys(postman_processor, tmp_path):
 
 def test_get_api_paths_returns_list(postman_processor):
     request = RequestData(
-        service="",
+        service="/users",
+        prefix="",
         file_path="test",
         path="/users/123",
         verb="GET",
@@ -199,6 +201,7 @@ def test_get_api_paths_returns_list(postman_processor):
 def test_get_api_paths_groups_by_service(postman_processor):
     request1 = RequestData(
         service="/users",  # Service is set to root path
+        prefix="",
         file_path="test1",
         path="/users/123",
         verb="GET",
@@ -209,6 +212,7 @@ def test_get_api_paths_groups_by_service(postman_processor):
     )
     request2 = RequestData(
         service="/orders",  # Service is set to root path
+        prefix="",
         file_path="test2",
         path="/orders/456",
         verb="GET",
@@ -231,6 +235,7 @@ def test_get_api_paths_groups_by_service(postman_processor):
 def test_get_api_paths_returns_grouped_verb_infos(postman_processor):
     request = RequestData(
         service="/users",  # Service is set to root path
+        prefix="",
         file_path="test",
         path="/users/123",
         verb="GET",
@@ -249,7 +254,11 @@ def test_get_api_paths_returns_grouped_verb_infos(postman_processor):
 
 
 def test_get_api_path_name_returns_service_name(postman_processor):
-    api_path = [VerbInfo("GET", "/users", {}, {}, "", [])]
+    api_path = [
+        VerbInfo(
+            verb="GET", root_path="/users", path="/users", query_params={}, body_attributes={}, script=[]
+        )
+    ]
 
     result = postman_processor.get_api_path_name(api_path)
 
@@ -271,6 +280,7 @@ def test_get_relevant_models_returns_matching_models(postman_processor):
     api_verb = RequestData(
         service="users",
         file_path="test",
+        prefix="",
         path="/users",
         verb="GET",
         body={},
@@ -293,6 +303,7 @@ def test_get_relevant_models_returns_empty_when_no_match(postman_processor):
     api_verb = RequestData(
         service="orders",
         file_path="test",
+        prefix="",
         path="/orders",
         verb="GET",
         body={},
@@ -315,6 +326,7 @@ def test_get_other_models_excludes_current_service(postman_processor):
     api_verb = RequestData(
         service="users",
         file_path="test",
+        prefix="",
         path="/users",
         verb="GET",
         body={},
@@ -338,6 +350,7 @@ def test_get_other_models_returns_api_model_instances(postman_processor):
     api_verb = RequestData(
         service="users",
         file_path="test",
+        prefix="",
         path="/users",
         verb="GET",
         body={},
@@ -375,6 +388,7 @@ def test_get_api_verbs_returns_request_data_list(postman_processor):
     request = RequestData(
         service="",
         file_path="test",
+        prefix="",
         path="/users/123",
         verb="GET",
         body={},
@@ -397,6 +411,7 @@ def test_get_api_verbs_tags_with_service(postman_processor):
     request = RequestData(
         service="/users",  # Service is set to root path in extract_request_data
         file_path="test",
+        prefix="",
         path="/users/123",
         verb="GET",
         body={},
@@ -418,6 +433,7 @@ def test_get_api_verbs_tags_multiple_services_correctly(postman_processor):
     request1 = RequestData(
         service="/users",  # Service is set to root path
         file_path="test1",
+        prefix="",
         path="/users/123",
         verb="GET",
         body={},
@@ -428,6 +444,7 @@ def test_get_api_verbs_tags_multiple_services_correctly(postman_processor):
     request2 = RequestData(
         service="/orders",  # Service is set to root path
         file_path="test2",
+        prefix="",
         path="/orders/456",
         verb="POST",
         body={},
@@ -521,6 +538,7 @@ def test_update_framework_for_postman_creates_run_order_file(postman_processor, 
     request = RequestData(
         service="users",
         file_path="src/tests/users/getUser",
+        prefix="",
         path="/users",
         verb="GET",
         body={},
@@ -584,6 +602,7 @@ def test_create_run_order_file_includes_all_requests(postman_processor, tmp_path
     request1 = RequestData(
         service="users",
         file_path="src/tests/users/getUser",
+        prefix="",
         path="/users",
         verb="GET",
         body={},
@@ -594,6 +613,7 @@ def test_create_run_order_file_includes_all_requests(postman_processor, tmp_path
     request2 = RequestData(
         service="users",
         file_path="src/tests/users/createUser",
+        prefix="",
         path="/users",
         verb="POST",
         body={},
@@ -625,6 +645,7 @@ def test_create_run_order_file_skips_non_request_data(postman_processor, tmp_pat
     request = RequestData(
         service="users",
         file_path="src/tests/users/getUser",
+        prefix="",
         path="/users",
         verb="GET",
         body={},

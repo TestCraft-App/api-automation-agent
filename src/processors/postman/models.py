@@ -10,6 +10,7 @@ class RequestData:
 
     service: str
     file_path: str
+    prefix: str
     path: str
     verb: str
     body: Dict[str, Any]
@@ -40,8 +41,8 @@ class VerbInfo:
     """
 
     verb: str
+    root_path: str | None
     path: str
     query_params: Dict[str, str]
     body_attributes: Dict[str, Any]
-    root_path: str | None
     script: List[str]

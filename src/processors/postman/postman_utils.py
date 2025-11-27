@@ -102,12 +102,13 @@ class PostmanUtils:
         name = PostmanUtils.to_camel_case(data.get("name", ""))
         file_path = f"src/tests{current_path}/{name}"
 
-        normalized_path = APIPath.normalize_path(path, prefixes)
+        normalized_path, prefix = APIPath.normalize_path(path, prefixes)
         service = APIVerb.get_root_path(normalized_path)
 
         return RequestData(
             service=service,
             file_path=file_path,
+            prefix=prefix,
             path=normalized_path,
             verb=verb,
             body=body,
@@ -118,34 +119,36 @@ class PostmanUtils:
 
     @staticmethod
     def extract_verb_path_info(requests: List[RequestData]) -> List[VerbInfo]:
-        distinct = {item.path.split("?")[0] for item in requests}
-        out: List[VerbInfo] = []
+        """Group requests by base path (without query params) and verb, then aggregate attributes."""
+        grouped: Dict[tuple[str, str], List[RequestData]] = {}
+        for request in requests:
+            base_path = request.path.split("?")[0]
+            key = (base_path, request.verb)
+            grouped.setdefault(key, []).append(request)
 
-        for base in distinct:
-            matches = [r for r in requests if r.path.startswith(base)]
-            verbs = {r.verb for r in matches}
-            for v in verbs:
-                qp: Dict[str, str] = {}
-                body_attrs: Dict[str, Any] = {}
-                for m in matches:
-                    if m.verb != v:
-                        continue
-                    # body
-                    PostmanUtils._accumulate_request_body_attributes(body_attrs, m.body)
-                    # query
-                    parts = m.path.split("?", 1)
-                    if len(parts) == 2 and parts[1]:
-                        PostmanUtils.accumulate_query_params(qp, parts[1])
-                out.append(
-                    VerbInfo(
-                        verb=v,
-                        root_path=APIVerb.get_root_path(base),
-                        path=base,
-                        query_params=qp,
-                        body_attributes=body_attrs,
-                        script=[s for m in matches if m.verb == v for s in m.script],
-                    )
+        out: List[VerbInfo] = []
+        for (base_path, verb), matches in grouped.items():
+            qp: Dict[str, str] = {}
+            body_attrs: Dict[str, Any] = {}
+            scripts: List[str] = []
+
+            for match in matches:
+                PostmanUtils._accumulate_request_body_attributes(body_attrs, match.body)
+                parts = match.path.split("?", 1)
+                if len(parts) == 2 and parts[1]:
+                    PostmanUtils.accumulate_query_params(qp, parts[1])
+                scripts.extend(match.script)
+
+            out.append(
+                VerbInfo(
+                    verb=verb,
+                    root_path=requests[0].prefix + APIVerb.get_root_path(base_path),
+                    path=base_path,
+                    query_params=qp,
+                    body_attributes=body_attrs,
+                    script=scripts,
                 )
+            )
         return out
 
     @staticmethod
