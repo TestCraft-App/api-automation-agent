@@ -97,7 +97,7 @@ def test_extract_requests_with_deeply_nested_folders():
 
     assert len(result) == 1
     assert result[0].file_path == "src/tests/api/v1/getResource"
-    assert result[0].full_path == "/v1/resource"  # Path normalized: /api prefix removed
+    assert result[0].full_path == "/api/v1/resource"
 
 
 def test_extract_requests_skips_duplicates():
@@ -139,7 +139,7 @@ def test_extract_request_data_with_dict_url():
     result = PostmanUtils.extract_request_data(data, "/api")
 
     assert result.verb == "POST"
-    assert result.full_path == "/endpoint"  # Path normalized: /api prefix removed
+    assert result.full_path == "/api/endpoint"
     assert result.body == {"name": "test"}
     assert result.prerequest == ["console.log('pre')"]
     assert result.script == ["pm.test('ok', () => {})"]
@@ -169,7 +169,7 @@ def test_extract_request_data_with_dict_url_path_and_query_arrays():
 
     # Path should include query params
     assert result.verb == "GET"
-    assert result.full_path == "/users?page=1&limit=10"  # Query params should be included
+    assert result.full_path == "/api/users?page=1&limit=10"  # Query params should be included
     assert "page" in result.full_path
     assert "limit" in result.full_path
 
@@ -208,7 +208,7 @@ def test_extract_request_data_with_dict_url_prefers_raw_over_path():
 
     result = PostmanUtils.extract_request_data(data, "/api")
 
-    assert result.full_path == "/users?page=1&limit=10"  # Should use raw, not reconstruct from path+query
+    assert result.full_path == "/api/users?page=1&limit=10"  # Should use raw, not reconstruct from path+query
 
 
 def test_extract_request_data_with_string_url():
@@ -236,16 +236,16 @@ def test_extract_request_data_with_empty_body():
 
 
 def test_extract_request_data_normalizes_api_prefix():
-    """Test that /api prefix is removed by default"""
+    """Test that /api prefix is preserved in full_path"""
     data = {"name": "Test", "request": {"method": "GET", "url": "/api/users"}}
 
     result = PostmanUtils.extract_request_data(data, "")
 
-    assert result.full_path == "/users"
+    assert result.full_path == "/api/users"
 
 
 def test_extract_requests_normalizes_paths():
-    """Test that extract_requests normalizes paths in all requests"""
+    """Test that extract_requests preserves paths in all requests"""
     data = {
         "item": [
             {"name": "Get Users", "request": {"method": "GET", "url": "/api/users"}},
@@ -257,17 +257,16 @@ def test_extract_requests_normalizes_paths():
     result = PostmanUtils.extract_requests(data)
 
     assert len(result) == 3
-    assert result[0].full_path == "/users"  # /api/users -> /users
-    assert result[1].full_path == "/v1/orders"  # /api/v1/orders -> /v1/orders
-    assert result[2].full_path == "/products"  # /products unchanged
+    assert result[0].full_path == "/api/users"
+    assert result[1].full_path == "/api/v1/orders"
+    assert result[2].full_path == "/products"
 
 
 def test_extract_verb_path_info_groups_by_path_and_verb():
     requests = [
         RequestData(
-            root_path="",
+            root_path="/users",
             file_path="test1",
-            prefix="",
             full_path="/users/123",
             verb="GET",
             body={},
@@ -276,9 +275,8 @@ def test_extract_verb_path_info_groups_by_path_and_verb():
             name="test1",
         ),
         RequestData(
-            root_path="",
+            root_path="/users",
             file_path="test2",
-            prefix="",
             full_path="/users/123",
             verb="POST",
             body={"name": "John"},
@@ -304,7 +302,6 @@ def test_extract_verb_path_info_removes_query_params():
         RequestData(
             root_path="",
             file_path="test",
-            prefix="",
             full_path="/users?sort=name&page=1",
             verb="GET",
             body={},
@@ -327,7 +324,6 @@ def test_extract_verb_path_info_aggregates_query_params():
         RequestData(
             root_path="",
             file_path="test1",
-            prefix="",
             full_path="/users?sort=name",
             verb="GET",
             body={},
@@ -338,7 +334,6 @@ def test_extract_verb_path_info_aggregates_query_params():
         RequestData(
             root_path="",
             file_path="test2",
-            prefix="",
             full_path="/users?include=profile",
             verb="GET",
             body={},
@@ -360,7 +355,6 @@ def test_extract_verb_path_info_aggregates_body_attributes():
         RequestData(
             root_path="",
             file_path="test1",
-            prefix="",
             full_path="/users",
             verb="POST",
             body={"name": "John"},
@@ -371,7 +365,6 @@ def test_extract_verb_path_info_aggregates_body_attributes():
         RequestData(
             root_path="",
             file_path="test2",
-            prefix="",
             full_path="/users",
             verb="POST",
             body={"email": "john@example.com"},
@@ -394,7 +387,6 @@ def test_extract_verb_path_info_aggregates_scripts():
         RequestData(
             root_path="",
             file_path="test1",
-            prefix="",
             full_path="/users",
             verb="POST",
             body={},
@@ -405,7 +397,6 @@ def test_extract_verb_path_info_aggregates_scripts():
         RequestData(
             root_path="",
             file_path="test2",
-            prefix="",
             full_path="/users",
             verb="POST",
             body={},
@@ -430,7 +421,6 @@ def test_extract_verb_path_info_scripts_filtered_by_verb():
         RequestData(
             root_path="",
             file_path="test1",
-            prefix="",
             full_path="/users",
             verb="GET",
             body={},
@@ -441,7 +431,6 @@ def test_extract_verb_path_info_scripts_filtered_by_verb():
         RequestData(
             root_path="",
             file_path="test2",
-            prefix="",
             full_path="/users",
             verb="POST",
             body={},
@@ -470,7 +459,6 @@ def test_extract_verb_path_info_handles_empty_scripts():
         RequestData(
             root_path="",
             file_path="test1",
-            prefix="",
             full_path="/users",
             verb="GET",
             body={},
@@ -481,7 +469,6 @@ def test_extract_verb_path_info_handles_empty_scripts():
         RequestData(
             root_path="",
             file_path="test2",
-            prefix="",
             full_path="/users",
             verb="GET",
             body={},
@@ -504,7 +491,6 @@ def test_extract_verb_path_info_scripts_with_multiple_script_lines():
         RequestData(
             root_path="",
             file_path="test1",
-            prefix="",
             full_path="/users",
             verb="POST",
             body={},
@@ -519,7 +505,6 @@ def test_extract_verb_path_info_scripts_with_multiple_script_lines():
         RequestData(
             root_path="",
             file_path="test2",
-            prefix="",
             full_path="/users",
             verb="POST",
             body={},
@@ -546,7 +531,6 @@ def test_group_request_data_by_service():
     requests = [
         RequestData(
             root_path="/users",
-            prefix="",
             file_path="test1",
             full_path="/users/123",
             verb="GET",
@@ -558,7 +542,6 @@ def test_group_request_data_by_service():
         RequestData(
             root_path="/orders",
             file_path="test2",
-            prefix="",
             full_path="/orders/456",
             verb="GET",
             body={},
@@ -796,10 +779,9 @@ def test_extract_verb_path_info_includes_prefix_in_root_path():
     """Test that prefix is included in root_path when present."""
     requests = [
         RequestData(
-            root_path="",
+            root_path="/api/users",
             file_path="test1",
-            prefix="/api",
-            full_path="/users/123",
+            full_path="/api/users/123",
             verb="GET",
             body={},
             prerequest=[],
@@ -819,9 +801,8 @@ def test_extract_verb_path_info_with_empty_prefix():
     """Test that root_path works correctly when prefix is empty (backward compatible)."""
     requests = [
         RequestData(
-            root_path="",
+            root_path="/users",
             file_path="test1",
-            prefix="",
             full_path="/users/123",
             verb="GET",
             body={},
@@ -842,10 +823,9 @@ def test_extract_verb_path_info_with_version_prefix():
     """Test that prefix works correctly with versioned paths."""
     requests = [
         RequestData(
-            root_path="",
+            root_path="/api/v1/pets",
             file_path="test1",
-            prefix="/api",
-            full_path="/v1/pets/123",
+            full_path="/api/v1/pets/123",
             verb="GET",
             body={},
             prerequest=[],
@@ -866,10 +846,9 @@ def test_extract_verb_path_info_with_multiple_requests_same_prefix():
     Note: Different base paths create separate groups, but all use the prefix from requests[0]."""
     requests = [
         RequestData(
-            root_path="",
+            root_path="/api/users",
             file_path="test1",
-            prefix="/api",
-            full_path="/users/123",
+            full_path="/api/users/123",
             verb="GET",
             body={},
             prerequest=[],
@@ -877,10 +856,9 @@ def test_extract_verb_path_info_with_multiple_requests_same_prefix():
             name="test1",
         ),
         RequestData(
-            root_path="",
+            root_path="/api/users",
             file_path="test2",
-            prefix="/api",
-            full_path="/users/456",
+            full_path="/api/users/456",
             verb="GET",
             body={},
             prerequest=[],
@@ -888,10 +866,9 @@ def test_extract_verb_path_info_with_multiple_requests_same_prefix():
             name="test2",
         ),
         RequestData(
-            root_path="",
+            root_path="/api/users",
             file_path="test3",
-            prefix="/api",
-            full_path="/users/789",
+            full_path="/api/users/789",
             verb="POST",
             body={},
             prerequest=[],
@@ -912,10 +889,9 @@ def test_extract_verb_path_info_with_query_params_and_prefix():
     """Test that prefix is included in root_path and path even when query params are present."""
     requests = [
         RequestData(
-            root_path="",
+            root_path="/api/users",
             file_path="test1",
-            prefix="/api",
-            full_path="/users?sort=name&page=1",
+            full_path="/api/users?sort=name&page=1",
             verb="GET",
             body={},
             prerequest=[],
@@ -936,10 +912,9 @@ def test_extract_verb_path_info_with_custom_prefix():
     """Test that custom prefixes (not /api) work correctly."""
     requests = [
         RequestData(
-            root_path="",
+            root_path="/custom/orders",
             file_path="test1",
-            prefix="/custom",
-            full_path="/orders/123",
+            full_path="/custom/orders/123",
             verb="GET",
             body={},
             prerequest=[],

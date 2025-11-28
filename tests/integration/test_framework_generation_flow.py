@@ -274,7 +274,7 @@ class TestFrameworkGenerationFlow:
 
         api_definition = generator.process_api_definition()
 
-        paths_in_definition = [d.full_path for d in api_definition.definitions]
+        paths_in_definition = [d.path for d in api_definition.definitions]
         assert all("/pets" in path for path in paths_in_definition)
 
         generator.setup_framework(api_definition)
@@ -338,7 +338,7 @@ class TestFrameworkGenerationFlow:
         assert hasattr(api_definition, "base_yaml")
         assert len(api_definition.definitions) > 0
 
-        paths = [d.full_path for d in api_definition.definitions]
+        paths = [d.path for d in api_definition.definitions]
         assert any("/pets" in path for path in paths)
 
     def test_framework_generation_with_existing_framework(self):
