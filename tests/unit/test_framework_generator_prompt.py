@@ -1,8 +1,6 @@
 """Unit tests for check_and_prompt_for_existing_endpoints in FrameworkGenerator."""
 
-import sys
-from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -70,28 +68,44 @@ def api_definition():
 class TestCheckAndPromptForExistingEndpoints:
     """Test check_and_prompt_for_existing_endpoints method."""
 
-    def test_no_existing_endpoints_returns_early(self, generator, api_definition, mock_api_processor):
-        """Test returns early when no existing paths/verbs."""
+    def test_no_existing_endpoints_returns_early(
+        self, generator, api_definition, mock_api_processor, monkeypatch
+    ):
+        """Test returns early when no existing paths/verbs without prompting user."""
         # Setup: no existing endpoints in state
         generator.state_manager._framework_state = FrameworkState()
 
-        # Mock API processor to return empty lists
+        # Mock API processor to return empty lists (no paths/verbs to check)
         mock_api_processor.get_api_paths.return_value = []
         mock_api_processor.get_api_verbs.return_value = []
-        mock_api_processor.get_api_path_name.return_value = "/users"
-        mock_api_processor.get_api_verb_rootpath.return_value = "/users"
 
-        # Should return without prompting
-        generator.check_and_prompt_for_existing_endpoints(api_definition)
+        # Track if input was called (it shouldn't be)
+        input_called = []
 
-        # Verify no prompts were made (input not called)
-        # This is verified by the fact that the function returns without error
+        def mock_input(prompt):
+            input_called.append(prompt)
+            return "1"
+
+        monkeypatch.setattr("builtins.input", mock_input)
+
+        # Execute - should return immediately without user interaction
+        with patch.object(generator.logger, "info") as mock_info:
+            generator.check_and_prompt_for_existing_endpoints(api_definition)
+
+            assert len(input_called) == 0, "Function should not prompt user when no existing endpoints"
+
+            # Verify no warning messages about existing endpoints
+            info_calls = [str(call) for call in mock_info.call_args_list]
+            assert not any("already exist" in str(call) for call in info_calls)
+
+        # Verify config remains unchanged
+        assert generator.config.override is False
 
     def test_user_option_1_override(self, generator, api_definition, mock_api_processor, monkeypatch):
         """Test user option 1 sets override mode."""
         # Setup: existing endpoint in state
         state = FrameworkState()
-        state.update_models(path="/users", models=[])
+        state.update_models(path="/users", models=[], auto_save=False)
         generator.state_manager._framework_state = state
 
         # Mock API processor
@@ -123,7 +137,7 @@ class TestCheckAndPromptForExistingEndpoints:
         """Test user option 2 enables skip mode."""
         # Setup: existing endpoint in state
         state = FrameworkState()
-        state.update_models(path="/users", models=[])
+        state.update_models(path="/users", models=[], auto_save=False)
         generator.state_manager._framework_state = state
 
         # Mock API processor
@@ -152,7 +166,7 @@ class TestCheckAndPromptForExistingEndpoints:
         """Test user option 3 exits the program."""
         # Setup: existing endpoint in state
         state = FrameworkState()
-        state.update_models(path="/users", models=[])
+        state.update_models(path="/users", models=[], auto_save=False)
         generator.state_manager._framework_state = state
 
         # Mock API processor
@@ -182,7 +196,7 @@ class TestCheckAndPromptForExistingEndpoints:
         """Test prompts again on invalid input, then accepts valid input."""
         # Setup: existing endpoint in state
         state = FrameworkState()
-        state.update_models(path="/users", models=[])
+        state.update_models(path="/users", models=[], auto_save=False)
         generator.state_manager._framework_state = state
 
         # Mock API processor
@@ -214,11 +228,13 @@ class TestCheckAndPromptForExistingEndpoints:
             # Verify override set after valid input
             assert generator.config.override is True
 
-    def test_displays_existing_paths_correctly(self, generator, api_definition, mock_api_processor, monkeypatch):
+    def test_displays_existing_paths_correctly(
+        self, generator, api_definition, mock_api_processor, monkeypatch
+    ):
         """Test displays existing paths correctly."""
         # Setup: existing endpoint in state
         state = FrameworkState()
-        state.update_models(path="/users", models=[])
+        state.update_models(path="/users", models=[], auto_save=False)
         generator.state_manager._framework_state = state
 
         # Mock API processor
@@ -241,12 +257,14 @@ class TestCheckAndPromptForExistingEndpoints:
             info_calls = [str(call) for call in mock_info.call_args_list]
             assert any("/users" in str(call) for call in info_calls)
 
-    def test_displays_existing_verbs_correctly(self, generator, api_definition, mock_api_processor, monkeypatch):
+    def test_displays_existing_verbs_correctly(
+        self, generator, api_definition, mock_api_processor, monkeypatch
+    ):
         """Test displays existing verbs correctly."""
         # Setup: existing verb in state
         state = FrameworkState()
         verb = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
-        state.update_tests(verb, ["test.ts"])
+        state.update_tests(verb, ["test.ts"], auto_save=False)
         generator.state_manager._framework_state = state
 
         # Mock API processor
@@ -272,7 +290,7 @@ class TestCheckAndPromptForExistingEndpoints:
         """Test displays paths without verbs correctly."""
         # Setup: existing endpoint with models but no verbs
         state = FrameworkState()
-        state.update_models(path="/users", models=[])
+        state.update_models(path="/users", models=[], auto_save=False)
         generator.state_manager._framework_state = state
 
         # Mock API processor
@@ -299,11 +317,11 @@ class TestCheckAndPromptForExistingEndpoints:
         """Test handles mixed scenario with both paths and verbs."""
         # Setup: existing endpoint with models and verbs
         state = FrameworkState()
-        state.update_models(path="/users", models=[])
+        state.update_models(path="/users", models=[], auto_save=False)
         verb1 = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
         verb2 = APIVerb(path="/orders", verb="post", root_path="/orders", yaml={})
-        state.update_tests(verb1, ["test1.ts"])
-        state.update_tests(verb2, ["test2.ts"])
+        state.update_tests(verb1, ["test1.ts"], auto_save=False)
+        state.update_tests(verb2, ["test2.ts"], auto_save=False)
         generator.state_manager._framework_state = state
 
         # Mock API processor
@@ -333,4 +351,3 @@ class TestCheckAndPromptForExistingEndpoints:
             info_calls = [str(call) for call in mock_info.call_args_list]
             assert any("/users" in str(call) for call in info_calls)
             assert any("/orders" in str(call) for call in info_calls)
-

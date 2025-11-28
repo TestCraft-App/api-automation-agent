@@ -71,6 +71,7 @@ class FrameworkState:
     """
 
     generated_endpoints: Dict[str, EndpointState] = field(default_factory=dict)
+    framework_root: Optional[Path] = None
     logger: Logger = field(default_factory=lambda: Logger.get_logger(__name__), repr=False)
 
     STATE_FILENAME = "framework-state.json"
@@ -79,21 +80,21 @@ class FrameworkState:
     def load(cls, framework_root: Path) -> "FrameworkState":
         state_file = framework_root / cls.STATE_FILENAME
         if not state_file.exists():
-            return cls()
+            return cls(framework_root=framework_root)
 
         try:
             raw_state = json.loads(state_file.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
             Logger.get_logger(__name__).warning(f"⚠️ Invalid framework state file: {exc}")
-            return cls()
+            return cls(framework_root=framework_root)
 
         entries = raw_state.get("generated_endpoints", [])
         endpoints = {entry["path"]: EndpointState.from_dict(entry) for entry in entries if "path" in entry}
-        return cls(generated_endpoints=endpoints)
+        return cls(generated_endpoints=endpoints, framework_root=framework_root)
 
-    def save(self, framework_root: Path) -> Path:
-        framework_root.mkdir(parents=True, exist_ok=True)
-        state_file = framework_root / self.STATE_FILENAME
+    def save(self) -> Path:
+        self.framework_root.mkdir(parents=True, exist_ok=True)
+        state_file = self.framework_root / self.STATE_FILENAME
         serialized_state = {
             "generated_endpoints": [endpoint.to_dict() for endpoint in self.generated_endpoints.values()]
         }
@@ -109,7 +110,13 @@ class FrameworkState:
             return False
         return f"{verb.path} - {verb.verb.upper()}" in endpoint.verbs
 
-    def update_models(self, path: str, models: Iterable[GeneratedModel]) -> EndpointState:
+    def update_models(
+        self,
+        path: str,
+        models: Iterable[GeneratedModel],
+        auto_save: bool = True,
+        framework_root: Optional[Path] = None,
+    ) -> EndpointState:
         model_metadata = [ModelMetadata.from_generated_model(model) for model in models]
 
         endpoint_state = self.generated_endpoints.get(path)
@@ -118,9 +125,19 @@ class FrameworkState:
         else:
             endpoint_state = EndpointState(path=path, models=model_metadata)
             self.generated_endpoints[path] = endpoint_state
+
+        if auto_save:
+            self.save()
+
         return endpoint_state
 
-    def update_tests(self, verb: APIVerb, tests: Iterable[str]) -> EndpointState:
+    def update_tests(
+        self,
+        verb: APIVerb,
+        tests: Iterable[str],
+        auto_save: bool = True,
+        framework_root: Optional[Path] = None,
+    ) -> EndpointState:
         endpoint = self.generated_endpoints.get(verb.root_path)
         if not endpoint:
             endpoint = EndpointState(path=verb.root_path)
@@ -132,8 +149,11 @@ class FrameworkState:
 
         all_tests = list(endpoint.tests) + list(tests)
         endpoint.tests = sorted(set(all_tests))
+
+        if auto_save:
+            self.save()
+
         return endpoint
 
     def get_endpoint(self, path: str) -> Optional[EndpointState]:
         return self.generated_endpoints.get(path)
-

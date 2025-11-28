@@ -26,24 +26,20 @@ class FrameworkStateManager:
         self.config = config
         self.file_service = file_service
         self.logger = Logger.get_logger(__name__)
-        self._framework_state = FrameworkState()
+        self._framework_root = Path(config.destination_folder)
+        self._framework_state = FrameworkState(framework_root=self._framework_root)
         self._state_loaded_models: Dict[str, ModelInfo] = {}
-
-    @property
-    def _framework_root(self) -> Path:
-        """Get the framework root directory."""
-        return Path(self.config.destination_folder)
 
     def load_state(self):
         """Load framework state from disk and hydrate model metadata."""
         self._framework_state = FrameworkState.load(self._framework_root)
-        self._state_loaded_models = self._load_models_from_state()
+        self._state_loaded_models = self._load_models_from_state(self._framework_root)
         if self._framework_state.generated_endpoints:
             endpoint_count = len(self._framework_state.generated_endpoints)
             endpoint_keys = list(self._framework_state.generated_endpoints.keys())
             self.logger.info(f"\n Loaded framework state with {endpoint_count} endpoint(s): {endpoint_keys}")
 
-    def _load_models_from_state(self) -> Dict[str, ModelInfo]:
+    def _load_models_from_state(self, framework_root: Path) -> Dict[str, ModelInfo]:
         """
         Load existing model file contents guided by the persisted state.
 
@@ -59,7 +55,7 @@ class FrameworkStateManager:
             file_entries: List[str] = []
 
             for model_meta in endpoint.models:
-                model_path = self._framework_root / model_meta.path
+                model_path = framework_root / model_meta.path
                 content = self.file_service.read_file(str(model_path))
                 if content is None:
                     self.logger.warning(f"⚠️ Unable to load model file from state: {model_meta.path}")
@@ -88,27 +84,9 @@ class FrameworkStateManager:
         return list(self._state_loaded_models.values())
 
     def are_models_generated_for_path(self, path_name: str) -> bool:
-        """
-        Check if models have been generated for a given path.
-
-        Args:
-            path_name: The endpoint path to check
-
-        Returns:
-            bool: True if models exist for the path, False otherwise
-        """
         return self._framework_state.are_models_generated_for_path(path_name)
 
     def are_tests_generated_for_verb(self, verb: APIVerb) -> bool:
-        """
-        Check if tests have been generated for a given verb.
-
-        Args:
-            verb: The API verb to check
-
-        Returns:
-            bool: True if tests exist for the verb, False otherwise
-        """
         return self._framework_state.are_tests_generated_for_verb(verb)
 
     def should_generate_models_for_path(self, path_name: str) -> bool:
@@ -154,30 +132,11 @@ class FrameworkStateManager:
     def update_models_state(self, path: str, models: List[GeneratedModel]):
         """Update or create endpoint state for models in the framework state."""
         self._framework_state.update_models(path=path, models=models)
-        self._framework_state.save(self._framework_root)
 
     def update_tests_state(self, verb: APIVerb, tests: List[str]):
         """Update tests for an endpoint in the framework state."""
         self._framework_state.update_tests(verb, tests)
-        self._framework_state.save(self._framework_root)
 
     def get_endpoint_state(self, path: str):
-        """
-        Get the endpoint state for a given path.
-
-        Args:
-            path: The endpoint path to retrieve
-
-        Returns:
-            EndpointState if found, None otherwise
-        """
+        """Get the endpoint state for a given path."""
         return self._framework_state.get_endpoint(path)
-
-    def get_endpoint_count(self) -> int:
-        """
-        Get the count of generated endpoints in the state.
-
-        Returns:
-            int: Number of endpoints in the state
-        """
-        return len(self._framework_state.generated_endpoints)

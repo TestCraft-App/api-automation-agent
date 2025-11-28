@@ -59,9 +59,9 @@ class TestFrameworkStateManagerInitialization:
         assert isinstance(manager._framework_state, FrameworkState)
         assert manager._state_loaded_models == {}
 
-    def test_framework_root_property(self, state_manager, tmp_path):
-        """Test framework_root property returns correct path."""
-        assert state_manager._framework_root == Path(tmp_path)
+    def test_framework_state_initialized(self, state_manager):
+        """Test framework state is initialized."""
+        assert isinstance(state_manager._framework_state, FrameworkState)
 
 
 class TestFrameworkStateManagerLoadState:
@@ -69,9 +69,8 @@ class TestFrameworkStateManagerLoadState:
 
     def test_load_state_when_file_exists(self, state_manager, tmp_path, sample_models):
         """Test loading state from existing file."""
-        state = FrameworkState()
+        state = FrameworkState(framework_root=tmp_path)
         state.update_models(path="/users", models=sample_models)
-        state.save(tmp_path)
 
         for model in sample_models:
             model_path = tmp_path / model.path
@@ -88,14 +87,14 @@ class TestFrameworkStateManagerLoadState:
 
         state_manager.load_state()
 
-        assert state_manager.get_endpoint_count() == 1
+        assert len(state_manager._framework_state.generated_endpoints) == 1
         assert state_manager.get_endpoint_state("/users") is not None
         assert len(state_manager._state_loaded_models) == 1
 
-    def test_load_state_when_file_not_exists(self, state_manager):
+    def test_load_state_when_file_not_exists(self, state_manager, tmp_path):
         """Test loading state when file doesn't exist (creates empty state)."""
         state_manager.load_state()
-        assert state_manager.get_endpoint_count() == 0
+        assert len(state_manager._framework_state.generated_endpoints) == 0
         assert len(state_manager._state_loaded_models) == 0
 
     def test_load_state_with_invalid_json(self, state_manager, tmp_path):
@@ -105,13 +104,12 @@ class TestFrameworkStateManagerLoadState:
 
         state_manager.load_state()
         # Should create empty state
-        assert state_manager.get_endpoint_count() == 0
+        assert len(state_manager._framework_state.generated_endpoints) == 0
 
     def test_load_state_with_missing_model_files(self, state_manager, tmp_path, sample_models):
         """Test loading state when model files don't exist (warning logged)."""
-        state = FrameworkState()
+        state = FrameworkState(framework_root=tmp_path)
         state.update_models(path="/users", models=sample_models)
-        state.save(tmp_path)
 
         # Don't create model files - they're missing
 
@@ -124,15 +122,14 @@ class TestFrameworkStateManagerLoadState:
             assert mock_warning.called
 
         # State should still be loaded, but no models in _state_loaded_models
-        assert state_manager.get_endpoint_count() == 1
+        assert len(state_manager._framework_state.generated_endpoints) == 1
         assert len(state_manager._state_loaded_models) == 0
 
     def test_load_state_with_valid_model_files(self, state_manager, tmp_path, sample_models):
         """Test loading state with valid model files (models loaded correctly)."""
         # Create state file
-        state = FrameworkState()
+        state = FrameworkState(framework_root=tmp_path)
         state.update_models(path="/users", models=sample_models)
-        state.save(tmp_path)
 
         # Create model files
         for model in sample_models:
@@ -161,12 +158,11 @@ class TestFrameworkStateManagerLoadState:
     def test_load_state_with_multiple_endpoints(self, state_manager, tmp_path):
         """Test loading state with multiple endpoints."""
         # Create state with multiple endpoints
-        state = FrameworkState()
+        state = FrameworkState(framework_root=tmp_path)
         models1 = [GeneratedModel(path="src/models/user.ts", fileContent="content1", summary="User")]
         models2 = [GeneratedModel(path="src/models/order.ts", fileContent="content2", summary="Order")]
         state.update_models(path="/users", models=models1)
         state.update_models(path="/orders", models=models2)
-        state.save(tmp_path)
 
         # Create model files
         (tmp_path / "src" / "models").mkdir(parents=True, exist_ok=True)
@@ -200,9 +196,8 @@ class TestFrameworkStateManagerGetPreloadedModelInfo:
     def test_get_preloaded_model_info_with_models(self, state_manager, tmp_path, sample_models):
         """Test returning correct ModelInfo objects."""
         # Setup state and load models
-        state = FrameworkState()
+        state = FrameworkState(framework_root=tmp_path)
         state.update_models(path="/users", models=sample_models)
-        state.save(tmp_path)
 
         for model in sample_models:
             model_path = tmp_path / model.path
@@ -234,9 +229,8 @@ class TestFrameworkStateManagerShouldGenerateModelsForPath:
 
     def test_should_generate_when_path_exists_and_override_false(self, state_manager, tmp_path):
         """Test returning False when path exists and override is False."""
-        state = FrameworkState()
+        state = FrameworkState(framework_root=tmp_path)
         state.update_models(path="/users", models=[])
-        state.save(tmp_path)
         state_manager.load_state()
 
         result = state_manager.should_generate_models_for_path("/users")
@@ -244,9 +238,8 @@ class TestFrameworkStateManagerShouldGenerateModelsForPath:
 
     def test_should_generate_when_path_exists_and_override_true(self, state_manager, tmp_path):
         """Test returning True when path exists and override is True."""
-        state = FrameworkState()
+        state = FrameworkState(framework_root=tmp_path)
         state.update_models(path="/users", models=[])
-        state.save(tmp_path)
         state_manager.load_state()
 
         state_manager.config.override = True
@@ -267,10 +260,9 @@ class TestFrameworkStateManagerShouldGenerateTestsVerb:
 
     def test_should_generate_when_verb_exists_and_override_false(self, state_manager, tmp_path):
         """Test returning False when verb exists and override is False."""
-        state = FrameworkState()
+        state = FrameworkState(framework_root=tmp_path)
         verb = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
         state.update_tests(verb, ["test.ts"])
-        state.save(tmp_path)
         state_manager.load_state()
 
         result = state_manager.should_generate_tests_verb(verb)
@@ -278,10 +270,9 @@ class TestFrameworkStateManagerShouldGenerateTestsVerb:
 
     def test_should_generate_when_verb_exists_and_override_true(self, state_manager, tmp_path):
         """Test returning True when verb exists and override is True."""
-        state = FrameworkState()
+        state = FrameworkState(framework_root=tmp_path)
         verb = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
         state.update_tests(verb, ["test.ts"])
-        state.save(tmp_path)
         state_manager.load_state()
 
         state_manager.config.override = True
@@ -311,10 +302,9 @@ class TestFrameworkStateManagerUpdateModelsState:
     def test_update_models_state_existing_path(self, state_manager, tmp_path, sample_models):
         """Test updating state with existing path (replaces models)."""
         # Create initial state
-        state = FrameworkState()
+        state = FrameworkState(framework_root=tmp_path)
         initial_models = [GeneratedModel(path="old.ts", fileContent="old", summary="Old")]
         state.update_models(path="/users", models=initial_models)
-        state.save(tmp_path)
         state_manager.load_state()
 
         # Update with new models
@@ -369,10 +359,9 @@ class TestFrameworkStateManagerUpdateTestsState:
     def test_update_tests_state_existing_verb(self, state_manager, tmp_path):
         """Test updating state with existing verb (adds to verbs list)."""
         # Create initial state
-        state = FrameworkState()
+        state = FrameworkState(framework_root=tmp_path)
         verb1 = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
         state.update_tests(verb1, ["test1.ts"])
-        state.save(tmp_path)
         state_manager.load_state()
 
         # Add another verb

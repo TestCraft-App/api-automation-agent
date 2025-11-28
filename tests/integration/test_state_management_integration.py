@@ -201,7 +201,7 @@ class TestStateManagementIntegration:
 
         generator2.state_manager.load_state()
 
-        assert generator2.state_manager.get_endpoint_count() > 0
+        assert len(generator2.state_manager._framework_state.generated_endpoints) > 0
 
     def test_preloaded_models_available_in_subsequent_runs(self):
         """Test preloaded models are available in subsequent runs."""
@@ -401,7 +401,7 @@ class TestStateManagementIntegration:
 
         generator.state_manager.load_state()
 
-        assert generator.state_manager.get_endpoint_count() == 0
+        assert len(generator.state_manager._framework_state.generated_endpoints) == 0
 
     def test_missing_state_file_creates_new_state(self):
         """Test missing state file creates new state."""
@@ -421,7 +421,7 @@ class TestStateManagementIntegration:
         )
 
         generator.state_manager.load_state()
-        assert generator.state_manager.get_endpoint_count() == 0
+        assert len(generator.state_manager._framework_state.generated_endpoints) == 0
 
         api_definition = generator.process_api_definition()
         generator.setup_framework(api_definition)
@@ -434,10 +434,9 @@ class TestStateManagementIntegration:
     def test_missing_model_files_handled_gracefully(self):
         """Test missing model files don't break generation."""
         # Create state file with models, but don't create the actual model files
-        state = FrameworkState()
+        state = FrameworkState(framework_root=Path(self.config.destination_folder))
         models = [GeneratedModel(path="src/models/missing.ts", fileContent="content", summary="Missing")]
         state.update_models(path="/users", models=models)
-        state.save(Path(self.config.destination_folder))
 
         file_service = FileService()
         llm_service = self._create_mock_llm_service(file_service)

@@ -13,7 +13,7 @@ def _create_models():
 
 
 def test_save_and_load_framework_state(tmp_path: Path):
-    state = FrameworkState()
+    state = FrameworkState(framework_root=tmp_path)
     state.update_models(
         path="/users",
         models=_create_models(),
@@ -24,7 +24,7 @@ def test_save_and_load_framework_state(tmp_path: Path):
     state.update_tests(get_verb, ["src/tests/users.spec.ts"])
     state.update_tests(post_verb, [])
 
-    state_file = state.save(tmp_path)
+    state_file = tmp_path / FrameworkState.STATE_FILENAME
     assert state_file.exists()
 
     loaded_state = FrameworkState.load(tmp_path)
@@ -43,21 +43,23 @@ def test_upsert_preserves_existing_tests_when_not_provided(tmp_path: Path):
     state.update_models(
         path="/orders",
         models=_create_models(),
+        auto_save=False,
     )
 
     # Add tests for GET verb
     get_verb = APIVerb(path="/orders", verb="get", root_path="/orders", yaml={})
-    state.update_tests(get_verb, ["src/tests/orders.spec.ts"])
+    state.update_tests(get_verb, ["src/tests/orders.spec.ts"], auto_save=False)
 
     # Second update_models call should preserve existing tests
     state.update_models(
         path="/orders",
         models=_create_models(),
+        auto_save=False,
     )
 
     # Add PUT verb
     put_verb = APIVerb(path="/orders", verb="put", root_path="/orders", yaml={})
-    state.update_tests(put_verb, [])
+    state.update_tests(put_verb, [], auto_save=False)
 
     endpoint_state = state.get_endpoint("/orders")
     assert endpoint_state is not None
@@ -69,7 +71,7 @@ def test_upsert_preserves_existing_tests_when_not_provided(tmp_path: Path):
 def test_update_tests_adds_entry_when_missing(tmp_path: Path):
     state = FrameworkState()
     verb = APIVerb(path="/inventory", verb="get", root_path="/inventory", yaml={})
-    state.update_tests(verb, ["src/tests/inventory.spec.ts"])
+    state.update_tests(verb, ["src/tests/inventory.spec.ts"], auto_save=False)
 
     endpoint_state = state.get_endpoint("/inventory")
     assert endpoint_state is not None
@@ -82,15 +84,18 @@ def test_update_tests_merges_with_existing_tests():
     state.update_models(
         path="/products",
         models=_create_models(),
+        auto_save=False,
     )
 
     # Add initial test for GET
     get_verb = APIVerb(path="/products", verb="get", root_path="/products", yaml={})
-    state.update_tests(get_verb, ["src/tests/products-get.spec.ts"])
+    state.update_tests(get_verb, ["src/tests/products-get.spec.ts"], auto_save=False)
 
     # Add more tests for POST (should merge with existing)
     post_verb = APIVerb(path="/products", verb="post", root_path="/products", yaml={})
-    state.update_tests(post_verb, ["src/tests/products-post.spec.ts", "src/tests/products-get.spec.ts"])
+    state.update_tests(
+        post_verb, ["src/tests/products-post.spec.ts", "src/tests/products-get.spec.ts"], auto_save=False
+    )
 
     endpoint_state = state.get_endpoint("/products")
     assert endpoint_state is not None
@@ -229,8 +234,9 @@ def test_load_with_missing_path_in_entry(tmp_path: Path):
 
 def test_save_creates_directory(tmp_path: Path):
     subdir = tmp_path / "subdir"
-    state = FrameworkState()
-    state_file = state.save(subdir)
+    state = FrameworkState(framework_root=subdir)
+    state.update_models(path="/test", models=[], auto_save=True)
+    state_file = subdir / FrameworkState.STATE_FILENAME
     assert state_file.exists()
     assert subdir.exists()
 
@@ -239,7 +245,7 @@ def test_are_models_generated_for_path():
     state = FrameworkState()
     assert state.are_models_generated_for_path("/users") is False
 
-    state.update_models(path="/users", models=_create_models())
+    state.update_models(path="/users", models=_create_models(), auto_save=False)
     assert state.are_models_generated_for_path("/users") is True
     assert state.are_models_generated_for_path("/orders") is False
 
@@ -252,13 +258,13 @@ def test_are_tests_generated_for_verb_non_existent_endpoint():
 
 def test_are_tests_generated_for_verb_non_existent_verb():
     state = FrameworkState()
-    state.update_models(path="/users", models=_create_models())
+    state.update_models(path="/users", models=_create_models(), auto_save=False)
     verb = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
     assert state.are_tests_generated_for_verb(verb) is False
 
     # Add a different verb
     post_verb = APIVerb(path="/users", verb="post", root_path="/users", yaml={})
-    state.update_tests(post_verb, ["test.ts"])
+    state.update_tests(post_verb, ["test.ts"], auto_save=False)
     assert state.are_tests_generated_for_verb(verb) is False
     assert state.are_tests_generated_for_verb(post_verb) is True
 
@@ -267,7 +273,7 @@ def test_update_models_creates_new_endpoint():
     state = FrameworkState()
     assert "/users" not in state.generated_endpoints
 
-    state.update_models(path="/users", models=_create_models())
+    state.update_models(path="/users", models=_create_models(), auto_save=False)
     assert "/users" in state.generated_endpoints
     endpoint = state.get_endpoint("/users")
     assert endpoint is not None
@@ -277,10 +283,10 @@ def test_update_models_creates_new_endpoint():
 def test_update_models_updates_existing_endpoint():
     state = FrameworkState()
     initial_models = [GeneratedModel(path="old.ts", summary="Old")]
-    state.update_models(path="/users", models=initial_models)
+    state.update_models(path="/users", models=initial_models, auto_save=False)
 
     new_models = _create_models()
-    state.update_models(path="/users", models=new_models)
+    state.update_models(path="/users", models=new_models, auto_save=False)
 
     endpoint = state.get_endpoint("/users")
     assert len(endpoint.models) == 2
@@ -292,7 +298,7 @@ def test_update_tests_creates_new_endpoint_if_needed():
     assert "/users" not in state.generated_endpoints
 
     verb = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
-    state.update_tests(verb, ["test.ts"])
+    state.update_tests(verb, ["test.ts"], auto_save=False)
 
     assert "/users" in state.generated_endpoints
     endpoint = state.get_endpoint("/users")
@@ -305,8 +311,8 @@ def test_update_tests_deduplicates_tests():
     verb1 = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
     verb2 = APIVerb(path="/users", verb="post", root_path="/users", yaml={})
 
-    state.update_tests(verb1, ["test1.ts", "test2.ts"])
-    state.update_tests(verb2, ["test2.ts", "test3.ts"])
+    state.update_tests(verb1, ["test1.ts", "test2.ts"], auto_save=False)
+    state.update_tests(verb2, ["test2.ts", "test3.ts"], auto_save=False)
 
     endpoint = state.get_endpoint("/users")
     # Should be sorted and deduplicated
@@ -320,7 +326,7 @@ def test_get_endpoint_returns_none():
 
 def test_get_endpoint_returns_correct_state():
     state = FrameworkState()
-    state.update_models(path="/users", models=_create_models())
+    state.update_models(path="/users", models=_create_models(), auto_save=False)
 
     endpoint = state.get_endpoint("/users")
     assert endpoint is not None

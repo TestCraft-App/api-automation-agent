@@ -132,18 +132,19 @@ class FrameworkGenerator:
 
             user_input = input("\nEnter your choice (1/2/3): ").strip()
 
-            if user_input == "1":
-                self.config.override = True
-                self.logger.info("\n✓ Override mode enabled. Existing files will be regenerated.")
-                return
-            elif user_input == "2":
-                self.logger.info("\n✓ Skip mode enabled. Existing files will be preserved.\n")
-                return
-            elif user_input == "3":
-                self.logger.info("\nExiting. Please modify your command and try again.")
-                sys.exit(1)
-            else:
-                self.logger.warning("Invalid choice. Please enter 1, 2, or 3.")
+            match user_input:
+                case "1":
+                    self.config.override = True
+                    self.logger.info("\n✓ Override mode enabled. Existing files will be regenerated.")
+                    return
+                case "2":
+                    self.logger.info("\n✓ Skip mode enabled. Existing files will be preserved.\n")
+                    return
+                case "3":
+                    self.logger.info("\nExiting. Please modify your command and try again.")
+                    sys.exit(1)
+                case _:
+                    self.logger.warning("Invalid choice. Please enter 1, 2, or 3.")
 
     @Checkpoint.checkpoint()
     def setup_framework(self, api_definition: APIDefinition):
