@@ -26,16 +26,16 @@ class APIDefinitionSplitter:
             normalized_path, _ = APIPath.normalize_path(path, prefixes)
 
             api_definition_list.append(
-                APIPath(path=normalized_path, yaml=yaml.dump({path: path_data}, sort_keys=False))
+                APIPath(full_path=normalized_path, content=yaml.dump({path: path_data}, sort_keys=False))
             )
 
             for verb, verb_data in path_data.items():
                 api_definition_list.append(
                     APIVerb(
                         verb=verb.upper(),
-                        path=normalized_path,
+                        full_path=normalized_path,
                         root_path=APIVerb.get_root_path(normalized_path),
-                        yaml=yaml.dump({path: {verb: verb_data}}, sort_keys=False),
+                        content=yaml.dump({path: {verb: verb_data}}, sort_keys=False),
                     )
                 )
 

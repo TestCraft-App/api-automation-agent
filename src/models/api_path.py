@@ -50,3 +50,11 @@ class APIPath(APIBase):
                 return (normalized_result, prefix)
 
         return (normalized_path, "")
+
+    def to_json(self) -> dict:
+        """Convert the APIPath instance to a JSON-serializable dictionary"""
+        return {
+            "path": self.full_path,
+            "yaml": self.content,
+            "type": self.type,
+        }

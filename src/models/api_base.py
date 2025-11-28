@@ -1,18 +1,22 @@
-from dataclasses import dataclass
-from typing import Dict, Any
+from dataclasses import dataclass, field
+from typing import Dict, Any, List, Optional
 
 
 @dataclass
 class APIBase:
     """Base class for API components"""
 
-    path: str
-    yaml: str
-    type: str
+    content: str = ""
+    root_path: Optional[str] = None
+    full_path: str = ""
+    type: str = ""
+    body: Dict[str, Any] = field(default_factory=dict)
+    script: List[str] = field(default_factory=list)
 
-    def to_json(self) -> Dict[str, Any]:
-        """Convert the component to a JSON-serializable dictionary"""
-        return {"path": self.path, "yaml": self.yaml, "type": self.type}
+    def __post_init__(self):
+        """Derive root_path from full_path if not provided."""
+        if self.root_path is None and self.full_path:
+            self.root_path = self.get_root_path(self.full_path)
 
     @staticmethod
     def get_root_path(path: str) -> str:

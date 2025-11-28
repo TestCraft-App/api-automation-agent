@@ -39,8 +39,8 @@ def test_swagger_processsor_filters_endpoint_with_one_verb():
     verbs = result.get_verbs()
     assert len(paths) == 1
     assert len(verbs) == 1
-    assert all(p.path.startswith("/items") for p in paths)
-    assert all(v.path.startswith("/items") for v in verbs)
+    assert all(p.full_path.startswith("/items") for p in paths)
+    assert all(v.full_path.startswith("/items") for v in verbs)
 
 
 def test_swagger_processsor_filters_endpoint_with_multiple_verbs():
@@ -58,8 +58,8 @@ def test_swagger_processsor_filters_endpoint_with_multiple_verbs():
     verbs = result.get_verbs()
     assert len(paths) == 1
     assert len(verbs) == 2
-    assert all(p.path.startswith("/users") for p in paths)
-    assert all(v.path.startswith("/users") for v in verbs)
+    assert all(p.full_path.startswith("/users") for p in paths)
+    assert all(v.full_path.startswith("/users") for v in verbs)
 
 
 def test_swagger_processsor_filters_multiple_endpoints():
@@ -77,8 +77,8 @@ def test_swagger_processsor_filters_multiple_endpoints():
     verbs = result.get_verbs()
     assert len(paths) == 2
     assert len(verbs) == 3
-    assert all(p.path.startswith("/users") or p.path.startswith("/items") for p in paths)
-    assert all(v.path.startswith("/users") or v.path.startswith("/items") for v in verbs)
+    assert all(p.full_path.startswith("/users") or p.full_path.startswith("/items") for p in paths)
+    assert all(v.full_path.startswith("/users") or v.full_path.startswith("/items") for v in verbs)
 
 
 def test_swagger_processsor_no_matching_endpoints():
@@ -147,7 +147,7 @@ def test_swagger_processor_rebuilds_full_path_definition():
     assert "/api/v1/items" not in base_yaml
     assert "/api/v1/items" in reconstructed["paths"]
 
-    assert "https://api.example.com" not in api_path.yaml
+    assert "https://api.example.com" not in api_path.content
     assert reconstructed["openapi"] == "3.0.0"
     assert reconstructed["servers"] == [{"url": "https://api.example.com"}]
     assert reconstructed["components"]["schemas"]["Item"] == {
@@ -188,6 +188,6 @@ def test_swagger_processor_rebuilds_full_verb_definition():
     assert "/api/v1/items" in reconstructed["paths"]
     assert "get" in reconstructed["paths"]["/api/v1/items"]
 
-    assert "https://api.example.com" not in api_verb.yaml
+    assert "https://api.example.com" not in api_verb.content
     assert reconstructed["openapi"] == "3.0.0"
     assert reconstructed["servers"] == [{"url": "https://api.example.com"}]

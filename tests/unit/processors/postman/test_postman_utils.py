@@ -1,5 +1,5 @@
 from src.processors.postman.postman_utils import PostmanUtils
-from src.processors.postman.models import RequestData
+from src.models.api_verb import APIVerb
 
 
 def test_extract_variables_with_valid_data():
@@ -264,7 +264,7 @@ def test_extract_requests_normalizes_paths():
 
 def test_extract_verb_path_info_groups_by_path_and_verb():
     requests = [
-        RequestData(
+        APIVerb(
             root_path="/users",
             file_path="test1",
             full_path="/users/123",
@@ -274,7 +274,7 @@ def test_extract_verb_path_info_groups_by_path_and_verb():
             script=[],
             name="test1",
         ),
-        RequestData(
+        APIVerb(
             root_path="/users",
             file_path="test2",
             full_path="/users/123",
@@ -299,7 +299,7 @@ def test_extract_verb_path_info_groups_by_path_and_verb():
 
 def test_extract_verb_path_info_removes_query_params():
     requests = [
-        RequestData(
+        APIVerb(
             root_path="",
             file_path="test",
             full_path="/users?sort=name&page=1",
@@ -321,7 +321,7 @@ def test_extract_verb_path_info_removes_query_params():
 
 def test_extract_verb_path_info_aggregates_query_params():
     requests = [
-        RequestData(
+        APIVerb(
             root_path="",
             file_path="test1",
             full_path="/users?sort=name",
@@ -331,7 +331,7 @@ def test_extract_verb_path_info_aggregates_query_params():
             script=[],
             name="test1",
         ),
-        RequestData(
+        APIVerb(
             root_path="",
             file_path="test2",
             full_path="/users?include=profile",
@@ -352,7 +352,7 @@ def test_extract_verb_path_info_aggregates_query_params():
 
 def test_extract_verb_path_info_aggregates_body_attributes():
     requests = [
-        RequestData(
+        APIVerb(
             root_path="",
             file_path="test1",
             full_path="/users",
@@ -362,7 +362,7 @@ def test_extract_verb_path_info_aggregates_body_attributes():
             script=[],
             name="test1",
         ),
-        RequestData(
+        APIVerb(
             root_path="",
             file_path="test2",
             full_path="/users",
@@ -384,7 +384,7 @@ def test_extract_verb_path_info_aggregates_body_attributes():
 def test_extract_verb_path_info_aggregates_scripts():
     """Test that scripts are aggregated from multiple requests with the same verb and path."""
     requests = [
-        RequestData(
+        APIVerb(
             root_path="",
             file_path="test1",
             full_path="/users",
@@ -394,7 +394,7 @@ def test_extract_verb_path_info_aggregates_scripts():
             script=["pm.test('test1', () => {})", "pm.expect(1).to.equal(1)"],
             name="test1",
         ),
-        RequestData(
+        APIVerb(
             root_path="",
             file_path="test2",
             full_path="/users",
@@ -418,7 +418,7 @@ def test_extract_verb_path_info_aggregates_scripts():
 def test_extract_verb_path_info_scripts_filtered_by_verb():
     """Test that scripts are only collected from requests matching the current verb."""
     requests = [
-        RequestData(
+        APIVerb(
             root_path="",
             file_path="test1",
             full_path="/users",
@@ -428,7 +428,7 @@ def test_extract_verb_path_info_scripts_filtered_by_verb():
             script=["pm.test('GET test', () => {})"],
             name="test1",
         ),
-        RequestData(
+        APIVerb(
             root_path="",
             file_path="test2",
             full_path="/users",
@@ -456,7 +456,7 @@ def test_extract_verb_path_info_scripts_filtered_by_verb():
 def test_extract_verb_path_info_handles_empty_scripts():
     """Test that empty scripts are handled correctly."""
     requests = [
-        RequestData(
+        APIVerb(
             root_path="",
             file_path="test1",
             full_path="/users",
@@ -466,7 +466,7 @@ def test_extract_verb_path_info_handles_empty_scripts():
             script=[],
             name="test1",
         ),
-        RequestData(
+        APIVerb(
             root_path="",
             file_path="test2",
             full_path="/users",
@@ -488,7 +488,7 @@ def test_extract_verb_path_info_handles_empty_scripts():
 def test_extract_verb_path_info_scripts_with_multiple_script_lines():
     """Test that scripts with multiple lines per request are handled correctly."""
     requests = [
-        RequestData(
+        APIVerb(
             root_path="",
             file_path="test1",
             full_path="/users",
@@ -502,7 +502,7 @@ def test_extract_verb_path_info_scripts_with_multiple_script_lines():
             ],
             name="test1",
         ),
-        RequestData(
+        APIVerb(
             root_path="",
             file_path="test2",
             full_path="/users",
@@ -529,7 +529,7 @@ def test_extract_verb_path_info_scripts_with_multiple_script_lines():
 
 def test_group_request_data_by_service():
     requests = [
-        RequestData(
+        APIVerb(
             root_path="/users",
             file_path="test1",
             full_path="/users/123",
@@ -539,7 +539,7 @@ def test_group_request_data_by_service():
             script=[],
             name="test1",
         ),
-        RequestData(
+        APIVerb(
             root_path="/orders",
             file_path="test2",
             full_path="/orders/456",
@@ -778,7 +778,7 @@ def test_map_object_attributes_empty_object():
 def test_extract_verb_path_info_includes_prefix_in_root_path():
     """Test that prefix is included in root_path when present."""
     requests = [
-        RequestData(
+        APIVerb(
             root_path="/api/users",
             file_path="test1",
             full_path="/api/users/123",
@@ -800,7 +800,7 @@ def test_extract_verb_path_info_includes_prefix_in_root_path():
 def test_extract_verb_path_info_with_empty_prefix():
     """Test that root_path works correctly when prefix is empty (backward compatible)."""
     requests = [
-        RequestData(
+        APIVerb(
             root_path="/users",
             file_path="test1",
             full_path="/users/123",
@@ -822,7 +822,7 @@ def test_extract_verb_path_info_with_empty_prefix():
 def test_extract_verb_path_info_with_version_prefix():
     """Test that prefix works correctly with versioned paths."""
     requests = [
-        RequestData(
+        APIVerb(
             root_path="/api/v1/pets",
             file_path="test1",
             full_path="/api/v1/pets/123",
@@ -845,7 +845,7 @@ def test_extract_verb_path_info_with_multiple_requests_same_prefix():
     """Test that multiple requests with the same prefix all use that prefix in root_path.
     Note: Different base paths create separate groups, but all use the prefix from requests[0]."""
     requests = [
-        RequestData(
+        APIVerb(
             root_path="/api/users",
             file_path="test1",
             full_path="/api/users/123",
@@ -855,7 +855,7 @@ def test_extract_verb_path_info_with_multiple_requests_same_prefix():
             script=[],
             name="test1",
         ),
-        RequestData(
+        APIVerb(
             root_path="/api/users",
             file_path="test2",
             full_path="/api/users/456",
@@ -865,7 +865,7 @@ def test_extract_verb_path_info_with_multiple_requests_same_prefix():
             script=[],
             name="test2",
         ),
-        RequestData(
+        APIVerb(
             root_path="/api/users",
             file_path="test3",
             full_path="/api/users/789",
@@ -888,7 +888,7 @@ def test_extract_verb_path_info_with_multiple_requests_same_prefix():
 def test_extract_verb_path_info_with_query_params_and_prefix():
     """Test that prefix is included in root_path and path even when query params are present."""
     requests = [
-        RequestData(
+        APIVerb(
             root_path="/api/users",
             file_path="test1",
             full_path="/api/users?sort=name&page=1",
@@ -911,7 +911,7 @@ def test_extract_verb_path_info_with_query_params_and_prefix():
 def test_extract_verb_path_info_with_custom_prefix():
     """Test that custom prefixes (not /api) work correctly."""
     requests = [
-        RequestData(
+        APIVerb(
             root_path="/custom/orders",
             file_path="test1",
             full_path="/custom/orders/123",

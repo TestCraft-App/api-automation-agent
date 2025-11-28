@@ -1,11 +1,12 @@
-import copy
 import json
 import os
 from typing import Dict, List
 
+from src.models.api_path import APIPath
+from src.models.api_verb import APIVerb
+
 from ..configuration.config import Config
 
-from .postman.models import VerbInfo, RequestData
 from ..ai_tools.models.file_spec import FileSpec
 from ..models import APIModel, GeneratedModel, ModelInfo, APIDefinition
 from ..processors.api_processor import APIProcessor
@@ -45,24 +46,38 @@ class PostmanProcessor(APIProcessor):
             f"Generated .env file with variables: {', '.join(var['key'].upper() for var in env_vars)}"
         )
 
-    def get_api_paths(self, api_definition: APIDefinition) -> List[List[VerbInfo]]:
-        """Create VerbInfo objects from RequestData and group by service."""
+    def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath]:
+        """Create APIPath objects from APIVerbs and group by service."""
         requests_by_service = PostmanUtils.group_request_data_by_service(api_definition.definitions)
+        api_paths: List[APIPath] = []
 
-        service_dict: Dict[str, List[VerbInfo]] = {}
+        service_dict: Dict[str, List[APIVerb]] = {}
         for service, service_requests in requests_by_service.items():
             verb_infos = PostmanUtils.extract_verb_path_info(service_requests)
             service_dict[service] = verb_infos
 
-        return copy.deepcopy(list(service_dict.values()))
+            if not verb_infos:
+                return json.dumps({})
 
-    def get_api_path_name(self, api_path: List[VerbInfo]) -> str:
-        if not api_path:
-            return ""
+            content = {service: []}
+            for verb in verb_infos:
+                content[service].append(
+                    {
+                        "root_path": verb.root_path,
+                        "full_path": verb.full_path,
+                        "verb": verb.verb,
+                        "query_params": verb.query_params,
+                        "body_attributes": verb.body_attributes,
+                        "script": verb.script,
+                    }
+                )
+            api_paths.append(APIPath(root_path=service, content=json.dumps(content)))
+        return api_paths
 
-        return api_path[0].root_path
+    def get_api_path_name(self, api_path: APIPath) -> str:
+        return api_path.root_path
 
-    def get_relevant_models(self, all_models: List[ModelInfo], api_verb: RequestData) -> List[GeneratedModel]:
+    def get_relevant_models(self, all_models: List[ModelInfo], api_verb: APIVerb) -> List[GeneratedModel]:
         """Get models relevant to the API verb."""
         result: List[GeneratedModel] = []
         for model in all_models:
@@ -70,49 +85,42 @@ class PostmanProcessor(APIProcessor):
                 result.extend(model.models)
         return result
 
-    def get_other_models(self, all_models: List[ModelInfo], api_verb: RequestData) -> List[APIModel]:
+    def get_other_models(self, all_models: List[ModelInfo], api_verb: APIVerb) -> List[APIModel]:
         result: List[APIModel] = []
         for model in all_models:
             if model.path != api_verb.root_path:
                 result.append(APIModel(path=model.path, files=model.files))
         return result
 
-    def get_api_verb_path(self, api_verb: RequestData) -> str:
+    def get_api_verb_path(self, api_verb: APIVerb) -> str:
         return api_verb.full_path
 
-    def get_api_verb_rootpath(self, api_verb: RequestData) -> str:
+    def get_api_verb_rootpath(self, api_verb: APIVerb) -> str:
         return api_verb.root_path
 
-    def get_api_verb_name(self, api_verb: RequestData) -> str:
+    def get_api_verb_name(self, api_verb: APIVerb) -> str:
         return api_verb.verb
 
-    def get_api_verbs(self, api_definition: APIDefinition) -> List[RequestData]:
-        """Return all RequestData from the API definition"""
-        return copy.deepcopy(api_definition.definitions)
+    def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb]:
+        """Return all APIVerbs from the API definition"""
+        return [d for d in api_definition.definitions if isinstance(d, APIVerb)]
 
-    def get_api_verb_content(self, api_verb: RequestData) -> str:
-        return json.dumps(api_verb.to_json())
+    def get_api_verb_content(self, api_verb: APIVerb) -> str:
+        return json.dumps(
+            {
+                "file_path": api_verb.file_path,
+                "root_path": api_verb.root_path,
+                "full_path": api_verb.full_path,
+                "verb": api_verb.verb,
+                "body": api_verb.body,
+                "prerequest": api_verb.prerequest,
+                "script": api_verb.script,
+                "name": api_verb.name,
+            }
+        )
 
-    def get_api_path_content(self, api_path: List[VerbInfo]) -> str:
-        if not api_path:
-            return json.dumps({})
-
-        service = self.get_api_path_name(api_path)
-        if not service:
-            return json.dumps({})
-        content = {service: []}
-        for verb in api_path:
-            content[service].append(
-                {
-                    "root_path": verb.root_path,
-                    "full_path": verb.full_path,
-                    "verb": verb.verb,
-                    "query_params": verb.query_params,
-                    "body_attributes": verb.body_attributes,
-                    "script": verb.script,
-                }
-            )
-        return json.dumps(content)
+    def get_api_path_content(self, api_path: APIPath) -> str:
+        return api_path.content
 
     def update_framework_for_postman(self, destination_folder: str, api_definition: APIDefinition):
         self._create_run_order_file(destination_folder, api_definition)
@@ -133,7 +141,7 @@ class PostmanProcessor(APIProcessor):
     def _create_run_order_file(self, destination_folder: str, api_definition: APIDefinition):
         lines = ["// This file runs the tests in order"]
         for definition in api_definition.definitions:
-            if isinstance(definition, RequestData):
+            if isinstance(definition, APIVerb):
                 lines.append(f'import "./{definition.file_path}.spec.ts";')
         file_spec = FileSpec(path="runTestsInOrder.js", fileContent="\n".join(lines))
         self.file_service.create_files(destination_folder, [file_spec])

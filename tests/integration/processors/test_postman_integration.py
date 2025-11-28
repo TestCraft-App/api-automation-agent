@@ -6,8 +6,9 @@ These tests use real Postman collection fixtures and verify the complete process
 import json
 import pytest
 
+from src.models.api_path import APIPath
+from src.models.api_verb import APIVerb
 from src.processors.postman_processor import PostmanProcessor
-from src.processors.postman.models import RequestData, VerbInfo
 from src.services.file_service import FileService
 from src.configuration.config import Config
 from src.models import APIDefinition
@@ -68,7 +69,7 @@ class TestSimpleCollectionProcessing:
         assert "BASEURL" in variable_keys
         assert "API_KEY" in variable_keys
 
-        assert all(isinstance(req, RequestData) for req in api_definition.definitions)
+        assert all(isinstance(req, APIVerb) for req in api_definition.definitions)
 
         first_request = api_definition.definitions[0]
         assert first_request.name != ""
@@ -97,11 +98,17 @@ class TestSimpleCollectionProcessing:
         api_paths = postman_processor.get_api_paths(api_definition)
 
         assert len(api_paths) > 0
-        service_verbs = api_paths[0]
+        api_path = api_paths[0]
 
-        assert isinstance(service_verbs, list)
-        assert len(service_verbs) > 0
-        assert all(isinstance(v, VerbInfo) for v in service_verbs)
+        assert isinstance(api_path, APIPath)
+        assert api_path.root_path != ""
+        # Parse content to verify it contains verb information
+        content = json.loads(api_path.content)
+        assert len(content) > 0
+        # Each service should have a list of verbs
+        for service, verbs in content.items():
+            assert isinstance(verbs, list)
+            assert len(verbs) > 0
 
     def test_get_api_verbs_with_service_tags(self, postman_processor, simple_collection_path):
         """Test that API verbs get properly tagged with services"""
@@ -123,8 +130,7 @@ class TestSimpleCollectionProcessing:
 
         # Verify api_paths structure
         assert len(api_paths) > 0
-        assert all(isinstance(path_group, list) for path_group in api_paths)
-        assert all(isinstance(verb_info, VerbInfo) for path_group in api_paths for verb_info in path_group)
+        assert all(isinstance(api_path, APIPath) for api_path in api_paths)
 
         api_verbs = postman_processor.get_api_verbs(api_definition)
 
@@ -134,10 +140,11 @@ class TestSimpleCollectionProcessing:
 
         # Build service_dict from api_paths for verification
         service_dict_paths = {}
-        for path_group in api_paths:
-            if path_group and path_group[0].root_path:
-                root_path = path_group[0].root_path
-                service_dict_paths[root_path] = {verb.full_path for verb in path_group}
+        for api_path in api_paths:
+            if api_path.root_path:
+                content = json.loads(api_path.content)
+                for service, verbs in content.items():
+                    service_dict_paths[service] = {verb["full_path"] for verb in verbs}
 
         # Verify each verb's path matches a path in its assigned service
         for verb in api_verbs:
@@ -207,11 +214,12 @@ class TestComplexCollectionProcessing:
 
         # Build service_dict from api_paths for verification
         service_dict_paths = {}
-        for path_group in api_paths:
-            if path_group and path_group[0].root_path:
+        for api_path in api_paths:
+            if api_path.root_path:
                 # Use root_path (which includes prefix) as the key to match verb.service
-                root_path = path_group[0].root_path
-                service_dict_paths[root_path] = {verb.full_path for verb in path_group}
+                content = json.loads(api_path.content)
+                for service, verbs in content.items():
+                    service_dict_paths[service] = {verb["full_path"] for verb in verbs}
 
         # Verify that each verb's path (without query params) matches a path in its assigned service
         for verb in api_verbs:
@@ -238,13 +246,18 @@ class TestComplexCollectionProcessing:
         api_definition = postman_processor.process_api_definition(complex_collection_path)
         api_paths = postman_processor.get_api_paths(api_definition)
 
-        all_verbs = [verb for service_verbs in api_paths for verb in service_verbs]
-        verbs_with_query_params = [v for v in all_verbs if v.query_params]
+        all_verbs = []
+        for api_path in api_paths:
+            content = json.loads(api_path.content)
+            for service, verbs in content.items():
+                all_verbs.extend(verbs)
+
+        verbs_with_query_params = [v for v in all_verbs if v.get("query_params")]
 
         assert len(verbs_with_query_params) > 0
 
         for verb in verbs_with_query_params:
-            for param, param_type in verb.query_params.items():
+            for param, param_type in verb["query_params"].items():
                 assert param_type in ["string", "number"]
 
     def test_body_attributes_extracted_with_nested_objects(self, postman_processor, complex_collection_path):
@@ -252,15 +265,22 @@ class TestComplexCollectionProcessing:
         api_definition = postman_processor.process_api_definition(complex_collection_path)
         api_paths = postman_processor.get_api_paths(api_definition)
 
-        all_verbs = [verb for service_verbs in api_paths for verb in service_verbs]
-        verbs_with_body = [v for v in all_verbs if v.body_attributes and v.verb in ["POST", "PUT"]]
+        all_verbs = []
+        for api_path in api_paths:
+            content = json.loads(api_path.content)
+            for service, verbs in content.items():
+                all_verbs.extend(verbs)
+
+        verbs_with_body = [
+            v for v in all_verbs if v.get("body_attributes") and v.get("verb") in ["POST", "PUT"]
+        ]
 
         assert len(verbs_with_body) > 0
 
         for verb in verbs_with_body:
-            has_nested = any("Object" in key for key in verb.body_attributes.keys())
+            has_nested = any("Object" in key for key in verb["body_attributes"].keys())
             if has_nested:
-                for key, value in verb.body_attributes.items():
+                for key, value in verb["body_attributes"].items():
                     if "Object" in key:
                         assert isinstance(value, dict) or value == "array"
                 break

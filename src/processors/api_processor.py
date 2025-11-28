@@ -5,7 +5,6 @@ from typing import List, Optional
 
 import yaml
 
-from .postman.models import VerbInfo, RequestData
 from ..configuration.data_sources import DataSource
 from ..models import APIModel, APIPath, APIVerb, GeneratedModel, ModelInfo, APIDefinition
 
@@ -62,55 +61,51 @@ class APIProcessor(ABC):
         pass
 
     @abstractmethod
-    def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath] | List[List[VerbInfo]]:
+    def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath]:
         """Get all path definitions that should be processed"""
         pass
 
     @abstractmethod
-    def get_api_path_name(self, api_path: APIPath | List[VerbInfo]) -> str:
+    def get_api_path_name(self, api_path: APIPath) -> str:
         """Get the name of the API path"""
         pass
 
     @abstractmethod
-    def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb] | List[RequestData]:
+    def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb]:
         """Get all verb definitions that should be processed"""
         pass
 
     @abstractmethod
-    def get_api_verb_path(self, api_verb: APIVerb | RequestData) -> str:
+    def get_api_verb_path(self, api_verb: APIVerb) -> str:
         """Get the path of the API verb"""
         pass
 
     @abstractmethod
-    def get_api_verb_rootpath(self, api_verb: APIVerb | RequestData) -> str:
+    def get_api_verb_rootpath(self, api_verb: APIVerb) -> str:
         """Get the root path of the API verb"""
         pass
 
     @abstractmethod
-    def get_api_verb_name(self, api_verb: APIVerb | RequestData) -> str:
+    def get_api_verb_name(self, api_verb: APIVerb) -> str:
         """Get the name of the API verb"""
         pass
 
     @abstractmethod
-    def get_relevant_models(
-        self, all_models: List[ModelInfo], api_verb: APIVerb | RequestData
-    ) -> List[GeneratedModel]:
+    def get_relevant_models(self, all_models: List[ModelInfo], api_verb: APIVerb) -> List[GeneratedModel]:
         """Get models relevant to the API verb"""
         pass
 
     @abstractmethod
-    def get_other_models(
-        self, all_models: List[ModelInfo], api_verb: APIVerb | RequestData
-    ) -> List[APIModel]:
+    def get_other_models(self, all_models: List[ModelInfo], api_verb: APIVerb) -> List[APIModel]:
         """Get other models not directly related to the API verb"""
         pass
 
     @abstractmethod
-    def get_api_verb_content(self, api_verb: APIVerb | RequestData) -> str:
+    def get_api_verb_content(self, api_verb: APIVerb) -> str:
         """Get the content of the API verb"""
         pass
 
     @abstractmethod
-    def get_api_path_content(self, api_path: APIPath | List[VerbInfo]) -> str:
+    def get_api_path_content(self, api_path: APIPath) -> str:
         """Get the content of the API path"""
         pass

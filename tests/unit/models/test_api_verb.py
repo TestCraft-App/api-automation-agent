@@ -8,11 +8,11 @@ def test_api_verb_instantiation():
     verb = "GET"
     root_path = "/test"
 
-    api_verb = APIVerb(path=path, yaml=yaml_content, verb=verb, root_path=root_path)
+    api_verb = APIVerb(full_path=path, content=yaml_content, verb=verb, root_path=root_path)
 
     assert api_verb.type == "verb"
-    assert api_verb.path == path
-    assert api_verb.yaml == yaml_content
+    assert api_verb.full_path == path
+    assert api_verb.content == yaml_content
     assert api_verb.verb == verb
     assert api_verb.root_path == root_path
 
@@ -24,7 +24,7 @@ def test_api_verb_to_json():
     verb = "GET"
     root_path = "/test"
 
-    api_verb = APIVerb(path=path, yaml=yaml_content, verb=verb, root_path=root_path)
+    api_verb = APIVerb(full_path=path, content=yaml_content, verb=verb, root_path=root_path)
 
     json_data = api_verb.to_json()
     assert json_data == {

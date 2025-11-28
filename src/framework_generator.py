@@ -10,7 +10,6 @@ from .models import APIDefinition, APIPath, APIVerb, GeneratedModel, ModelInfo
 from .models.usage_data import AggregatedUsageMetadata
 from .processors.api_processor import APIProcessor
 from .processors.postman_processor import PostmanProcessor
-from .processors.postman.models import VerbInfo, RequestData
 from .services.command_service import CommandService
 from .services.file_service import FileService
 from .services.framework_state_manager import FrameworkStateManager
@@ -303,7 +302,7 @@ class FrameworkGenerator:
         self.logger.info(f"   Output Tokens: {usage_metadata.total_output_tokens:,}")
         self.logger.info(f"   Total Cost (USD): ${usage_metadata.total_cost:.4f}")
 
-    def _generate_models(self, api_definition: APIPath | List[VerbInfo]) -> Optional[List[GeneratedModel]]:
+    def _generate_models(self, api_definition: APIPath) -> Optional[List[GeneratedModel]]:
         """Generate models for the API definition."""
         try:
             path_name, _ = APIPath.normalize_path(self.api_processor.get_api_path_name(api_definition))
@@ -325,7 +324,7 @@ class FrameworkGenerator:
 
     def _generate_tests(
         self,
-        api_verb: APIVerb | RequestData,
+        api_verb: APIVerb,
         all_models: List[ModelInfo],
         generate_tests: GenerationOptions,
     ) -> Optional[List[FileSpec]]:
