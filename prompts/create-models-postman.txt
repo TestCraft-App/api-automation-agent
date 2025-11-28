@@ -6,6 +6,7 @@ You will create API automation test code based on Postman request data using a c
 ## Task
 
 - Your task is to create the Service Model TypeScript file for the path documented on the Postman Request Data section.
+- Use `root_path` for the Service Model constructor.
 - Include in the Service Model every verb detailed in the Postman Request Data.
 - Parameters to the verbs methods must be of type unknown, to allow to test negative scenarios.
 - Service Models must be placed inside /src/models/services folder in the current working directory.

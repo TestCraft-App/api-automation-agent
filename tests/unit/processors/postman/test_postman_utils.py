@@ -56,7 +56,7 @@ def test_extract_requests_with_simple_request():
 
     assert len(result) == 1
     assert result[0].verb == "GET"
-    assert result[0].path == "/users/123"
+    assert result[0].full_path == "/users/123"
     assert result[0].name == "getUser"
 
 
@@ -97,7 +97,7 @@ def test_extract_requests_with_deeply_nested_folders():
 
     assert len(result) == 1
     assert result[0].file_path == "src/tests/api/v1/getResource"
-    assert result[0].path == "/v1/resource"  # Path normalized: /api prefix removed
+    assert result[0].full_path == "/v1/resource"  # Path normalized: /api prefix removed
 
 
 def test_extract_requests_skips_duplicates():
@@ -123,7 +123,7 @@ def test_extract_requests_with_non_standard_dict_structure():
 
     assert len(result) == 1
     assert result[0].verb == "GET"
-    assert result[0].path == "/test"
+    assert result[0].full_path == "/test"
 
 
 def test_extract_request_data_with_dict_url():
@@ -139,7 +139,7 @@ def test_extract_request_data_with_dict_url():
     result = PostmanUtils.extract_request_data(data, "/api")
 
     assert result.verb == "POST"
-    assert result.path == "/endpoint"  # Path normalized: /api prefix removed
+    assert result.full_path == "/endpoint"  # Path normalized: /api prefix removed
     assert result.body == {"name": "test"}
     assert result.prerequest == ["console.log('pre')"]
     assert result.script == ["pm.test('ok', () => {})"]
@@ -169,9 +169,9 @@ def test_extract_request_data_with_dict_url_path_and_query_arrays():
 
     # Path should include query params
     assert result.verb == "GET"
-    assert result.path == "/users?page=1&limit=10"  # Query params should be included
-    assert "page" in result.path
-    assert "limit" in result.path
+    assert result.full_path == "/users?page=1&limit=10"  # Query params should be included
+    assert "page" in result.full_path
+    assert "limit" in result.full_path
 
 
 def test_extract_request_data_with_dict_url_path_array_only():
@@ -189,7 +189,7 @@ def test_extract_request_data_with_dict_url_path_array_only():
     result = PostmanUtils.extract_request_data(data, None)
 
     assert result.verb == "GET"
-    assert result.path == "/users/123"  # No query params, just path
+    assert result.full_path == "/users/123"  # No query params, just path
 
 
 def test_extract_request_data_with_dict_url_prefers_raw_over_path():
@@ -208,7 +208,7 @@ def test_extract_request_data_with_dict_url_prefers_raw_over_path():
 
     result = PostmanUtils.extract_request_data(data, "/api")
 
-    assert result.path == "/users?page=1&limit=10"  # Should use raw, not reconstruct from path+query
+    assert result.full_path == "/users?page=1&limit=10"  # Should use raw, not reconstruct from path+query
 
 
 def test_extract_request_data_with_string_url():
@@ -216,7 +216,7 @@ def test_extract_request_data_with_string_url():
 
     result = PostmanUtils.extract_request_data(data, "")
 
-    assert result.path == "/simple/path"
+    assert result.full_path == "/simple/path"
 
 
 def test_extract_request_data_with_invalid_json_body():
@@ -241,7 +241,7 @@ def test_extract_request_data_normalizes_api_prefix():
 
     result = PostmanUtils.extract_request_data(data, "")
 
-    assert result.path == "/users"
+    assert result.full_path == "/users"
 
 
 def test_extract_requests_normalizes_paths():
@@ -257,18 +257,18 @@ def test_extract_requests_normalizes_paths():
     result = PostmanUtils.extract_requests(data)
 
     assert len(result) == 3
-    assert result[0].path == "/users"  # /api/users -> /users
-    assert result[1].path == "/v1/orders"  # /api/v1/orders -> /v1/orders
-    assert result[2].path == "/products"  # /products unchanged
+    assert result[0].full_path == "/users"  # /api/users -> /users
+    assert result[1].full_path == "/v1/orders"  # /api/v1/orders -> /v1/orders
+    assert result[2].full_path == "/products"  # /products unchanged
 
 
 def test_extract_verb_path_info_groups_by_path_and_verb():
     requests = [
         RequestData(
-            service="",
+            root_path="",
             file_path="test1",
             prefix="",
-            path="/users/123",
+            full_path="/users/123",
             verb="GET",
             body={},
             prerequest=[],
@@ -276,10 +276,10 @@ def test_extract_verb_path_info_groups_by_path_and_verb():
             name="test1",
         ),
         RequestData(
-            service="",
+            root_path="",
             file_path="test2",
             prefix="",
-            path="/users/123",
+            full_path="/users/123",
             verb="POST",
             body={"name": "John"},
             prerequest=[],
@@ -293,8 +293,8 @@ def test_extract_verb_path_info_groups_by_path_and_verb():
     assert len(result) == 2
     get_verb = next(v for v in result if v.verb == "GET")
     post_verb = next(v for v in result if v.verb == "POST")
-    assert get_verb.path == "/users/123"
-    assert post_verb.path == "/users/123"
+    assert get_verb.full_path == "/users/123"
+    assert post_verb.full_path == "/users/123"
     assert get_verb.root_path == "/users"
     assert post_verb.root_path == "/users"
 
@@ -302,10 +302,10 @@ def test_extract_verb_path_info_groups_by_path_and_verb():
 def test_extract_verb_path_info_removes_query_params():
     requests = [
         RequestData(
-            service="",
+            root_path="",
             file_path="test",
             prefix="",
-            path="/users?sort=name&page=1",
+            full_path="/users?sort=name&page=1",
             verb="GET",
             body={},
             prerequest=[],
@@ -317,7 +317,7 @@ def test_extract_verb_path_info_removes_query_params():
     result = PostmanUtils.extract_verb_path_info(requests)
 
     assert len(result) == 1
-    assert result[0].path == "/users"
+    assert result[0].full_path == "/users"
     assert "sort" in result[0].query_params
     assert "page" in result[0].query_params
 
@@ -325,10 +325,10 @@ def test_extract_verb_path_info_removes_query_params():
 def test_extract_verb_path_info_aggregates_query_params():
     requests = [
         RequestData(
-            service="",
+            root_path="",
             file_path="test1",
             prefix="",
-            path="/users?sort=name",
+            full_path="/users?sort=name",
             verb="GET",
             body={},
             prerequest=[],
@@ -336,10 +336,10 @@ def test_extract_verb_path_info_aggregates_query_params():
             name="test1",
         ),
         RequestData(
-            service="",
+            root_path="",
             file_path="test2",
             prefix="",
-            path="/users?include=profile",
+            full_path="/users?include=profile",
             verb="GET",
             body={},
             prerequest=[],
@@ -358,10 +358,10 @@ def test_extract_verb_path_info_aggregates_query_params():
 def test_extract_verb_path_info_aggregates_body_attributes():
     requests = [
         RequestData(
-            service="",
+            root_path="",
             file_path="test1",
             prefix="",
-            path="/users",
+            full_path="/users",
             verb="POST",
             body={"name": "John"},
             prerequest=[],
@@ -369,10 +369,10 @@ def test_extract_verb_path_info_aggregates_body_attributes():
             name="test1",
         ),
         RequestData(
-            service="",
+            root_path="",
             file_path="test2",
             prefix="",
-            path="/users",
+            full_path="/users",
             verb="POST",
             body={"email": "john@example.com"},
             prerequest=[],
@@ -392,10 +392,10 @@ def test_extract_verb_path_info_aggregates_scripts():
     """Test that scripts are aggregated from multiple requests with the same verb and path."""
     requests = [
         RequestData(
-            service="",
+            root_path="",
             file_path="test1",
             prefix="",
-            path="/users",
+            full_path="/users",
             verb="POST",
             body={},
             prerequest=[],
@@ -403,10 +403,10 @@ def test_extract_verb_path_info_aggregates_scripts():
             name="test1",
         ),
         RequestData(
-            service="",
+            root_path="",
             file_path="test2",
             prefix="",
-            path="/users",
+            full_path="/users",
             verb="POST",
             body={},
             prerequest=[],
@@ -428,10 +428,10 @@ def test_extract_verb_path_info_scripts_filtered_by_verb():
     """Test that scripts are only collected from requests matching the current verb."""
     requests = [
         RequestData(
-            service="",
+            root_path="",
             file_path="test1",
             prefix="",
-            path="/users",
+            full_path="/users",
             verb="GET",
             body={},
             prerequest=[],
@@ -439,10 +439,10 @@ def test_extract_verb_path_info_scripts_filtered_by_verb():
             name="test1",
         ),
         RequestData(
-            service="",
+            root_path="",
             file_path="test2",
             prefix="",
-            path="/users",
+            full_path="/users",
             verb="POST",
             body={},
             prerequest=[],
@@ -468,10 +468,10 @@ def test_extract_verb_path_info_handles_empty_scripts():
     """Test that empty scripts are handled correctly."""
     requests = [
         RequestData(
-            service="",
+            root_path="",
             file_path="test1",
             prefix="",
-            path="/users",
+            full_path="/users",
             verb="GET",
             body={},
             prerequest=[],
@@ -479,10 +479,10 @@ def test_extract_verb_path_info_handles_empty_scripts():
             name="test1",
         ),
         RequestData(
-            service="",
+            root_path="",
             file_path="test2",
             prefix="",
-            path="/users",
+            full_path="/users",
             verb="GET",
             body={},
             prerequest=[],
@@ -502,10 +502,10 @@ def test_extract_verb_path_info_scripts_with_multiple_script_lines():
     """Test that scripts with multiple lines per request are handled correctly."""
     requests = [
         RequestData(
-            service="",
+            root_path="",
             file_path="test1",
             prefix="",
-            path="/users",
+            full_path="/users",
             verb="POST",
             body={},
             prerequest=[],
@@ -517,10 +517,10 @@ def test_extract_verb_path_info_scripts_with_multiple_script_lines():
             name="test1",
         ),
         RequestData(
-            service="",
+            root_path="",
             file_path="test2",
             prefix="",
-            path="/users",
+            full_path="/users",
             verb="POST",
             body={},
             prerequest=[],
@@ -545,10 +545,10 @@ def test_extract_verb_path_info_scripts_with_multiple_script_lines():
 def test_group_request_data_by_service():
     requests = [
         RequestData(
-            service="/users",
+            root_path="/users",
             prefix="",
             file_path="test1",
-            path="/users/123",
+            full_path="/users/123",
             verb="GET",
             body={},
             prerequest=[],
@@ -556,10 +556,10 @@ def test_group_request_data_by_service():
             name="test1",
         ),
         RequestData(
-            service="/orders",
+            root_path="/orders",
             file_path="test2",
             prefix="",
-            path="/orders/456",
+            full_path="/orders/456",
             verb="GET",
             body={},
             prerequest=[],
@@ -574,8 +574,8 @@ def test_group_request_data_by_service():
     assert "/orders" in result
     assert len(result["/users"]) == 1
     assert len(result["/orders"]) == 1
-    assert result["/users"][0].path == "/users/123"
-    assert result["/orders"][0].path == "/orders/456"
+    assert result["/users"][0].full_path == "/users/123"
+    assert result["/orders"][0].full_path == "/orders/456"
 
 
 def test_accumulate_query_params_with_string_values():
@@ -796,10 +796,10 @@ def test_extract_verb_path_info_includes_prefix_in_root_path():
     """Test that prefix is included in root_path when present."""
     requests = [
         RequestData(
-            service="",
+            root_path="",
             file_path="test1",
             prefix="/api",
-            path="/users/123",
+            full_path="/users/123",
             verb="GET",
             body={},
             prerequest=[],
@@ -812,16 +812,17 @@ def test_extract_verb_path_info_includes_prefix_in_root_path():
 
     assert len(result) == 1
     assert result[0].root_path == "/api/users"
+    assert result[0].full_path == "/api/users/123"
 
 
 def test_extract_verb_path_info_with_empty_prefix():
     """Test that root_path works correctly when prefix is empty (backward compatible)."""
     requests = [
         RequestData(
-            service="",
+            root_path="",
             file_path="test1",
             prefix="",
-            path="/users/123",
+            full_path="/users/123",
             verb="GET",
             body={},
             prerequest=[],
@@ -834,16 +835,17 @@ def test_extract_verb_path_info_with_empty_prefix():
 
     assert len(result) == 1
     assert result[0].root_path == "/users"
+    assert result[0].full_path == "/users/123"
 
 
 def test_extract_verb_path_info_with_version_prefix():
     """Test that prefix works correctly with versioned paths."""
     requests = [
         RequestData(
-            service="",
+            root_path="",
             file_path="test1",
             prefix="/api",
-            path="/v1/pets/123",
+            full_path="/v1/pets/123",
             verb="GET",
             body={},
             prerequest=[],
@@ -856,6 +858,7 @@ def test_extract_verb_path_info_with_version_prefix():
 
     assert len(result) == 1
     assert result[0].root_path == "/api/v1/pets"
+    assert result[0].full_path == "/api/v1/pets/123"
 
 
 def test_extract_verb_path_info_with_multiple_requests_same_prefix():
@@ -863,10 +866,10 @@ def test_extract_verb_path_info_with_multiple_requests_same_prefix():
     Note: Different base paths create separate groups, but all use the prefix from requests[0]."""
     requests = [
         RequestData(
-            service="",
+            root_path="",
             file_path="test1",
             prefix="/api",
-            path="/users/123",
+            full_path="/users/123",
             verb="GET",
             body={},
             prerequest=[],
@@ -874,10 +877,10 @@ def test_extract_verb_path_info_with_multiple_requests_same_prefix():
             name="test1",
         ),
         RequestData(
-            service="",
+            root_path="",
             file_path="test2",
             prefix="/api",
-            path="/users/456",
+            full_path="/users/456",
             verb="GET",
             body={},
             prerequest=[],
@@ -885,10 +888,10 @@ def test_extract_verb_path_info_with_multiple_requests_same_prefix():
             name="test2",
         ),
         RequestData(
-            service="",
+            root_path="",
             file_path="test3",
             prefix="/api",
-            path="/users/789",
+            full_path="/users/789",
             verb="POST",
             body={},
             prerequest=[],
@@ -902,16 +905,17 @@ def test_extract_verb_path_info_with_multiple_requests_same_prefix():
     assert len(result) == 3
     for verb_info in result:
         assert verb_info.root_path == "/api/users"
+        assert verb_info.full_path.startswith("/api/users/")
 
 
 def test_extract_verb_path_info_with_query_params_and_prefix():
-    """Test that prefix is included in root_path even when query params are present."""
+    """Test that prefix is included in root_path and path even when query params are present."""
     requests = [
         RequestData(
-            service="",
+            root_path="",
             file_path="test1",
             prefix="/api",
-            path="/users?sort=name&page=1",
+            full_path="/users?sort=name&page=1",
             verb="GET",
             body={},
             prerequest=[],
@@ -924,7 +928,7 @@ def test_extract_verb_path_info_with_query_params_and_prefix():
 
     assert len(result) == 1
     assert result[0].root_path == "/api/users"
-    assert result[0].path == "/users"
+    assert result[0].full_path == "/api/users"
     assert "sort" in result[0].query_params
 
 
@@ -932,10 +936,10 @@ def test_extract_verb_path_info_with_custom_prefix():
     """Test that custom prefixes (not /api) work correctly."""
     requests = [
         RequestData(
-            service="",
+            root_path="",
             file_path="test1",
             prefix="/custom",
-            path="/orders/123",
+            full_path="/orders/123",
             verb="GET",
             body={},
             prerequest=[],
@@ -948,3 +952,62 @@ def test_extract_verb_path_info_with_custom_prefix():
 
     assert len(result) == 1
     assert result[0].root_path == "/custom/orders"
+    assert result[0].full_path == "/custom/orders/123"
+
+
+def test_strip_leading_postman_variable_with_trailing_slash():
+    """Test that Postman variables at the start are removed, including trailing slash."""
+    result = PostmanUtils._strip_leading_postman_variable("{{BASEURL}}/api/users")
+
+    assert result == "/api/users"
+
+
+def test_strip_leading_postman_variable_without_trailing_slash():
+    """Test that Postman variables at the start are removed without trailing slash."""
+    result = PostmanUtils._strip_leading_postman_variable("{{BASEURL}}api/users")
+
+    assert result == "api/users"
+
+
+def test_strip_leading_postman_variable_preserves_path_params():
+    """Test that path parameters in the middle of the path are preserved."""
+    result = PostmanUtils._strip_leading_postman_variable("{{BASEURL}}/api/users/{{id}}")
+
+    assert result == "/api/users/{{id}}"
+
+
+def test_strip_leading_postman_variable_no_variable():
+    """Test that paths without leading variables are unchanged."""
+    result = PostmanUtils._strip_leading_postman_variable("/api/users/{{id}}")
+
+    assert result == "/api/users/{{id}}"
+
+
+def test_strip_leading_postman_variable_only_variable():
+    """Test that a path with only a variable returns empty string."""
+    result = PostmanUtils._strip_leading_postman_variable("{{BASEURL}}")
+
+    assert result == ""
+
+
+def test_strip_leading_postman_variable_empty_path():
+    """Test that empty path returns empty string."""
+    result = PostmanUtils._strip_leading_postman_variable("")
+
+    assert result == ""
+
+
+def test_strip_leading_postman_variable_with_query_params():
+    """Test that query parameters are preserved when stripping leading variable."""
+    result = PostmanUtils._strip_leading_postman_variable("{{BASEURL}}/api/users?page=1")
+
+    assert result == "/api/users?page=1"
+
+
+def test_strip_leading_postman_variable_different_variable_names():
+    """Test that different variable names are handled correctly."""
+    result1 = PostmanUtils._strip_leading_postman_variable("{{API_URL}}/endpoint")
+    result2 = PostmanUtils._strip_leading_postman_variable("{{HOST}}/v1/resource")
+
+    assert result1 == "/endpoint"
+    assert result2 == "/v1/resource"

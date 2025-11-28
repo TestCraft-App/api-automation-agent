@@ -55,10 +55,10 @@ def sample_postman_collection():
 @pytest.fixture
 def sample_request_data():
     return RequestData(
-        service="users",
+        root_path="users",
         file_path="src/tests/users/getUser",
         prefix="",
-        path="/users/123",
+        full_path="/users/123",
         verb="GET",
         body={},
         prerequest=["console.log('pre')"],
@@ -180,10 +180,10 @@ def test_create_dot_env_uppercases_keys(postman_processor, tmp_path):
 
 def test_get_api_paths_returns_list(postman_processor):
     request = RequestData(
-        service="/users",
+        root_path="/users",
         prefix="",
         file_path="test",
-        path="/users/123",
+        full_path="/users/123",
         verb="GET",
         body={},
         prerequest=[],
@@ -200,10 +200,10 @@ def test_get_api_paths_returns_list(postman_processor):
 
 def test_get_api_paths_groups_by_service(postman_processor):
     request1 = RequestData(
-        service="/users",  # Service is set to root path
+        root_path="/users",  # Service is set to root path
         prefix="",
         file_path="test1",
-        path="/users/123",
+        full_path="/users/123",
         verb="GET",
         body={},
         prerequest=[],
@@ -211,10 +211,10 @@ def test_get_api_paths_groups_by_service(postman_processor):
         name="test1",
     )
     request2 = RequestData(
-        service="/orders",  # Service is set to root path
+        root_path="/orders",  # Service is set to root path
         prefix="",
         file_path="test2",
-        path="/orders/456",
+        full_path="/orders/456",
         verb="GET",
         body={},
         prerequest=[],
@@ -234,10 +234,10 @@ def test_get_api_paths_groups_by_service(postman_processor):
 
 def test_get_api_paths_returns_grouped_verb_infos(postman_processor):
     request = RequestData(
-        service="/users",  # Service is set to root path
+        root_path="/users",  # Service is set to root path
         prefix="",
         file_path="test",
-        path="/users/123",
+        full_path="/users/123",
         verb="GET",
         body={},
         prerequest=[],
@@ -256,7 +256,7 @@ def test_get_api_paths_returns_grouped_verb_infos(postman_processor):
 def test_get_api_path_name_returns_service_name(postman_processor):
     api_path = [
         VerbInfo(
-            verb="GET", root_path="/users", path="/users", query_params={}, body_attributes={}, script=[]
+            verb="GET", root_path="/users", full_path="/users", query_params={}, body_attributes={}, script=[]
         )
     ]
 
@@ -278,10 +278,10 @@ def test_get_relevant_models_returns_matching_models(postman_processor):
         ModelInfo(path="orders", files=["Order.ts"], models=[]),
     ]
     api_verb = RequestData(
-        service="users",
+        root_path="users",
         file_path="test",
         prefix="",
-        path="/users",
+        full_path="/users",
         verb="GET",
         body={},
         prerequest=[],
@@ -301,10 +301,10 @@ def test_get_relevant_models_returns_matching_models(postman_processor):
 def test_get_relevant_models_returns_empty_when_no_match(postman_processor):
     all_models = [ModelInfo(path="users", files=["User.ts"], models=[])]
     api_verb = RequestData(
-        service="orders",
+        root_path="orders",
         file_path="test",
         prefix="",
-        path="/orders",
+        full_path="/orders",
         verb="GET",
         body={},
         prerequest=[],
@@ -324,10 +324,10 @@ def test_get_other_models_excludes_current_service(postman_processor):
         ModelInfo(path="products", files=["Product.ts"], models=[]),
     ]
     api_verb = RequestData(
-        service="users",
+        root_path="users",
         file_path="test",
         prefix="",
-        path="/users",
+        full_path="/users",
         verb="GET",
         body={},
         prerequest=[],
@@ -348,10 +348,10 @@ def test_get_other_models_returns_api_model_instances(postman_processor):
         ModelInfo(path="orders", files=["Order.ts"], models=[]),
     ]
     api_verb = RequestData(
-        service="users",
+        root_path="users",
         file_path="test",
         prefix="",
-        path="/users",
+        full_path="/users",
         verb="GET",
         body={},
         prerequest=[],
@@ -386,10 +386,10 @@ def test_get_api_verb_name(postman_processor, sample_request_data):
 
 def test_get_api_verbs_returns_request_data_list(postman_processor):
     request = RequestData(
-        service="",
+        root_path="",
         file_path="test",
         prefix="",
-        path="/users/123",
+        full_path="/users/123",
         verb="GET",
         body={},
         prerequest=[],
@@ -409,10 +409,10 @@ def test_get_api_verbs_tags_with_service(postman_processor):
     # Service is already set when RequestData is created via extract_request_data
     # In this test, we set it manually to match real usage
     request = RequestData(
-        service="/users",  # Service is set to root path in extract_request_data
+        root_path="/users",  # Service is set to root path in extract_request_data
         file_path="test",
         prefix="",
-        path="/users/123",
+        full_path="/users/123",
         verb="GET",
         body={},
         prerequest=[],
@@ -431,10 +431,10 @@ def test_get_api_verbs_tags_with_service(postman_processor):
 
 def test_get_api_verbs_tags_multiple_services_correctly(postman_processor):
     request1 = RequestData(
-        service="/users",  # Service is set to root path
+        root_path="/users",  # Service is set to root path
         file_path="test1",
         prefix="",
-        path="/users/123",
+        full_path="/users/123",
         verb="GET",
         body={},
         prerequest=[],
@@ -442,10 +442,10 @@ def test_get_api_verbs_tags_multiple_services_correctly(postman_processor):
         name="test1",
     )
     request2 = RequestData(
-        service="/orders",  # Service is set to root path
+        root_path="/orders",  # Service is set to root path
         file_path="test2",
         prefix="",
-        path="/orders/456",
+        full_path="/orders/456",
         verb="POST",
         body={},
         prerequest=[],
@@ -492,7 +492,7 @@ def test_get_api_path_content_returns_json_string(postman_processor):
     api_path = [
         VerbInfo(
             verb="GET",
-            path="/users/123",
+            full_path="/users/123",
             query_params={"include": "string"},
             body_attributes={},
             root_path="/users",
@@ -511,7 +511,7 @@ def test_get_api_path_content_includes_verb_details(postman_processor):
     api_path = [
         VerbInfo(
             verb="GET",
-            path="/users/123",
+            full_path="/users/123",
             query_params={"include": "string"},
             body_attributes={"name": "string"},
             root_path="/users",
@@ -536,10 +536,10 @@ def test_update_framework_for_postman_creates_run_order_file(postman_processor, 
     package_json.write_text(json.dumps({"name": "test"}))
 
     request = RequestData(
-        service="users",
+        root_path="users",
         file_path="src/tests/users/getUser",
         prefix="",
-        path="/users",
+        full_path="/users",
         verb="GET",
         body={},
         prerequest=[],
@@ -600,10 +600,10 @@ def test_update_package_json_handles_missing_file(postman_processor, tmp_path, c
 
 def test_create_run_order_file_includes_all_requests(postman_processor, tmp_path):
     request1 = RequestData(
-        service="users",
+        root_path="users",
         file_path="src/tests/users/getUser",
         prefix="",
-        path="/users",
+        full_path="/users",
         verb="GET",
         body={},
         prerequest=[],
@@ -611,10 +611,10 @@ def test_create_run_order_file_includes_all_requests(postman_processor, tmp_path
         name="getUser",
     )
     request2 = RequestData(
-        service="users",
+        root_path="users",
         file_path="src/tests/users/createUser",
         prefix="",
-        path="/users",
+        full_path="/users",
         verb="POST",
         body={},
         prerequest=[],
@@ -643,10 +643,10 @@ def test_create_run_order_file_includes_header_comment(postman_processor, tmp_pa
 
 def test_create_run_order_file_skips_non_request_data(postman_processor, tmp_path):
     request = RequestData(
-        service="users",
+        root_path="users",
         file_path="src/tests/users/getUser",
         prefix="",
-        path="/users",
+        full_path="/users",
         verb="GET",
         body={},
         prerequest=[],

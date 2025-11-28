@@ -77,17 +77,17 @@ class APIProcessor(ABC):
         pass
 
     @abstractmethod
-    def get_api_verb_path(self, api_verb: APIVerb) -> str:
+    def get_api_verb_path(self, api_verb: APIVerb | RequestData) -> str:
         """Get the path of the API verb"""
         pass
 
     @abstractmethod
-    def get_api_verb_rootpath(self, api_verb: APIVerb) -> str:
+    def get_api_verb_rootpath(self, api_verb: APIVerb | RequestData) -> str:
         """Get the root path of the API verb"""
         pass
 
     @abstractmethod
-    def get_api_verb_name(self, api_verb: APIVerb) -> str:
+    def get_api_verb_name(self, api_verb: APIVerb | RequestData) -> str:
         """Get the name of the API verb"""
         pass
 
@@ -99,7 +99,9 @@ class APIProcessor(ABC):
         pass
 
     @abstractmethod
-    def get_other_models(self, all_models: List[ModelInfo], api_verb: APIVerb) -> List[APIModel]:
+    def get_other_models(
+        self, all_models: List[ModelInfo], api_verb: APIVerb | RequestData
+    ) -> List[APIModel]:
         """Get other models not directly related to the API verb"""
         pass
 

@@ -3,9 +3,8 @@ import re
 from typing import Any, Dict, List, Optional
 from urllib.parse import parse_qsl
 
-from src.models.api_path import APIPath
 from src.models.api_verb import APIVerb
-
+from src.models.api_path import APIPath
 from ...processors.postman.models import RequestData, VerbInfo
 
 
@@ -82,8 +81,7 @@ class PostmanUtils:
         else:
             path = raw_url or ""
 
-        # Strip Postman variables like {{BASEURL}} from the path
-        path = re.sub(r"\{\{[^}]+\}\}", "", path)
+        path = PostmanUtils._strip_leading_postman_variable(path)
 
         raw_body = req.get("body", {}).get("raw", "").replace("\r", "").replace("\n", "")
         try:
@@ -103,13 +101,12 @@ class PostmanUtils:
         file_path = f"src/tests{current_path}/{name}"
 
         normalized_path, prefix = APIPath.normalize_path(path, prefixes)
-        service = APIVerb.get_root_path(normalized_path)
+        root_path = prefix + APIVerb.get_root_path(normalized_path)
 
         return RequestData(
-            service=service,
             file_path=file_path,
-            prefix=prefix,
-            path=normalized_path,
+            root_path=root_path,
+            full_path=path,
             verb=verb,
             body=body,
             prerequest=prereq,
@@ -122,7 +119,7 @@ class PostmanUtils:
         """Group requests by base path (without query params) and verb, then aggregate attributes."""
         grouped: Dict[tuple[str, str], List[RequestData]] = {}
         for request in requests:
-            base_path = request.path.split("?")[0]
+            base_path = request.full_path.split("?")[0]
             key = (base_path, request.verb)
             grouped.setdefault(key, []).append(request)
 
@@ -134,7 +131,7 @@ class PostmanUtils:
 
             for match in matches:
                 PostmanUtils._accumulate_request_body_attributes(body_attrs, match.body)
-                parts = match.path.split("?", 1)
+                parts = match.full_path.split("?", 1)
                 if len(parts) == 2 and parts[1]:
                     PostmanUtils.accumulate_query_params(qp, parts[1])
                 scripts.extend(match.script)
@@ -142,8 +139,8 @@ class PostmanUtils:
             out.append(
                 VerbInfo(
                     verb=verb,
-                    root_path=requests[0].prefix + APIVerb.get_root_path(base_path),
-                    path=base_path,
+                    root_path=matches[0].root_path,
+                    full_path=base_path,
                     query_params=qp,
                     body_attributes=body_attrs,
                     script=scripts,
@@ -156,7 +153,7 @@ class PostmanUtils:
         """Group RequestData objects by their service."""
         requests_by_service: Dict[str, List[RequestData]] = {}
         for request in requests:
-            requests_by_service.setdefault(request.service, []).append(request)
+            requests_by_service.setdefault(request.root_path, []).append(request)
         return requests_by_service
 
     @staticmethod
@@ -185,6 +182,25 @@ class PostmanUtils:
         if not parts:
             return ""
         return parts[0].lower() + "".join(p.title() for p in parts[1:])
+
+    @staticmethod
+    def _strip_leading_postman_variable(path: str) -> str:
+        """
+        Strip Postman variables like {{BASEURL}} from the start of the path only.
+        Preserves path parameters like {{id}} that appear later in the path.
+
+        Args:
+            path: The path string that may contain Postman variables
+
+        Returns:
+            The path with leading Postman variables removed
+
+        Examples:
+            "{{BASEURL}}/api/users" -> "/api/users"
+            "{{BASEURL}}/api/users/{{id}}" -> "/api/users/{{id}}"
+            "/api/users/{{id}}" -> "/api/users/{{id}}"
+        """
+        return re.sub(r"^\{\{[^}]+\}\}", "", path)
 
     @staticmethod
     def _accumulate_request_body_attributes(all_attrs: Dict[str, Any], body: Dict[str, Any]) -> None:

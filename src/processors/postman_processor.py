@@ -7,7 +7,7 @@ from ..configuration.config import Config
 
 from .postman.models import VerbInfo, RequestData
 from ..ai_tools.models.file_spec import FileSpec
-from ..models import APIModel, APIVerb, GeneratedModel, ModelInfo, APIDefinition
+from ..models import APIModel, GeneratedModel, ModelInfo, APIDefinition
 from ..processors.api_processor import APIProcessor
 from ..processors.postman.postman_utils import PostmanUtils
 from ..services.file_service import FileService
@@ -59,33 +59,31 @@ class PostmanProcessor(APIProcessor):
     def get_api_path_name(self, api_path: List[VerbInfo]) -> str:
         if not api_path:
             return ""
-        first_path = api_path[0].path.lstrip("/")
-        if not first_path:
-            return ""
-        return first_path.split("/", 1)[0]
+
+        return api_path[0].root_path
 
     def get_relevant_models(self, all_models: List[ModelInfo], api_verb: RequestData) -> List[GeneratedModel]:
         """Get models relevant to the API verb."""
         result: List[GeneratedModel] = []
         for model in all_models:
-            if api_verb.service.lstrip("/") == model.path:
+            if api_verb.root_path == model.path:
                 result.extend(model.models)
         return result
 
     def get_other_models(self, all_models: List[ModelInfo], api_verb: RequestData) -> List[APIModel]:
         result: List[APIModel] = []
         for model in all_models:
-            if model.path != api_verb.service.lstrip("/"):
+            if model.path != api_verb.root_path:
                 result.append(APIModel(path=model.path, files=model.files))
         return result
 
-    def get_api_verb_path(self, api_verb: APIVerb) -> str:
-        return api_verb.path
+    def get_api_verb_path(self, api_verb: RequestData) -> str:
+        return api_verb.full_path
 
     def get_api_verb_rootpath(self, api_verb: RequestData) -> str:
-        return api_verb.service
+        return api_verb.root_path
 
-    def get_api_verb_name(self, api_verb: APIVerb) -> str:
+    def get_api_verb_name(self, api_verb: RequestData) -> str:
         return api_verb.verb
 
     def get_api_verbs(self, api_definition: APIDefinition) -> List[RequestData]:
@@ -107,7 +105,7 @@ class PostmanProcessor(APIProcessor):
             content[service].append(
                 {
                     "root_path": verb.root_path,
-                    "path": verb.path,
+                    "full_path": verb.full_path,
                     "verb": verb.verb,
                     "query_params": verb.query_params,
                     "body_attributes": verb.body_attributes,

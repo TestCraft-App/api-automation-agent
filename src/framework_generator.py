@@ -306,7 +306,7 @@ class FrameworkGenerator:
     def _generate_models(self, api_definition: APIPath | List[VerbInfo]) -> Optional[List[GeneratedModel]]:
         """Generate models for the API definition."""
         try:
-            path_name = self.api_processor.get_api_path_name(api_definition)
+            path_name, _ = APIPath.normalize_path(self.api_processor.get_api_path_name(api_definition))
             self.logger.info(f"Generating models for {path_name}")
             definition_content = self.api_processor.get_api_path_content(api_definition)
             models_result = self.llm_service.generate_models(definition_content)

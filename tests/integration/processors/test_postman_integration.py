@@ -73,7 +73,7 @@ class TestSimpleCollectionProcessing:
         first_request = api_definition.definitions[0]
         assert first_request.name != ""
         assert first_request.verb in ["GET", "POST", "PUT", "DELETE", "PATCH"]
-        assert first_request.path != ""
+        assert first_request.full_path != ""
 
     def test_generate_env_file_from_simple_collection(
         self, postman_processor, simple_collection_path, temp_destination
@@ -204,11 +204,25 @@ class TestComplexCollectionProcessing:
 
         # Build service_dict from api_paths for verification
         service_dict_paths = {}
+        service_prefixes = {}  # Track prefix for each service
         for path_group in api_paths:
             service_name = postman_processor.get_api_path_name(path_group)
             if service_name:
                 root_path = f"/{service_name}"
                 service_dict_paths[root_path] = {verb.path for verb in path_group}
+                # Extract prefix from root_path: if root_path is "/api/users" and service is "/users",
+                # prefix is "/api" (everything before "/users")
+                if path_group and path_group[0].root_path:
+                    root_path_str = path_group[0].root_path
+                    service_with_slash = root_path
+                    # Remove service from end of root_path to get prefix
+                    if root_path_str.endswith(service_with_slash):
+                        prefix = root_path_str[: -len(service_with_slash)]
+                        service_prefixes[root_path] = prefix
+                    else:
+                        service_prefixes[root_path] = ""
+                else:
+                    service_prefixes[root_path] = ""
 
         # Verify that each verb's path (without query params) matches a path in its assigned service
         for verb in api_verbs:
@@ -223,10 +237,16 @@ class TestComplexCollectionProcessing:
             # Get all paths for this service
             service_paths = service_dict_paths[service]
 
-            # Verify the verb's path matches
-            assert verb_path_no_query in service_paths, (
-                f"Path '{verb_path_no_query}' (from verb {verb.verb} {verb.path}) "
-                f"not found in service '{service}'. "
+            # Get the prefix for this service (from VerbInfo paths)
+            service_prefix = service_prefixes.get(service, verb.prefix or "")
+
+            verb_path_with_prefix = (
+                service_prefix + verb_path_no_query if service_prefix else verb_path_no_query
+            )
+
+            assert verb_path_with_prefix in service_paths, (
+                f"Path '{verb_path_with_prefix}' (from verb {verb.verb} {verb.path} "
+                f"with service prefix {service_prefix}) not found in service '{service}'. "
                 f"Available paths in service: {service_paths}. "
                 f"Service dict keys: {list(service_dict_paths.keys())}"
             )

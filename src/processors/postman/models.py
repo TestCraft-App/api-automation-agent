@@ -8,10 +8,9 @@ class RequestData:
     Represents one Postman request/test‐case with its metadata.
     """
 
-    service: str
     file_path: str
-    prefix: str
-    path: str
+    root_path: str
+    full_path: str
     verb: str
     body: Dict[str, Any]
     prerequest: List[str]
@@ -23,9 +22,9 @@ class RequestData:
         Convert the RequestData object to a JSON-compatible dictionary.
         """
         return {
-            "service": self.service,
             "file_path": self.file_path,
-            "path": self.path,
+            "root_path": self.root_path,
+            "full_path": self.full_path,
             "verb": self.verb,
             "body": self.body,
             "prerequest": self.prerequest,
@@ -42,7 +41,7 @@ class VerbInfo:
 
     verb: str
     root_path: str | None
-    path: str
+    full_path: str
     query_params: Dict[str, str]
     body_attributes: Dict[str, Any]
     script: List[str]
