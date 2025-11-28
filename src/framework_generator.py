@@ -38,6 +38,9 @@ class FrameworkGenerator:
         self.checkpoint = Checkpoint(self, "framework_generator", self.config.destination_folder)
         self.state_manager = FrameworkStateManager(self.config, self.file_service)
 
+        if self.config.use_existing_framework:
+            self.state_manager.load_state()
+
         signal.signal(signal.SIGINT, self._handle_interrupt)
         signal.signal(signal.SIGTERM, self._handle_interrupt)
 

@@ -103,9 +103,6 @@ def main(
         else:
             framework_generator.restore_state(last_namespace)
 
-        if config.use_existing_framework:
-            framework_generator.state_manager.load_state()
-
         api_definition = framework_generator.process_api_definition()
         if not api_definition.definitions:
             return
