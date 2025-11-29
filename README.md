@@ -204,6 +204,15 @@ generated-framework_[timestamp]/    # Or the Destination Folder selected
 └── tsconfig.json
 ```
 
+## Framework State & Incremental Generation
+
+The framework state management feature enables incremental generation of endpoints one at a time, while preserving all previously generated models as context for subsequent generations. This allows you to generate your test framework in stages, edit tests and models manually, and continue generation later without losing context or regenerating existing artifacts.
+
+- Every framework contains a `framework-state.json` file at its root. This file tracks each generated endpoint, the verbs that were processed, the TypeScript model files (path + summary), and the associated test specs.
+- When you pass `--use-existing-framework`, the agent loads this state file from `--destination-folder` and re-reads the referenced model files from disk so that manually edited models are still used as LLM context.
+- If the user requests to generate an endpoint that is part of the loaded state, the agent prompts the user whether to override it, skip it, or exit.
+- Tests are marked as part of the state file as soon as they are generated, so you can run the agent in multiple stages (e.g., generate models first, return later to add tests) without losing track of your progress.
+
 ## Postman Collection Migration
 
 The API Automation Agent can now convert your Postman collections into TypeScript automated test frameworks, preserving the structure and test logic of your collections.
@@ -326,6 +335,8 @@ For detailed instructions on how to set up, run, and interpret the benchmark res
 ## Checkpoints
 
 The checkpoints feature allows you to save and restore the state of the framework generation process. This is useful if you need to interrupt the process and resume it later without losing progress.
+
+> **Checkpoints vs. Framework State**: Checkpoints are still used for crash/interrupt recovery during a single run. The new `framework-state.json` file (described above) captures long-term metadata so you can return to an existing framework and continue generation later.
 
 ### Purpose
 

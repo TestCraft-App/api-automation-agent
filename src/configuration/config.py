@@ -33,6 +33,7 @@ class Config:
     prefixes: Optional[List[str]] = None
     use_existing_framework: bool = False
     list_endpoints: bool = False
+    override: bool = False
     tsc_max_passes: int = 4
 
     def update(self, updates: dict[str, Any]):

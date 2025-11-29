@@ -1,4 +1,3 @@
-from argparse import Namespace
 import logging
 import os
 import sys
