@@ -123,7 +123,7 @@ class FrameworkStateManager:
 
         if self.config.override:
             self.logger.info(
-                f"\n⚠️ Tests for '{verb.path} - {verb.verb.upper()}' already exist. Overriding tests."
+                f"\n⚠️ Tests for '{verb.full_path} - {verb.verb.upper()}' already exist. Overriding tests."
             )
             return True
 

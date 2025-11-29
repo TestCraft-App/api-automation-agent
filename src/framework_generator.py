@@ -113,7 +113,7 @@ class FrameworkGenerator:
             if verb_rootpath and self.state_manager.are_tests_generated_for_verb(verb):
                 if verb_rootpath not in existing_paths:
                     existing_paths[verb_rootpath] = []
-                existing_paths[verb_rootpath].append(f"{verb.path} - {verb.verb.upper()}")
+                existing_paths[verb_rootpath].append(f"{verb.full_path} - {verb.verb.upper()}")
 
         if not existing_paths:
             return

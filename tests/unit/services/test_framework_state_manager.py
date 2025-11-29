@@ -254,14 +254,14 @@ class TestFrameworkStateManagerShouldGenerateTestsVerb:
 
     def test_should_generate_when_verb_not_exists(self, state_manager):
         """Test returning True when verb doesn't exist in state."""
-        verb = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
+        verb = APIVerb(full_path="/users", verb="get", root_path="/users", content="test: content")
         result = state_manager.should_generate_tests_verb(verb)
         assert result is True
 
     def test_should_generate_when_verb_exists_and_override_false(self, state_manager, tmp_path):
         """Test returning False when verb exists and override is False."""
         state = FrameworkState(framework_root=tmp_path)
-        verb = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
+        verb = APIVerb(full_path="/users", verb="get", root_path="/users", content="test: content")
         state.update_tests(verb, ["test.ts"])
         state_manager.load_state()
 
@@ -271,7 +271,7 @@ class TestFrameworkStateManagerShouldGenerateTestsVerb:
     def test_should_generate_when_verb_exists_and_override_true(self, state_manager, tmp_path):
         """Test returning True when verb exists and override is True."""
         state = FrameworkState(framework_root=tmp_path)
-        verb = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
+        verb = APIVerb(full_path="/users", verb="get", root_path="/users", content="test: content")
         state.update_tests(verb, ["test.ts"])
         state_manager.load_state()
 
@@ -340,7 +340,7 @@ class TestFrameworkStateManagerUpdateTestsState:
 
     def test_update_tests_state_new_verb(self, state_manager, tmp_path):
         """Test updating state with new tests."""
-        verb = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
+        verb = APIVerb(full_path="/users", verb="get", root_path="/users", content="test: content")
         tests = ["src/tests/users.spec.ts"]
 
         state_manager.update_tests_state(verb, tests)
@@ -360,12 +360,12 @@ class TestFrameworkStateManagerUpdateTestsState:
         """Test updating state with existing verb (adds to verbs list)."""
         # Create initial state
         state = FrameworkState(framework_root=tmp_path)
-        verb1 = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
+        verb1 = APIVerb(full_path="/users", verb="get", root_path="/users", content="test: content")
         state.update_tests(verb1, ["test1.ts"])
         state_manager.load_state()
 
         # Add another verb
-        verb2 = APIVerb(path="/users", verb="post", root_path="/users", yaml={})
+        verb2 = APIVerb(full_path="/users", verb="post", root_path="/users", content="test: content")
         state_manager.update_tests_state(verb2, ["test2.ts"])
 
         # Verify both verbs present
@@ -381,14 +381,14 @@ class TestFrameworkStateManagerUpdateTestsState:
         state_file = tmp_path / FrameworkState.STATE_FILENAME
         assert not state_file.exists()
 
-        verb = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
+        verb = APIVerb(full_path="/users", verb="get", root_path="/users", content="test: content")
         state_manager.update_tests_state(verb, ["test.ts"])
 
         assert state_file.exists()
 
     def test_update_tests_state_empty_tests(self, state_manager, tmp_path):
         """Test with empty tests list."""
-        verb = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
+        verb = APIVerb(full_path="/users", verb="get", root_path="/users", content="test: content")
         state_manager.update_tests_state(verb, [])
 
         loaded_state = FrameworkState.load(tmp_path)
