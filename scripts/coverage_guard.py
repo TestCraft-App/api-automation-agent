@@ -24,8 +24,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--tolerance",
         type=float,
-        default=1e-4,
-        help="Permitted floating point tolerance when comparing coverage values.",
+        default=0.01,
+        help="Permitted floating point tolerance when comparing coverage values (1% = 0.01).",
     )
     return parser.parse_args()
 

@@ -113,7 +113,7 @@ class FrameworkGenerator:
             if verb_rootpath and self.state_manager.are_tests_generated_for_verb(verb):
                 if verb_rootpath not in existing_paths:
                     existing_paths[verb_rootpath] = []
-                existing_paths[verb_rootpath].append(f"{verb.path} - {verb.verb.upper()}")
+                existing_paths[verb_rootpath].append(f"{verb.full_path} - {verb.verb.upper()}")
 
         if not existing_paths:
             return
@@ -302,10 +302,10 @@ class FrameworkGenerator:
         self.logger.info(f"   Output Tokens: {usage_metadata.total_output_tokens:,}")
         self.logger.info(f"   Total Cost (USD): ${usage_metadata.total_cost:.4f}")
 
-    def _generate_models(self, api_definition: APIPath | str) -> Optional[List[GeneratedModel]]:
+    def _generate_models(self, api_definition: APIPath) -> Optional[List[GeneratedModel]]:
         """Generate models for the API definition."""
         try:
-            path_name = self.api_processor.get_api_path_name(api_definition)
+            path_name, _ = APIPath.normalize_path(self.api_processor.get_api_path_name(api_definition))
             self.logger.info(f"Generating models for {path_name}")
             definition_content = self.api_processor.get_api_path_content(api_definition)
             models_result = self.llm_service.generate_models(definition_content)
@@ -315,7 +315,7 @@ class FrameworkGenerator:
 
             self.models_count += len(models_result)
             self._run_code_quality_checks(models_result, are_models=True)
-            self.logger.info(f"Generated {len(models_result)} models for {path_name}")
+            self.logger.info(f"Generated {len(models_result)} models for {path_name}\n")
             return GeneratedModel.from_model_file_specs(models_result)
 
         except Exception as e:
@@ -334,6 +334,7 @@ class FrameworkGenerator:
         try:
             relevant_models = self.api_processor.get_relevant_models(all_models, api_verb)
             other_models = self.api_processor.get_other_models(all_models, api_verb)
+
             self.logger.info(f"\nGenerating first test for path: {verb_path} and verb: {verb_name}")
 
             if other_models:

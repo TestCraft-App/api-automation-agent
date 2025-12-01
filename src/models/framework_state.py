@@ -108,14 +108,13 @@ class FrameworkState:
         endpoint = self.generated_endpoints.get(verb.root_path)
         if not endpoint:
             return False
-        return f"{verb.path} - {verb.verb.upper()}" in endpoint.verbs
+        return f"{verb.full_path} - {verb.verb.upper()}" in endpoint.verbs
 
     def update_models(
         self,
         path: str,
         models: Iterable[GeneratedModel],
         auto_save: bool = True,
-        framework_root: Optional[Path] = None,
     ) -> EndpointState:
         model_metadata = [ModelMetadata.from_generated_model(model) for model in models]
 
@@ -136,14 +135,13 @@ class FrameworkState:
         verb: APIVerb,
         tests: Iterable[str],
         auto_save: bool = True,
-        framework_root: Optional[Path] = None,
     ) -> EndpointState:
         endpoint = self.generated_endpoints.get(verb.root_path)
         if not endpoint:
             endpoint = EndpointState(path=verb.root_path)
             self.generated_endpoints[verb.root_path] = endpoint
 
-        verb_key = f"{verb.path} - {verb.verb.upper()}"
+        verb_key = f"{verb.full_path} - {verb.verb.upper()}"
         if verb_key not in endpoint.verbs:
             endpoint.verbs.append(verb_key)
 

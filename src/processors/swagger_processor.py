@@ -69,30 +69,31 @@ class SwaggerProcessor(APIProcessor):
 
             result = APIDefinition(endpoints=self.config.endpoints, base_yaml=base_definition)
             for definition in merged_definitions:
-                if not result.should_process_endpoint(definition.path):
-                    self.logger.debug(f"Skipping endpoint: {definition.path}")
+                if not result.should_process_endpoint(definition.full_path):
+                    self.logger.debug(f"Skipping endpoint: {definition.full_path}")
                     continue
                 if isinstance(definition, APIPath):
-                    result.add_definition(APIPath(path=definition.path, yaml=definition.yaml))
+                    result.add_definition(APIPath(full_path=definition.full_path, content=definition.content))
                 elif isinstance(definition, APIVerb):
                     result.add_definition(
                         APIVerb(
                             verb=definition.verb,
-                            path=definition.path,
-                            root_path=APIVerb.get_root_path(definition.path),
-                            yaml=definition.yaml,
+                            full_path=definition.full_path,
+                            root_path=APIVerb.get_root_path(definition.full_path),
+                            content=definition.content,
                         )
                     )
 
                 self.logger.debug(f"\nType: {definition.type}")
-                self.logger.debug(f"Path: {definition.path}")
+                self.logger.debug(f"Path: {definition.full_path}")
                 if isinstance(definition, APIVerb):
                     self.logger.debug(f"Verb: {definition.verb}")
 
             if not result.definitions:
                 if self.config.endpoints:
                     self.logger.error(
-                        f"\n❌ The API definition does not contain any of the provided endpoints: {', '.join(self.config.endpoints)}"
+                        f"\n❌ The API definition does not contain any of the provided endpoints: "
+                        f"{', '.join(self.config.endpoints)}"
                     )
                 else:
                     self.logger.error("❌ No endpoints were found in the API definition.")
@@ -148,14 +149,14 @@ class SwaggerProcessor(APIProcessor):
         return api_definition.get_paths()
 
     def get_api_path_name(self, api_path: APIPath) -> str:
-        return api_path.path
+        return api_path.full_path
 
     def get_api_verbs(self, api_definition: APIDefinition) -> List[APIVerb]:
         """Get all verb definitions that should be processed."""
         return api_definition.get_verbs()
 
     def get_api_verb_path(self, api_verb: APIVerb) -> str:
-        return api_verb.path
+        return api_verb.full_path
 
     def get_api_verb_rootpath(self, api_verb: APIVerb) -> str:
         return api_verb.root_path
@@ -168,7 +169,7 @@ class SwaggerProcessor(APIProcessor):
         result: List[GeneratedModel] = []
 
         for model in all_models:
-            if api_verb.path == model.path or str(api_verb.path).startswith(model.path + "/"):
+            if api_verb.full_path == model.path or str(api_verb.full_path).startswith(model.path + "/"):
                 result.extend(model.models)
 
         return result
@@ -180,15 +181,15 @@ class SwaggerProcessor(APIProcessor):
     ) -> List[APIModel]:
         result = []
         for model in all_models:
-            if not (api_verb.path == model.path or str(api_verb.path).startswith(model.path + "/")):
+            if not (api_verb.full_path == model.path or str(api_verb.full_path).startswith(model.path + "/")):
                 result.append(APIModel(path=model.path, files=model.files))
         return result
 
     def get_api_verb_content(self, api_verb: APIVerb) -> str:
-        return self._build_full_definition(api_verb.yaml)
+        return self._build_full_definition(api_verb.content)
 
     def get_api_path_content(self, api_path: APIPath) -> str:
-        return self._build_full_definition(api_path.yaml)
+        return self._build_full_definition(api_path.content)
 
     def _build_full_definition(self, paths_yaml: str) -> str:
         """Combine base specification with a partial paths YAML"""

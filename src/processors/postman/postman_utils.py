@@ -1,16 +1,16 @@
 import json
 import re
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, List, Optional
 from urllib.parse import parse_qsl
 
 from src.models.api_verb import APIVerb
-
-from ...processors.postman.models import RequestData, VerbInfo
+from src.models.api_path import APIPath
+from .verb_info import VerbInfo
 
 
 class PostmanUtils:
     """
-    All pure‐logic for parsing Postman JSON → RequestData, VerbInfo, ServiceVerbs.
+    All pure‐logic for parsing Postman JSON → APIVerb, VerbInfo.
     """
 
     numeric_only = r"^\d+$"
@@ -26,8 +26,8 @@ class PostmanUtils:
         return variables
 
     @staticmethod
-    def extract_requests(data: Any, path: str = "") -> List[RequestData]:
-        results: List[RequestData] = []
+    def extract_requests(data: Any, path: str = "", prefixes: Optional[List[str]] = None) -> List[APIVerb]:
+        results: List[APIVerb] = []
 
         def _walk(item: Any, cur: str):
             if isinstance(item, dict):
@@ -36,7 +36,7 @@ class PostmanUtils:
                     for sub in item["item"]:
                         _walk(sub, new_path)
                 elif PostmanUtils.item_is_a_test_case(item):
-                    rd = PostmanUtils.extract_request_data(item, cur)
+                    rd = PostmanUtils.extract_request_data(item, cur, prefixes=prefixes)
                     if rd.name not in {r.name for r in results}:
                         results.append(rd)
                 else:
@@ -50,23 +50,41 @@ class PostmanUtils:
         return results
 
     @staticmethod
-    def extract_request_data(data: Dict[str, Any], current_path: str) -> RequestData:
+    def extract_request_data(
+        data: Dict[str, Any], current_path: str, prefixes: Optional[List[str]] = None
+    ) -> APIVerb:
         req = data.get("request", {})
         verb = req.get("method", "")
         raw_url = req.get("url")
         if isinstance(raw_url, dict):
-            path = raw_url.get("raw", "")
+            # Prefer "raw" as it includes query parameters
+            if "raw" in raw_url:
+                path = raw_url.get("raw", "")
+            elif "path" in raw_url and isinstance(raw_url["path"], list):
+                path = "/" + "/".join(raw_url["path"])
+                if "query" in raw_url and isinstance(raw_url["query"], list):
+                    query_parts = []
+                    for q in raw_url["query"]:
+                        if isinstance(q, dict) and "key" in q:
+                            key = q.get("key", "")
+                            value = q.get("value", "")
+                            if key:
+                                query_parts.append(f"{key}={value}" if value else key)
+                    if query_parts:
+                        path += "?" + "&".join(query_parts)
+            else:
+                path = raw_url.get("raw", "")
         else:
             path = raw_url or ""
 
-        # body
+        path = PostmanUtils._strip_leading_postman_variable(path)
+
         raw_body = req.get("body", {}).get("raw", "").replace("\r", "").replace("\n", "")
         try:
             body = json.loads(raw_body) if raw_body else {}
         except json.JSONDecodeError:
             body = {}
 
-        # scripts
         prereq: List[str] = []
         script: List[str] = []
         for ev in data.get("event", []):
@@ -75,14 +93,16 @@ class PostmanUtils:
             elif ev.get("listen") == "test":
                 script = ev.get("script", {}).get("exec", [])
 
-        # name & file_path
         name = PostmanUtils.to_camel_case(data.get("name", ""))
         file_path = f"src/tests{current_path}/{name}"
 
-        return RequestData(
-            service="",
+        normalized_path, prefix = APIPath.normalize_path(path, prefixes)
+        root_path = prefix + APIVerb.get_root_path(normalized_path)
+
+        return APIVerb(
             file_path=file_path,
-            path=path,
+            root_path=root_path,
+            full_path=path,
             verb=verb,
             body=body,
             prerequest=prereq,
@@ -91,69 +111,46 @@ class PostmanUtils:
         )
 
     @staticmethod
-    def extract_verb_path_info(requests: List[RequestData]) -> List[VerbInfo]:
-        distinct = {item.path.split("?")[0] for item in requests}
+    def extract_verb_path_info(requests: List[APIVerb]) -> List[VerbInfo]:
+        """Group requests by base path (without query params) and verb, then aggregate attributes."""
+        grouped: Dict[tuple[str, str], List[APIVerb]] = {}
+        for request in requests:
+            base_path = request.full_path.split("?")[0]
+            key = (base_path, request.verb)
+            grouped.setdefault(key, []).append(request)
+
         out: List[VerbInfo] = []
+        for (base_path, verb), matches in grouped.items():
+            qp: Dict[str, str] = {}
+            body_attrs: Dict[str, Any] = {}
+            scripts: List[str] = []
 
-        for base in distinct:
-            matches = [r for r in requests if r.path.startswith(base)]
-            verbs = {r.verb for r in matches}
-            for v in verbs:
-                qp: Dict[str, str] = {}
-                body_attrs: Dict[str, Any] = {}
-                for m in matches:
-                    if m.verb != v:
-                        continue
-                    # body
-                    PostmanUtils._accumulate_request_body_attributes(body_attrs, m.body)
-                    # query
-                    parts = m.path.split("?", 1)
-                    if len(parts) == 2 and parts[1]:
-                        PostmanUtils.accumulate_query_params(qp, parts[1])
-                out.append(
-                    VerbInfo(
-                        verb=v,
-                        root_path=APIVerb.get_root_path(base),
-                        path=base,
-                        query_params=qp,
-                        body_attributes=body_attrs,
-                    )
+            for match in matches:
+                PostmanUtils._accumulate_request_body_attributes(body_attrs, match.body)
+                parts = match.full_path.split("?", 1)
+                if len(parts) == 2 and parts[1]:
+                    PostmanUtils.accumulate_query_params(qp, parts[1])
+                scripts.extend(match.script)
+
+            out.append(
+                VerbInfo(
+                    verb=verb,
+                    root_path=matches[0].root_path,
+                    full_path=base_path,
+                    query_params=qp,
+                    body_attributes=body_attrs,
+                    script=scripts,
                 )
+            )
         return out
 
     @staticmethod
-    def map_verb_path_pairs_to_services(
-        verb_path_pairs: List[RequestData], no_query_params_routes_grouped_by_service: Dict[str, List[str]]
-    ) -> Dict[str, List[VerbInfo]]:
-        # first group raw paths by service root
-        verb_chunks_with_query_params = PostmanUtils.extract_verb_path_info(verb_path_pairs)
-
-        verb_path_pairs_and_services: Dict[str, List[VerbInfo]] = {}
-        for verb_path_pair in verb_chunks_with_query_params:
-            for service, routes in no_query_params_routes_grouped_by_service.items():
-                if verb_path_pair.path in routes:
-                    if service not in verb_path_pairs_and_services:
-                        verb_path_pairs_and_services[service] = []
-
-                    verb_path_pairs_and_services[service].append(
-                        VerbInfo(
-                            verb=verb_path_pair.verb,
-                            path=verb_path_pair.path,
-                            query_params=verb_path_pair.query_params,
-                            body_attributes=verb_path_pair.body_attributes,
-                            root_path="",
-                        )
-                    )
-        return verb_path_pairs_and_services
-
-    @staticmethod
-    def group_paths_by_service(paths: Iterable[str]) -> Dict[str, List[str]]:
-        out: Dict[str, List[str]] = {}
-        for p in paths:
-            segs = p.split("/", 2)
-            svc = segs[1] if len(segs) > 1 else ""
-            out.setdefault(svc, []).append(p)
-        return out
+    def group_request_data_by_service(requests: List[APIVerb]) -> Dict[str, List[APIVerb]]:
+        """Group APIVerb objects by their service."""
+        requests_by_service: Dict[str, List[APIVerb]] = {}
+        for request in requests:
+            requests_by_service.setdefault(request.root_path, []).append(request)
+        return requests_by_service
 
     @staticmethod
     def accumulate_query_params(all_params: Dict[str, str], qs: str) -> None:
@@ -181,6 +178,25 @@ class PostmanUtils:
         if not parts:
             return ""
         return parts[0].lower() + "".join(p.title() for p in parts[1:])
+
+    @staticmethod
+    def _strip_leading_postman_variable(path: str) -> str:
+        """
+        Strip Postman variables like {{BASEURL}} from the start of the path only.
+        Preserves path parameters like {{id}} that appear later in the path.
+
+        Args:
+            path: The path string that may contain Postman variables
+
+        Returns:
+            The path with leading Postman variables removed
+
+        Examples:
+            "{{BASEURL}}/api/users" -> "/api/users"
+            "{{BASEURL}}/api/users/{{id}}" -> "/api/users/{{id}}"
+            "/api/users/{{id}}" -> "/api/users/{{id}}"
+        """
+        return re.sub(r"^\{\{[^}]+\}\}", "", path)
 
     @staticmethod
     def _accumulate_request_body_attributes(all_attrs: Dict[str, Any], body: Dict[str, Any]) -> None:

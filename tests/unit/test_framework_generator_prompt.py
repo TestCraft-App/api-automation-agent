@@ -263,7 +263,7 @@ class TestCheckAndPromptForExistingEndpoints:
         """Test displays existing verbs correctly."""
         # Setup: existing verb in state
         state = FrameworkState()
-        verb = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
+        verb = APIVerb(full_path="/users", verb="get", root_path="/users", content="test: content")
         state.update_tests(verb, ["test.ts"], auto_save=False)
         generator.state_manager._framework_state = state
 
@@ -318,8 +318,8 @@ class TestCheckAndPromptForExistingEndpoints:
         # Setup: existing endpoint with models and verbs
         state = FrameworkState()
         state.update_models(path="/users", models=[], auto_save=False)
-        verb1 = APIVerb(path="/users", verb="get", root_path="/users", yaml={})
-        verb2 = APIVerb(path="/orders", verb="post", root_path="/orders", yaml={})
+        verb1 = APIVerb(full_path="/users", verb="get", root_path="/users", content="test: content")
+        verb2 = APIVerb(full_path="/orders", verb="post", root_path="/orders", content="test: content")
         state.update_tests(verb1, ["test1.ts"], auto_save=False)
         state.update_tests(verb2, ["test2.ts"], auto_save=False)
         generator.state_manager._framework_state = state

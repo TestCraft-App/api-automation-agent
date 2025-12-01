@@ -4,14 +4,13 @@ from typing import List, Optional, Dict
 from src.models.api_def import APIDef
 from src.models.api_path import APIPath
 from src.models.api_verb import APIVerb
-from src.processors.postman.models import RequestData
 
 
 @dataclass
 class APIDefinition:
     """Container for API definitions and their endpoints"""
 
-    definitions: List[APIDef | RequestData] = field(default_factory=list)
+    definitions: List[APIDef] = field(default_factory=list)
     endpoints: Optional[List[str]] = None
     variables: List[Dict[str, str]] = field(default_factory=list)
     base_yaml: Optional[str] = None
@@ -38,12 +37,3 @@ class APIDefinition:
             return True
         path_no_slash = path.lstrip("/")
         return any(path_no_slash.startswith(endpoint.lstrip("/")) for endpoint in self.endpoints)
-
-    def to_json(self) -> dict:
-        """Convert to JSON-serializable dictionary"""
-        return {
-            "definitions": [d.to_json() for d in self.definitions],
-            "endpoints": self.endpoints,
-            "variables": self.variables,
-            "base_yaml": self.base_yaml,
-        }

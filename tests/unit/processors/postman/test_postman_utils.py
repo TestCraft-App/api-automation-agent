@@ -1,5 +1,5 @@
 from src.processors.postman.postman_utils import PostmanUtils
-from src.processors.postman.models import RequestData
+from src.models.api_verb import APIVerb
 
 
 def test_extract_variables_with_valid_data():
@@ -56,7 +56,7 @@ def test_extract_requests_with_simple_request():
 
     assert len(result) == 1
     assert result[0].verb == "GET"
-    assert result[0].path == "/users/123"
+    assert result[0].full_path == "/users/123"
     assert result[0].name == "getUser"
 
 
@@ -97,6 +97,7 @@ def test_extract_requests_with_deeply_nested_folders():
 
     assert len(result) == 1
     assert result[0].file_path == "src/tests/api/v1/getResource"
+    assert result[0].full_path == "/api/v1/resource"
 
 
 def test_extract_requests_skips_duplicates():
@@ -122,7 +123,7 @@ def test_extract_requests_with_non_standard_dict_structure():
 
     assert len(result) == 1
     assert result[0].verb == "GET"
-    assert result[0].path == "/test"
+    assert result[0].full_path == "/test"
 
 
 def test_extract_request_data_with_dict_url():
@@ -138,11 +139,76 @@ def test_extract_request_data_with_dict_url():
     result = PostmanUtils.extract_request_data(data, "/api")
 
     assert result.verb == "POST"
-    assert result.path == "/api/endpoint"
+    assert result.full_path == "/api/endpoint"
     assert result.body == {"name": "test"}
     assert result.prerequest == ["console.log('pre')"]
     assert result.script == ["pm.test('ok', () => {})"]
     assert result.file_path == "src/tests/api/testRequest"
+
+
+def test_extract_request_data_with_dict_url_path_and_query_arrays():
+    """Test that extract_request_data correctly reconstructs path with query params
+    from Postman URL dict format."""
+    data = {
+        "name": "Get Users",
+        "request": {
+            "method": "GET",
+            "url": {
+                "raw": "{{BASEURL}}/api/users?page=1&limit=10",
+                "host": ["{{BASEURL}}"],
+                "path": ["users"],
+                "query": [
+                    {"key": "page", "value": "1"},
+                    {"key": "limit", "value": "10"},
+                ],
+            },
+        },
+    }
+
+    result = PostmanUtils.extract_request_data(data, "/api")
+
+    # Path should include query params
+    assert result.verb == "GET"
+    assert result.full_path == "/api/users?page=1&limit=10"  # Query params should be included
+    assert "page" in result.full_path
+    assert "limit" in result.full_path
+
+
+def test_extract_request_data_with_dict_url_path_array_only():
+    """Test that extract_request_data handles URL dict with path array but no query array."""
+    data = {
+        "name": "Get User",
+        "request": {
+            "method": "GET",
+            "url": {
+                "path": ["users", "123"],
+            },
+        },
+    }
+
+    result = PostmanUtils.extract_request_data(data, None)
+
+    assert result.verb == "GET"
+    assert result.full_path == "/users/123"  # No query params, just path
+
+
+def test_extract_request_data_with_dict_url_prefers_raw_over_path():
+    """Test that extract_request_data prefers 'raw' field over path array when both are present."""
+    data = {
+        "name": "Test Request",
+        "request": {
+            "method": "GET",
+            "url": {
+                "raw": "/api/users?page=1&limit=10",
+                "path": ["users"],  # Should be ignored when raw is present
+                "query": [{"key": "other", "value": "param"}],  # Should be ignored when raw is present
+            },
+        },
+    }
+
+    result = PostmanUtils.extract_request_data(data, "/api")
+
+    assert result.full_path == "/api/users?page=1&limit=10"  # Should use raw, not reconstruct from path+query
 
 
 def test_extract_request_data_with_string_url():
@@ -150,7 +216,7 @@ def test_extract_request_data_with_string_url():
 
     result = PostmanUtils.extract_request_data(data, "")
 
-    assert result.path == "/simple/path"
+    assert result.full_path == "/simple/path"
 
 
 def test_extract_request_data_with_invalid_json_body():
@@ -169,22 +235,49 @@ def test_extract_request_data_with_empty_body():
     assert result.body == {}
 
 
+def test_extract_request_data_normalizes_api_prefix():
+    """Test that /api prefix is preserved in full_path"""
+    data = {"name": "Test", "request": {"method": "GET", "url": "/api/users"}}
+
+    result = PostmanUtils.extract_request_data(data, "")
+
+    assert result.full_path == "/api/users"
+
+
+def test_extract_requests_normalizes_paths():
+    """Test that extract_requests preserves paths in all requests"""
+    data = {
+        "item": [
+            {"name": "Get Users", "request": {"method": "GET", "url": "/api/users"}},
+            {"name": "Get Orders", "request": {"method": "GET", "url": "/api/v1/orders"}},
+            {"name": "Get Products", "request": {"method": "GET", "url": "/products"}},
+        ]
+    }
+
+    result = PostmanUtils.extract_requests(data)
+
+    assert len(result) == 3
+    assert result[0].full_path == "/api/users"
+    assert result[1].full_path == "/api/v1/orders"
+    assert result[2].full_path == "/products"
+
+
 def test_extract_verb_path_info_groups_by_path_and_verb():
     requests = [
-        RequestData(
-            service="",
+        APIVerb(
+            root_path="/users",
             file_path="test1",
-            path="/users/123",
+            full_path="/users/123",
             verb="GET",
             body={},
             prerequest=[],
             script=[],
             name="test1",
         ),
-        RequestData(
-            service="",
+        APIVerb(
+            root_path="/users",
             file_path="test2",
-            path="/users/123",
+            full_path="/users/123",
             verb="POST",
             body={"name": "John"},
             prerequest=[],
@@ -198,18 +291,18 @@ def test_extract_verb_path_info_groups_by_path_and_verb():
     assert len(result) == 2
     get_verb = next(v for v in result if v.verb == "GET")
     post_verb = next(v for v in result if v.verb == "POST")
-    assert get_verb.path == "/users/123"
-    assert post_verb.path == "/users/123"
+    assert get_verb.full_path == "/users/123"
+    assert post_verb.full_path == "/users/123"
     assert get_verb.root_path == "/users"
     assert post_verb.root_path == "/users"
 
 
 def test_extract_verb_path_info_removes_query_params():
     requests = [
-        RequestData(
-            service="",
+        APIVerb(
+            root_path="",
             file_path="test",
-            path="/users?sort=name&page=1",
+            full_path="/users?sort=name&page=1",
             verb="GET",
             body={},
             prerequest=[],
@@ -221,27 +314,27 @@ def test_extract_verb_path_info_removes_query_params():
     result = PostmanUtils.extract_verb_path_info(requests)
 
     assert len(result) == 1
-    assert result[0].path == "/users"
+    assert result[0].full_path == "/users"
     assert "sort" in result[0].query_params
     assert "page" in result[0].query_params
 
 
 def test_extract_verb_path_info_aggregates_query_params():
     requests = [
-        RequestData(
-            service="",
+        APIVerb(
+            root_path="",
             file_path="test1",
-            path="/users?sort=name",
+            full_path="/users?sort=name",
             verb="GET",
             body={},
             prerequest=[],
             script=[],
             name="test1",
         ),
-        RequestData(
-            service="",
+        APIVerb(
+            root_path="",
             file_path="test2",
-            path="/users?include=profile",
+            full_path="/users?include=profile",
             verb="GET",
             body={},
             prerequest=[],
@@ -259,20 +352,20 @@ def test_extract_verb_path_info_aggregates_query_params():
 
 def test_extract_verb_path_info_aggregates_body_attributes():
     requests = [
-        RequestData(
-            service="",
+        APIVerb(
+            root_path="",
             file_path="test1",
-            path="/users",
+            full_path="/users",
             verb="POST",
             body={"name": "John"},
             prerequest=[],
             script=[],
             name="test1",
         ),
-        RequestData(
-            service="",
+        APIVerb(
+            root_path="",
             file_path="test2",
-            path="/users",
+            full_path="/users",
             verb="POST",
             body={"email": "john@example.com"},
             prerequest=[],
@@ -288,22 +381,168 @@ def test_extract_verb_path_info_aggregates_body_attributes():
     assert "email" in result[0].body_attributes
 
 
-def test_map_verb_path_pairs_to_services():
+def test_extract_verb_path_info_aggregates_scripts():
+    """Test that scripts are aggregated from multiple requests with the same verb and path."""
     requests = [
-        RequestData(
-            service="",
+        APIVerb(
+            root_path="",
             file_path="test1",
-            path="/users/123",
+            full_path="/users",
+            verb="POST",
+            body={},
+            prerequest=[],
+            script=["pm.test('test1', () => {})", "pm.expect(1).to.equal(1)"],
+            name="test1",
+        ),
+        APIVerb(
+            root_path="",
+            file_path="test2",
+            full_path="/users",
+            verb="POST",
+            body={},
+            prerequest=[],
+            script=["pm.test('test2', () => {})"],
+            name="test2",
+        ),
+    ]
+
+    result = PostmanUtils.extract_verb_path_info(requests)
+
+    assert len(result) == 1
+    assert len(result[0].script) == 3
+    assert "pm.test('test1', () => {})" in result[0].script
+    assert "pm.expect(1).to.equal(1)" in result[0].script
+    assert "pm.test('test2', () => {})" in result[0].script
+
+
+def test_extract_verb_path_info_scripts_filtered_by_verb():
+    """Test that scripts are only collected from requests matching the current verb."""
+    requests = [
+        APIVerb(
+            root_path="",
+            file_path="test1",
+            full_path="/users",
+            verb="GET",
+            body={},
+            prerequest=[],
+            script=["pm.test('GET test', () => {})"],
+            name="test1",
+        ),
+        APIVerb(
+            root_path="",
+            file_path="test2",
+            full_path="/users",
+            verb="POST",
+            body={},
+            prerequest=[],
+            script=["pm.test('POST test', () => {})"],
+            name="test2",
+        ),
+    ]
+
+    result = PostmanUtils.extract_verb_path_info(requests)
+
+    assert len(result) == 2
+    get_verb = next(v for v in result if v.verb == "GET")
+    post_verb = next(v for v in result if v.verb == "POST")
+    assert len(get_verb.script) == 1
+    assert "pm.test('GET test', () => {})" in get_verb.script
+    assert "pm.test('POST test', () => {})" not in get_verb.script
+    assert len(post_verb.script) == 1
+    assert "pm.test('POST test', () => {})" in post_verb.script
+    assert "pm.test('GET test', () => {})" not in post_verb.script
+
+
+def test_extract_verb_path_info_handles_empty_scripts():
+    """Test that empty scripts are handled correctly."""
+    requests = [
+        APIVerb(
+            root_path="",
+            file_path="test1",
+            full_path="/users",
             verb="GET",
             body={},
             prerequest=[],
             script=[],
             name="test1",
         ),
-        RequestData(
-            service="",
+        APIVerb(
+            root_path="",
             file_path="test2",
-            path="/orders/456",
+            full_path="/users",
+            verb="GET",
+            body={},
+            prerequest=[],
+            script=["pm.test('test', () => {})"],
+            name="test2",
+        ),
+    ]
+
+    result = PostmanUtils.extract_verb_path_info(requests)
+
+    assert len(result) == 1
+    assert len(result[0].script) == 1
+    assert "pm.test('test', () => {})" in result[0].script
+
+
+def test_extract_verb_path_info_scripts_with_multiple_script_lines():
+    """Test that scripts with multiple lines per request are handled correctly."""
+    requests = [
+        APIVerb(
+            root_path="",
+            file_path="test1",
+            full_path="/users",
+            verb="POST",
+            body={},
+            prerequest=[],
+            script=[
+                "pm.test('Status code is 200', () => {",
+                "    pm.response.to.have.status(200);",
+                "});",
+            ],
+            name="test1",
+        ),
+        APIVerb(
+            root_path="",
+            file_path="test2",
+            full_path="/users",
+            verb="POST",
+            body={},
+            prerequest=[],
+            script=[
+                "pm.test('Response has body', () => {",
+                "    pm.expect(pm.response.json()).to.exist;",
+                "});",
+            ],
+            name="test2",
+        ),
+    ]
+
+    result = PostmanUtils.extract_verb_path_info(requests)
+
+    assert len(result) == 1
+    assert len(result[0].script) == 6  # 3 lines from test1 + 3 lines from test2
+    assert "pm.test('Status code is 200', () => {" in result[0].script
+    assert "    pm.response.to.have.status(200);" in result[0].script
+    assert "pm.test('Response has body', () => {" in result[0].script
+
+
+def test_group_request_data_by_service():
+    requests = [
+        APIVerb(
+            root_path="/users",
+            file_path="test1",
+            full_path="/users/123",
+            verb="GET",
+            body={},
+            prerequest=[],
+            script=[],
+            name="test1",
+        ),
+        APIVerb(
+            root_path="/orders",
+            file_path="test2",
+            full_path="/orders/456",
             verb="GET",
             body={},
             prerequest=[],
@@ -311,38 +550,15 @@ def test_map_verb_path_pairs_to_services():
             name="test2",
         ),
     ]
-    grouped_paths = {"users": ["/users/123"], "orders": ["/orders/456"]}
 
-    result = PostmanUtils.map_verb_path_pairs_to_services(requests, grouped_paths)
+    result = PostmanUtils.group_request_data_by_service(requests)
 
-    assert "users" in result
-    assert "orders" in result
-    assert len(result["users"]) == 1
-    assert len(result["orders"]) == 1
-    assert result["users"][0].path == "/users/123"
-    assert result["orders"][0].path == "/orders/456"
-
-
-def test_group_paths_by_service():
-    paths = ["/users/123", "/users/456", "/orders/789", "/products/abc"]
-
-    result = PostmanUtils.group_paths_by_service(paths)
-
-    assert "users" in result
-    assert "orders" in result
-    assert "products" in result
-    assert len(result["users"]) == 2
-    assert len(result["orders"]) == 1
-    assert len(result["products"]) == 1
-
-
-def test_group_paths_by_service_with_root_path():
-    paths = ["/", "/api"]
-
-    result = PostmanUtils.group_paths_by_service(paths)
-
-    assert "" in result
-    assert "api" in result
+    assert "/users" in result
+    assert "/orders" in result
+    assert len(result["/users"]) == 1
+    assert len(result["/orders"]) == 1
+    assert result["/users"][0].full_path == "/users/123"
+    assert result["/orders"][0].full_path == "/orders/456"
 
 
 def test_accumulate_query_params_with_string_values():
@@ -557,3 +773,216 @@ def test_map_object_attributes_empty_object():
     result = PostmanUtils._map_object_attributes({})
 
     assert result == {}
+
+
+def test_extract_verb_path_info_includes_prefix_in_root_path():
+    """Test that prefix is included in root_path when present."""
+    requests = [
+        APIVerb(
+            root_path="/api/users",
+            file_path="test1",
+            full_path="/api/users/123",
+            verb="GET",
+            body={},
+            prerequest=[],
+            script=[],
+            name="test1",
+        )
+    ]
+
+    result = PostmanUtils.extract_verb_path_info(requests)
+
+    assert len(result) == 1
+    assert result[0].root_path == "/api/users"
+    assert result[0].full_path == "/api/users/123"
+
+
+def test_extract_verb_path_info_with_empty_prefix():
+    """Test that root_path works correctly when prefix is empty (backward compatible)."""
+    requests = [
+        APIVerb(
+            root_path="/users",
+            file_path="test1",
+            full_path="/users/123",
+            verb="GET",
+            body={},
+            prerequest=[],
+            script=[],
+            name="test1",
+        )
+    ]
+
+    result = PostmanUtils.extract_verb_path_info(requests)
+
+    assert len(result) == 1
+    assert result[0].root_path == "/users"
+    assert result[0].full_path == "/users/123"
+
+
+def test_extract_verb_path_info_with_version_prefix():
+    """Test that prefix works correctly with versioned paths."""
+    requests = [
+        APIVerb(
+            root_path="/api/v1/pets",
+            file_path="test1",
+            full_path="/api/v1/pets/123",
+            verb="GET",
+            body={},
+            prerequest=[],
+            script=[],
+            name="test1",
+        )
+    ]
+
+    result = PostmanUtils.extract_verb_path_info(requests)
+
+    assert len(result) == 1
+    assert result[0].root_path == "/api/v1/pets"
+    assert result[0].full_path == "/api/v1/pets/123"
+
+
+def test_extract_verb_path_info_with_multiple_requests_same_prefix():
+    """Test that multiple requests with the same prefix all use that prefix in root_path.
+    Note: Different base paths create separate groups, but all use the prefix from requests[0]."""
+    requests = [
+        APIVerb(
+            root_path="/api/users",
+            file_path="test1",
+            full_path="/api/users/123",
+            verb="GET",
+            body={},
+            prerequest=[],
+            script=[],
+            name="test1",
+        ),
+        APIVerb(
+            root_path="/api/users",
+            file_path="test2",
+            full_path="/api/users/456",
+            verb="GET",
+            body={},
+            prerequest=[],
+            script=[],
+            name="test2",
+        ),
+        APIVerb(
+            root_path="/api/users",
+            file_path="test3",
+            full_path="/api/users/789",
+            verb="POST",
+            body={},
+            prerequest=[],
+            script=[],
+            name="test3",
+        ),
+    ]
+
+    result = PostmanUtils.extract_verb_path_info(requests)
+
+    assert len(result) == 3
+    for verb_info in result:
+        assert verb_info.root_path == "/api/users"
+        assert verb_info.full_path.startswith("/api/users/")
+
+
+def test_extract_verb_path_info_with_query_params_and_prefix():
+    """Test that prefix is included in root_path and path even when query params are present."""
+    requests = [
+        APIVerb(
+            root_path="/api/users",
+            file_path="test1",
+            full_path="/api/users?sort=name&page=1",
+            verb="GET",
+            body={},
+            prerequest=[],
+            script=[],
+            name="test1",
+        )
+    ]
+
+    result = PostmanUtils.extract_verb_path_info(requests)
+
+    assert len(result) == 1
+    assert result[0].root_path == "/api/users"
+    assert result[0].full_path == "/api/users"
+    assert "sort" in result[0].query_params
+
+
+def test_extract_verb_path_info_with_custom_prefix():
+    """Test that custom prefixes (not /api) work correctly."""
+    requests = [
+        APIVerb(
+            root_path="/custom/orders",
+            file_path="test1",
+            full_path="/custom/orders/123",
+            verb="GET",
+            body={},
+            prerequest=[],
+            script=[],
+            name="test1",
+        )
+    ]
+
+    result = PostmanUtils.extract_verb_path_info(requests)
+
+    assert len(result) == 1
+    assert result[0].root_path == "/custom/orders"
+    assert result[0].full_path == "/custom/orders/123"
+
+
+def test_strip_leading_postman_variable_with_trailing_slash():
+    """Test that Postman variables at the start are removed, including trailing slash."""
+    result = PostmanUtils._strip_leading_postman_variable("{{BASEURL}}/api/users")
+
+    assert result == "/api/users"
+
+
+def test_strip_leading_postman_variable_without_trailing_slash():
+    """Test that Postman variables at the start are removed without trailing slash."""
+    result = PostmanUtils._strip_leading_postman_variable("{{BASEURL}}api/users")
+
+    assert result == "api/users"
+
+
+def test_strip_leading_postman_variable_preserves_path_params():
+    """Test that path parameters in the middle of the path are preserved."""
+    result = PostmanUtils._strip_leading_postman_variable("{{BASEURL}}/api/users/{{id}}")
+
+    assert result == "/api/users/{{id}}"
+
+
+def test_strip_leading_postman_variable_no_variable():
+    """Test that paths without leading variables are unchanged."""
+    result = PostmanUtils._strip_leading_postman_variable("/api/users/{{id}}")
+
+    assert result == "/api/users/{{id}}"
+
+
+def test_strip_leading_postman_variable_only_variable():
+    """Test that a path with only a variable returns empty string."""
+    result = PostmanUtils._strip_leading_postman_variable("{{BASEURL}}")
+
+    assert result == ""
+
+
+def test_strip_leading_postman_variable_empty_path():
+    """Test that empty path returns empty string."""
+    result = PostmanUtils._strip_leading_postman_variable("")
+
+    assert result == ""
+
+
+def test_strip_leading_postman_variable_with_query_params():
+    """Test that query parameters are preserved when stripping leading variable."""
+    result = PostmanUtils._strip_leading_postman_variable("{{BASEURL}}/api/users?page=1")
+
+    assert result == "/api/users?page=1"
+
+
+def test_strip_leading_postman_variable_different_variable_names():
+    """Test that different variable names are handled correctly."""
+    result1 = PostmanUtils._strip_leading_postman_variable("{{API_URL}}/endpoint")
+    result2 = PostmanUtils._strip_leading_postman_variable("{{HOST}}/v1/resource")
+
+    assert result1 == "/endpoint"
+    assert result2 == "/v1/resource"

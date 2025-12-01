@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from .api_base import APIBase
 
 
@@ -10,8 +10,13 @@ class APIPath(APIBase):
     type: str = field(default="path", init=False)
 
     @staticmethod
-    def normalize_path(path: str, prefixes: Optional[List[str]] = None) -> str:
-        """Normalizes the path by removing api and version prefixes."""
+    def normalize_path(path: str, prefixes: Optional[List[str]] = None) -> Tuple[str, str]:
+        """Normalizes the path by removing api and prefixes.
+
+        Returns:
+            Tuple[str, str]: A tuple containing (normalized_path, removed_prefix).
+                            removed_prefix will be an empty string if no prefix was removed.
+        """
 
         def _format_path(s: str) -> str:
             parts = [p for p in s.split("/") if p]
@@ -26,16 +31,30 @@ class APIPath(APIBase):
 
         normalized_path = _format_path(path)
         if not normalized_path:
-            return path
+            return (path, "")
 
-        prefixes = prefixes or ["/api"]
+        default_prefixes = ["/api"]
+        if prefixes:
+            all_prefixes = default_prefixes + [p for p in prefixes if p not in default_prefixes]
+        else:
+            all_prefixes = default_prefixes
+
         normalized_prefixes = []
-        for pre in prefixes:
+        for pre in all_prefixes:
             normalized_prefixes.append(_format_path(pre))
 
         normalized_prefixes.sort(key=len, reverse=True)
         for prefix in normalized_prefixes:
             if _starts_with_prefix(normalized_path, prefix):
-                return normalized_path[len(prefix):] or "/"
+                normalized_result = normalized_path[len(prefix) :] or "/"
+                return (normalized_result, prefix)
 
-        return normalized_path
+        return (normalized_path, "")
+
+    def to_json(self) -> dict:
+        """Convert the APIPath instance to a JSON-serializable dictionary"""
+        return {
+            "path": self.full_path,
+            "yaml": self.content,
+            "type": self.type,
+        }

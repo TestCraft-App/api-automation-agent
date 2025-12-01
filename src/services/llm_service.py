@@ -29,6 +29,7 @@ class PromptConfig:
 
     DOT_ENV = get_resource_path("prompts/create-dot-env.txt")
     MODELS = get_resource_path("prompts/create-models.txt")
+    MODELS_POSTMAN = get_resource_path("prompts/create-models-postman.txt")
     FIRST_TEST = get_resource_path("prompts/create-first-test.txt")
     FIRST_TEST_POSTMAN = get_resource_path("prompts/create-first-test-postman.txt")
     TESTS = get_resource_path("prompts/create-tests.txt")
@@ -209,8 +210,13 @@ class LLMService:
     def generate_models(self, definition_content: str) -> List[ModelFileSpec]:
         """Generate models for the API definition."""
         try:
+            prompt = (
+                PromptConfig.MODELS_POSTMAN
+                if self.config.data_source == DataSource.POSTMAN
+                else PromptConfig.MODELS
+            )
             result = self.create_ai_chain(
-                PromptConfig.MODELS,
+                prompt,
                 tools=[FileCreationTool(self.config, self.file_service, are_models=True)],
                 must_use_tool=True,
             ).invoke({"api_definition": definition_content})

@@ -1,11 +1,10 @@
 import json
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 import yaml
 
-from .postman.models import VerbInfo, RequestData
 from ..configuration.data_sources import DataSource
 from ..models import APIModel, APIPath, APIVerb, GeneratedModel, ModelInfo, APIDefinition
 
@@ -62,7 +61,7 @@ class APIProcessor(ABC):
         pass
 
     @abstractmethod
-    def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath] | Dict[str, List[VerbInfo]]:
+    def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath]:
         """Get all path definitions that should be processed"""
         pass
 
@@ -102,7 +101,7 @@ class APIProcessor(ABC):
         pass
 
     @abstractmethod
-    def get_api_verb_content(self, api_verb: APIVerb | RequestData) -> str:
+    def get_api_verb_content(self, api_verb: APIVerb) -> str:
         """Get the content of the API verb"""
         pass
 

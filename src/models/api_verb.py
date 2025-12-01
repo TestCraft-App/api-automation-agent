@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, Any
+from typing import List
 from .api_base import APIBase
 
 
@@ -9,15 +9,17 @@ class APIVerb(APIBase):
 
     type: str = field(default="verb", init=False)
 
-    verb: str
-    root_path: str
+    file_path: str = ""
+    verb: str = ""
+    prerequest: List[str] = field(default_factory=list)
+    name: str = ""
 
-    def to_json(self) -> Dict[str, Any]:
-        """Convert the verb to a JSON-serializable dictionary"""
+    def to_json(self) -> dict:
+        """Convert the APIVerb instance to a JSON-serializable dictionary"""
         return {
             "verb": self.verb,
-            "path": self.path,
+            "path": self.full_path,
             "root_path": self.root_path,
-            "yaml": self.yaml,
+            "yaml": self.content,
             "type": self.type,
         }

@@ -5,9 +5,9 @@ from src.models.api_verb import APIVerb
 
 def test_list_endpoints_outputs_paths(capsys):
     paths = [
-        APIPath(path="/users", yaml=""),
-        APIPath(path="/items", yaml=""),
-        APIPath(path="/accounts", yaml=""),
+        APIPath(full_path="/users", content=""),
+        APIPath(full_path="/items", content=""),
+        APIPath(full_path="/accounts", content=""),
     ]
     EndpointLister.list_endpoints(paths)
     captured = capsys.readouterr()
@@ -28,9 +28,9 @@ def test_list_endpoints_empty_list(capsys):
 
 def test_list_endpoints_duplicate_paths(capsys):
     paths = [
-        APIPath(path="/users", yaml=""),
-        APIPath(path="/users", yaml=""),  # Duplicate path
-        APIPath(path="/items", yaml=""),
+        APIPath(full_path="/users", content=""),
+        APIPath(full_path="/users", content=""),  # Duplicate path
+        APIPath(full_path="/items", content=""),
     ]
     EndpointLister.list_endpoints(paths)
     captured = capsys.readouterr()
@@ -41,8 +41,8 @@ def test_list_endpoints_duplicate_paths(capsys):
 
 def test_list_endpoints_mixed_types(capsys):
     paths = [
-        APIPath(path="/users", yaml=""),
-        APIVerb(path="/users/{id}", verb="GET", yaml="", root_path="/users"),
+        APIPath(full_path="/users", content=""),
+        APIVerb(full_path="/users/{id}", verb="GET", content="", root_path="/users"),
     ]
     EndpointLister.list_endpoints(paths)
     captured = capsys.readouterr()
@@ -54,9 +54,9 @@ def test_list_endpoints_mixed_types(capsys):
 
 def test_list_endpoints_special_characters(capsys):
     paths = [
-        APIPath(path="/users/{id}", yaml=""),
-        APIPath(path="/items/{item_id}/status", yaml=""),
-        APIPath(path="/search?q={query}", yaml=""),
+        APIPath(full_path="/users/{id}", content=""),
+        APIPath(full_path="/items/{item_id}/status", content=""),
+        APIPath(full_path="/search?q={query}", content=""),
     ]
     EndpointLister.list_endpoints(paths)
     captured = capsys.readouterr()
@@ -67,9 +67,9 @@ def test_list_endpoints_special_characters(capsys):
 
 def test_list_endpoints_sorting(capsys):
     paths = [
-        APIPath(path="/zebra", yaml=""),
-        APIPath(path="/apple", yaml=""),
-        APIPath(path="/banana", yaml=""),
+        APIPath(full_path="/zebra", content=""),
+        APIPath(full_path="/apple", content=""),
+        APIPath(full_path="/banana", content=""),
     ]
     EndpointLister.list_endpoints(paths)
     captured = capsys.readouterr()
@@ -84,8 +84,8 @@ def test_list_endpoints_sorting(capsys):
 
 def test_list_endpoints_newline_formatting(capsys):
     paths = [
-        APIPath(path="/users", yaml=""),
-        APIPath(path="/items", yaml=""),
+        APIPath(full_path="/users", content=""),
+        APIPath(full_path="/items", content=""),
     ]
     EndpointLister.list_endpoints(paths)
     captured = capsys.readouterr()

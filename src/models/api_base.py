@@ -1,23 +1,28 @@
-from dataclasses import dataclass
-from typing import Dict, Any
+from dataclasses import dataclass, field
+from typing import Dict, Any, List, Optional
 
 
 @dataclass
 class APIBase:
     """Base class for API components"""
 
-    path: str
-    yaml: str
-    type: str
+    content: str = ""
+    root_path: Optional[str] = None
+    full_path: str = ""
+    type: str = ""
+    body: Dict[str, Any] = field(default_factory=dict)
+    script: List[str] = field(default_factory=list)
 
-    def to_json(self) -> Dict[str, Any]:
-        """Convert the component to a JSON-serializable dictionary"""
-        return {"path": self.path, "yaml": self.yaml, "type": self.type}
+    def __post_init__(self):
+        """Derive root_path from full_path if not provided."""
+        if self.root_path is None and self.full_path:
+            self.root_path = self.get_root_path(self.full_path)
 
     @staticmethod
     def get_root_path(path: str) -> str:
-        """Gets the root path from a full path, preserving version numbers if present"""
-        parts = path.strip("/").split("/")
+        """Gets the root path from a full path, preserving version numbers if present."""
+        path_no_query = path.split("?")[0]
+        parts = path_no_query.strip("/").split("/")
         if len(parts) > 1 and parts[0].startswith("v") and parts[0][1].isdigit():
             return "/" + "/".join(parts[:2])
         return "/" + parts[0]

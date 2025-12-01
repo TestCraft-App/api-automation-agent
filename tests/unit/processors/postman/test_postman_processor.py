@@ -1,12 +1,11 @@
 import json
 import pytest
 
+from src.models.api_verb import APIVerb
 from src.processors.postman_processor import PostmanProcessor
-from src.processors.postman.models import RequestData, VerbInfo
 from src.configuration.config import Config
 from src.services.file_service import FileService
 from src.models import APIDefinition, ModelInfo, GeneratedModel, APIModel, APIPath
-from src.ai_tools.models.file_spec import FileSpec
 
 
 @pytest.fixture
@@ -55,10 +54,10 @@ def sample_postman_collection():
 
 @pytest.fixture
 def sample_request_data():
-    return RequestData(
-        service="users",
+    return APIVerb(
+        root_path="users",
         file_path="src/tests/users/getUser",
-        path="/users/123",
+        full_path="/users/123",
         verb="GET",
         body={},
         prerequest=["console.log('pre')"],
@@ -99,7 +98,7 @@ def test_process_api_definition_extracts_requests(postman_processor, tmp_path, s
     result = postman_processor.process_api_definition(str(postman_file))
 
     assert len(result.definitions) == 1
-    assert isinstance(result.definitions[0], RequestData)
+    assert isinstance(result.definitions[0], APIVerb)
 
 
 def test_process_api_definition_with_empty_collection(postman_processor, tmp_path):
@@ -179,10 +178,10 @@ def test_create_dot_env_uppercases_keys(postman_processor, tmp_path):
 
 
 def test_get_api_paths_returns_list(postman_processor):
-    request = RequestData(
-        service="",
+    request = APIVerb(
+        root_path="/users",
         file_path="test",
-        path="/users/123",
+        full_path="/users/123",
         verb="GET",
         body={},
         prerequest=[],
@@ -198,20 +197,20 @@ def test_get_api_paths_returns_list(postman_processor):
 
 
 def test_get_api_paths_groups_by_service(postman_processor):
-    request1 = RequestData(
-        service="",
+    request1 = APIVerb(
+        root_path="/users",  # Service is set to root path
         file_path="test1",
-        path="/users/123",
+        full_path="/users/123",
         verb="GET",
         body={},
         prerequest=[],
         script=[],
         name="test1",
     )
-    request2 = RequestData(
-        service="",
+    request2 = APIVerb(
+        root_path="/orders",  # Service is set to root path
         file_path="test2",
-        path="/orders/456",
+        full_path="/orders/456",
         verb="GET",
         body={},
         prerequest=[],
@@ -222,19 +221,17 @@ def test_get_api_paths_groups_by_service(postman_processor):
 
     result = postman_processor.get_api_paths(api_definition)
 
-    assert isinstance(result[0], dict)
-    assert "users" in result[0]
-    assert "orders" in result[0]
-    assert len(result[0]) == 2
-    assert len(result[0]["users"]) == 1
-    assert len(result[0]["orders"]) == 1
+    assert all(isinstance(path, APIPath) for path in result)
+    services = {postman_processor.get_api_path_name(path) for path in result}
+    assert services == {"/users", "/orders"}
+    assert len(result) == 2
 
 
-def test_get_api_paths_populates_service_dict(postman_processor):
-    request = RequestData(
-        service="",
+def test_get_api_paths_returns_grouped_verb_infos(postman_processor):
+    request = APIVerb(
+        root_path="/users",  # Service is set to root path
         file_path="test",
-        path="/users/123",
+        full_path="/users/123",
         verb="GET",
         body={},
         prerequest=[],
@@ -243,35 +240,37 @@ def test_get_api_paths_populates_service_dict(postman_processor):
     )
     api_definition = APIDefinition(definitions=[request])
 
-    postman_processor.get_api_paths(api_definition)
+    result = postman_processor.get_api_paths(api_definition)
 
-    assert len(postman_processor.service_dict) > 0
+    assert len(result) > 0
+    assert all(isinstance(path, APIPath) for path in result)
 
 
 def test_get_api_path_name_returns_service_name(postman_processor):
-    api_path = {"users": [VerbInfo("GET", "/users", {}, {}, "")]}
+    api_path = APIPath(root_path="/users", content="test")
 
     result = postman_processor.get_api_path_name(api_path)
 
-    assert result == "users"
+    assert result == "/users"
 
 
-def test_get_api_path_name_with_empty_dict(postman_processor):
-    result = postman_processor.get_api_path_name({})
+def test_get_api_path_name_with_empty_path(postman_processor):
+    api_path = APIPath(root_path="", content="test")
+    result = postman_processor.get_api_path_name(api_path)
 
     assert result == ""
 
 
 def test_get_relevant_models_returns_matching_models(postman_processor):
-    model_files = [FileSpec(path="User.ts", fileContent="interface User {}")]
+    model_files = [GeneratedModel(path="User.ts", fileContent="interface User {}", summary="User model")]
     all_models = [
         ModelInfo(path="users", files=["User.ts"], models=model_files),
         ModelInfo(path="orders", files=["Order.ts"], models=[]),
     ]
-    api_verb = RequestData(
-        service="users",
+    api_verb = APIVerb(
+        root_path="users",
         file_path="test",
-        path="/users",
+        full_path="/users",
         verb="GET",
         body={},
         prerequest=[],
@@ -283,14 +282,17 @@ def test_get_relevant_models_returns_matching_models(postman_processor):
 
     assert len(result) == 1
     assert isinstance(result[0], GeneratedModel)
+    assert result[0].path == "User.ts"
+    assert result[0].fileContent == "interface User {}"
+    assert result[0].summary == "User model"
 
 
 def test_get_relevant_models_returns_empty_when_no_match(postman_processor):
     all_models = [ModelInfo(path="users", files=["User.ts"], models=[])]
-    api_verb = RequestData(
-        service="orders",
+    api_verb = APIVerb(
+        root_path="orders",
         file_path="test",
-        path="/orders",
+        full_path="/orders",
         verb="GET",
         body={},
         prerequest=[],
@@ -309,10 +311,10 @@ def test_get_other_models_excludes_current_service(postman_processor):
         ModelInfo(path="orders", files=["Order.ts"], models=[]),
         ModelInfo(path="products", files=["Product.ts"], models=[]),
     ]
-    api_verb = RequestData(
-        service="users",
+    api_verb = APIVerb(
+        root_path="users",
         file_path="test",
-        path="/users",
+        full_path="/users",
         verb="GET",
         body={},
         prerequest=[],
@@ -332,10 +334,10 @@ def test_get_other_models_returns_api_model_instances(postman_processor):
         ModelInfo(path="users", files=["User.ts"], models=[]),
         ModelInfo(path="orders", files=["Order.ts"], models=[]),
     ]
-    api_verb = RequestData(
-        service="users",
+    api_verb = APIVerb(
+        root_path="users",
         file_path="test",
-        path="/users",
+        full_path="/users",
         verb="GET",
         body={},
         prerequest=[],
@@ -369,10 +371,10 @@ def test_get_api_verb_name(postman_processor, sample_request_data):
 
 
 def test_get_api_verbs_returns_request_data_list(postman_processor):
-    request = RequestData(
-        service="",
+    request = APIVerb(
+        root_path="",
         file_path="test",
-        path="/users/123",
+        full_path="/users/123",
         verb="GET",
         body={},
         prerequest=[],
@@ -385,14 +387,16 @@ def test_get_api_verbs_returns_request_data_list(postman_processor):
     result = postman_processor.get_api_verbs(api_definition)
 
     assert isinstance(result, list)
-    assert all(isinstance(r, RequestData) for r in result)
+    assert all(isinstance(r, APIVerb) for r in result)
 
 
 def test_get_api_verbs_tags_with_service(postman_processor):
-    request = RequestData(
-        service="",
+    # Service is already set when APIVerb is created via extract_request_data
+    # In this test, we set it manually to match real usage
+    request = APIVerb(
+        root_path="/users",  # Service is set to root path in extract_request_data
         file_path="test",
-        path="/users/123",
+        full_path="/users/123",
         verb="GET",
         body={},
         prerequest=[],
@@ -405,24 +409,25 @@ def test_get_api_verbs_tags_with_service(postman_processor):
     result = postman_processor.get_api_verbs(api_definition)
 
     assert len(result) == 1
-    assert result[0].service != ""
+    assert result[0].root_path != ""
+    assert result[0].root_path == "/users"
 
 
 def test_get_api_verbs_tags_multiple_services_correctly(postman_processor):
-    request1 = RequestData(
-        service="",
+    request1 = APIVerb(
+        root_path="/users",  # Service is set to root path
         file_path="test1",
-        path="/users/123",
+        full_path="/users/123",
         verb="GET",
         body={},
         prerequest=[],
         script=[],
         name="test1",
     )
-    request2 = RequestData(
-        service="",
+    request2 = APIVerb(
+        root_path="/orders",  # Service is set to root path
         file_path="test2",
-        path="/orders/456",
+        full_path="/orders/456",
         verb="POST",
         body={},
         prerequest=[],
@@ -435,12 +440,12 @@ def test_get_api_verbs_tags_multiple_services_correctly(postman_processor):
     result = postman_processor.get_api_verbs(api_definition)
 
     assert len(result) == 2
-    users_verb = next((r for r in result if r.path == "/users/123"), None)
-    orders_verb = next((r for r in result if r.path == "/orders/456"), None)
+    users_verb = next((r for r in result if r.full_path == "/users/123"), None)
+    orders_verb = next((r for r in result if r.full_path == "/orders/456"), None)
     assert users_verb is not None
     assert orders_verb is not None
-    assert users_verb.service == "users"
-    assert orders_verb.service == "orders"
+    assert users_verb.root_path == "/users"  # Service is root path
+    assert orders_verb.root_path == "/orders"  # Service is root path
 
 
 def test_get_api_verb_content_returns_json_string(postman_processor, sample_request_data):
@@ -455,9 +460,9 @@ def test_get_api_verb_content_includes_all_fields(postman_processor, sample_requ
     result = postman_processor.get_api_verb_content(sample_request_data)
 
     parsed = json.loads(result)
-    assert parsed["service"] == "users"
+    assert parsed["root_path"] == "users"
     assert parsed["file_path"] == "src/tests/users/getUser"
-    assert parsed["path"] == "/users/123"
+    assert parsed["full_path"] == "/users/123"
     assert parsed["verb"] == "GET"
     assert parsed["name"] == "getUser"
     assert "body" in parsed
@@ -466,58 +471,49 @@ def test_get_api_verb_content_includes_all_fields(postman_processor, sample_requ
 
 
 def test_get_api_path_content_returns_json_string(postman_processor):
-    api_path = {
-        "users": [
-            VerbInfo(
-                verb="GET",
-                path="/users/123",
-                query_params={"include": "string"},
-                body_attributes={},
-                root_path="/users",
-            )
-        ]
-    }
+    api_path = APIPath(root_path="/users", content="test")
 
     result = postman_processor.get_api_path_content(api_path)
 
     assert isinstance(result, str)
-    parsed = json.loads(result)
-    assert isinstance(parsed, dict)
+    assert result == "test"
 
 
 def test_get_api_path_content_includes_verb_details(postman_processor):
-    api_path = {
-        "users": [
-            VerbInfo(
-                verb="GET",
-                path="/users/123",
-                query_params={"include": "string"},
-                body_attributes={"name": "string"},
-                root_path="/users",
-            )
+    content = {
+        "/users": [
+            {
+                "verb": "GET",
+                "full_path": "/users/123",
+                "query_params": {"include": "string"},
+                "body_attributes": {"name": "string"},
+                "root_path": "/users",
+                "script": [],
+            }
         ]
     }
+    api_path = APIPath(root_path="/users", content=json.dumps(content))
 
     result = postman_processor.get_api_path_content(api_path)
 
     parsed = json.loads(result)
-    assert "users" in parsed
-    assert len(parsed["users"]) == 1
-    assert parsed["users"][0]["verb"] == "GET"
-    assert parsed["users"][0]["path"] == "/users/123"
-    assert parsed["users"][0]["query_params"] == {"include": "string"}
-    assert parsed["users"][0]["body_attributes"] == {"name": "string"}
-    assert parsed["users"][0]["root_path"] == "/users"
+    assert "/users" in parsed
+    assert len(parsed["/users"]) == 1
+    assert parsed["/users"][0]["verb"] == "GET"
+    assert parsed["/users"][0]["full_path"] == "/users/123"
+    assert parsed["/users"][0]["query_params"] == {"include": "string"}
+    assert parsed["/users"][0]["body_attributes"] == {"name": "string"}
+    assert parsed["/users"][0]["root_path"] == "/users"
 
 
 def test_update_framework_for_postman_creates_run_order_file(postman_processor, tmp_path):
     package_json = tmp_path / "package.json"
     package_json.write_text(json.dumps({"name": "test"}))
 
-    request = RequestData(
-        service="users",
+    request = APIVerb(
+        root_path="users",
         file_path="src/tests/users/getUser",
-        path="/users",
+        full_path="/users",
         verb="GET",
         body={},
         prerequest=[],
@@ -577,20 +573,20 @@ def test_update_package_json_handles_missing_file(postman_processor, tmp_path, c
 
 
 def test_create_run_order_file_includes_all_requests(postman_processor, tmp_path):
-    request1 = RequestData(
-        service="users",
+    request1 = APIVerb(
+        root_path="users",
         file_path="src/tests/users/getUser",
-        path="/users",
+        full_path="/users",
         verb="GET",
         body={},
         prerequest=[],
         script=[],
         name="getUser",
     )
-    request2 = RequestData(
-        service="users",
+    request2 = APIVerb(
+        root_path="users",
         file_path="src/tests/users/createUser",
-        path="/users",
+        full_path="/users",
         verb="POST",
         body={},
         prerequest=[],
@@ -618,17 +614,17 @@ def test_create_run_order_file_includes_header_comment(postman_processor, tmp_pa
 
 
 def test_create_run_order_file_skips_non_request_data(postman_processor, tmp_path):
-    request = RequestData(
-        service="users",
+    request = APIVerb(
+        root_path="users",
         file_path="src/tests/users/getUser",
-        path="/users",
+        full_path="/users",
         verb="GET",
         body={},
         prerequest=[],
         script=[],
         name="getUser",
     )
-    api_path = APIPath(path="/users", yaml="test")
+    api_path = APIPath(full_path="/users", content="test")
     api_definition = APIDefinition(definitions=[request, api_path])
 
     postman_processor._create_run_order_file(str(tmp_path), api_definition)
