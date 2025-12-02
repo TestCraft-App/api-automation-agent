@@ -21,8 +21,9 @@ The CLI will create a .env file automatically.
 
 SUPPORTED MODELS:
 Anthropic Models:
-- claude-haiku-4-5-20251001 (recommended default)
-- claude-sonnet-4-5-20250929 
+- claude-sonnet-4-5-20250929 (default - best balance)
+- claude-haiku-4-5-20251001 (fast + low cost)
+- claude-opus-4-5-20251101 (highest quality)
 - claude-sonnet-4-20250514
 
 OpenAI Models:
