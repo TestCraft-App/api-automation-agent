@@ -17,7 +17,7 @@ class BaseConfigAdapter(containers.DeclarativeContainer):
         """Generates a configuration object based on the environment."""
         load_dotenv(override=True)
         config = Config(env=env)
-        config.model = Model(os.getenv("MODEL", Model.CLAUDE_HAIKU_4_5.value))
+        config.model = Model(os.getenv("MODEL", Model.CLAUDE_SONNET_4_5.value))
         config.debug = os.getenv("DEBUG", "False").title() == "True"
         config.langchain_debug = os.getenv("LANGCHAIN_DEBUG", "False").title() == "True"
         config.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY", "")

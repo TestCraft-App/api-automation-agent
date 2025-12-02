@@ -15,11 +15,12 @@ class InteractiveSetup:
             "name": "Anthropic (recommended)",
             "env_key": "ANTHROPIC_API_KEY",
             "models": [
-                "claude-haiku-4-5-20251001",
                 "claude-sonnet-4-5-20250929",
+                "claude-haiku-4-5-20251001",
+                "claude-opus-4-5-20251101",
                 "claude-sonnet-4-20250514",
             ],
-            "default_model": "claude-haiku-4-5-20251001",
+            "default_model": "claude-sonnet-4-5-20250929",
         },
         "2": {
             "name": "OpenAI",

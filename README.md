@@ -82,8 +82,9 @@ This project supports Anthropic, OpenAI, and Google Generative AI language model
 
 **Anthropic**
 
-- Claude Haiku 4.5 (claude-haiku-4-5-20251001) - **Recommended default: Good quality + fast + low cost**
-- Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) - **Recommended: Higher quality for complex suites**
+- Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) - **Default: Best balance of quality and cost**
+- Claude Haiku 4.5 (claude-haiku-4-5-20251001) - **Fast + low cost**
+- Claude Opus 4.5 (claude-opus-4-5-20251101) - **Highest quality for complex tasks**
 - Claude Sonnet 4 (claude-sonnet-4-20250514)
 
 **OpenAI**

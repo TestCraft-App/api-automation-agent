@@ -27,6 +27,10 @@ class Model(Enum):
         "claude-haiku-4-5-20251001",
         ModelCost(input_cost_per_million_tokens=1.0, output_cost_per_million_tokens=5.0),
     )
+    CLAUDE_OPUS_4_5 = (
+        "claude-opus-4-5-20251101",
+        ModelCost(input_cost_per_million_tokens=5.0, output_cost_per_million_tokens=25.0),
+    )
     GEMINI_3_PRO_PREVIEW = (
         "gemini-3-pro-preview",
         ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=12.0),
@@ -47,6 +51,7 @@ class Model(Enum):
             Model.CLAUDE_SONNET_4,
             Model.CLAUDE_SONNET_4_5,
             Model.CLAUDE_HAIKU_4_5,
+            Model.CLAUDE_OPUS_4_5,
         ]
 
     def is_google(self) -> bool:

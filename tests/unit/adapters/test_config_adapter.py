@@ -51,7 +51,7 @@ class TestBaseConfigAdapter:
         config = BaseConfigAdapter.get_base_config(Envs.PROD)
 
         assert config.env == Envs.PROD
-        assert config.model == Model.CLAUDE_HAIKU_4_5
+        assert config.model == Model.CLAUDE_SONNET_4_5
         assert config.debug is False
         assert config.langchain_debug is False
         assert config.anthropic_api_key == ""

@@ -21,7 +21,7 @@ class Config:
     env: Envs = Envs.DEV
     debug: bool = False
     langchain_debug: bool = False
-    model: Model = Model.CLAUDE_HAIKU_4_5
+    model: Model = Model.CLAUDE_SONNET_4_5
     generate: GenerationOptions = GenerationOptions.MODELS_AND_TESTS
     anthropic_api_key: str = ""
     openai_api_key: str = ""
