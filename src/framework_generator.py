@@ -34,6 +34,7 @@ class FrameworkGenerator:
         self.api_processor = api_processor
         self.models_count = 0
         self.test_files_count = 0
+        self.request_count = 0
         self.logger = Logger.get_logger(__name__)
         self.checkpoint = Checkpoint(self, "framework_generator", self.config.destination_folder)
         self.state_manager = FrameworkStateManager(self.config, self.file_service)
@@ -194,6 +195,7 @@ class FrameworkGenerator:
 
             api_paths = self.api_processor.get_api_paths(api_definition)
             api_verbs = self.api_processor.get_api_verbs(api_definition)
+            self.request_count = len(api_verbs)
 
             for path in self.checkpoint.checkpoint_iter(api_paths, "generate_paths", all_generated_models):
                 path_name = self.api_processor.get_api_path_name(path)
@@ -249,10 +251,14 @@ class FrameworkGenerator:
                     self.logger.debug(
                         f"Generated tests for path: {verb_path_for_debug} - {verb_name_for_debug}"
                     )
-            self.logger.info(
-                f"\nGeneration complete. "
-                f"{self.models_count} models and {self.test_files_count} tests were generated."
+            log_message = (
+                f"\nGeneration complete. {self.models_count} models and "
+                f"{self.test_files_count} tests were generated"
             )
+            if self.config.data_source == DataSource.POSTMAN and self.request_count > 0:
+                log_message += f" for {self.request_count} Postman requests"
+            log_message += "."
+            self.logger.info(log_message)
         except Exception as e:
             self._log_error("Error processing definitions", e)
             self.save_state()
