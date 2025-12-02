@@ -351,3 +351,16 @@ class TestCheckAndPromptForExistingEndpoints:
             info_calls = [str(call) for call in mock_info.call_args_list]
             assert any("/users" in str(call) for call in info_calls)
             assert any("/orders" in str(call) for call in info_calls)
+
+
+class TestRequestCountTracking:
+    """Test request count tracking in FrameworkGenerator."""
+
+    def test_request_count_initialized_to_zero(self, generator):
+        """Test that request_count is initialized to 0."""
+        assert generator.request_count == 0
+
+    def test_request_count_attribute_exists(self, generator):
+        """Test that request_count attribute can be set and retrieved."""
+        generator.request_count = 5
+        assert generator.request_count == 5

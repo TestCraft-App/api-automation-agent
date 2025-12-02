@@ -6,6 +6,7 @@ from typing import Dict, List
 from src.models.api_verb import APIVerb
 
 from ..configuration.config import Config
+from ..configuration.data_sources import DataSource
 from ..models import GeneratedModel, ModelInfo
 from ..services.file_service import FileService
 from ..models.framework_state import FrameworkState
@@ -118,6 +119,9 @@ class FrameworkStateManager:
         Returns:
             bool: True if tests should be generated, False otherwise
         """
+        if self.config.data_source == DataSource.POSTMAN:
+            return True
+
         if not self.are_tests_generated_for_verb(verb):
             return True
 
