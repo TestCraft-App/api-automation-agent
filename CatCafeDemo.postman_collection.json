@@ -1,0 +1,799 @@
+{
+	"info": {
+		"_postman_id": "e9a1a8ef-dc1c-4e5d-bc80-c6a256dd24ef",
+		"name": "CatCafe-Demo",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17177698",
+		"_collection_link": "https://gold-firefly-482275.postman.co/workspace/CatCafeDemo~c647c2e5-ace4-4c32-bffe-272ba59c1e17/collection/17177698-e9a1a8ef-dc1c-4e5d-bc80-c6a256dd24ef?action=share&source=collection_link&creator=17177698"
+	},
+	"item": [
+		{
+			"name": "Adopt a cat",
+			"item": [
+				{
+					"name": "preparation",
+					"item": [
+						{
+							"name": "C598989 Register user",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"pm.test(\"Body matches string\", function () {",
+											"    pm.expect(pm.response.text()).to.include(\"User registered successfully\");",
+											"});",
+											"",
+											"var jsonData = pm.response.json();",
+											"pm.environment.set(\"userID\", jsonData.id);",
+											"",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.environment.set(\"username\", pm.variables.replaceIn(\"{{$randomCity}}\"));"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"username\": \"{{username}}\",\r\n  \"password\": \"{{password}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/register",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"auth",
+										"register"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "C598989  Login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"pm.test(\"Body matches string\", function () {",
+											"    pm.expect(pm.response.text()).to.include(\"accessToken\");",
+											"});",
+											"",
+											"var jsonData = pm.response.json();",
+											"pm.environment.set(\"token\", jsonData.accessToken);",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-skip-rate-limit",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"username\": \"{{username}}\",\r\n  \"password\": \"{{password}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/login",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"auth",
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "C598989 Add staff member",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"var jsonData = pm.response.json();",
+											"pm.environment.set(\"staffID\", jsonData.id);",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"{{staffName}}\",\r\n  \"lastName\": \"{{staffLastName}}\",\r\n  \"age\": 30,\r\n  \"dateJoined\": \"2025-05-09T18:24:45.220Z\",\r\n  \"role\": \"Assistant\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/staff",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"staff"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "C598989 Add a new cat adopter",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"var jsonData = pm.response.json();",
+											"pm.environment.set(\"adopterID\", jsonData.id);",
+											"",
+											"pm.test(\"Adopter Name is correct\", function () {",
+											"    pm.expect(jsonData.name).to.not.be.empty;",
+											"});",
+											"",
+											"pm.test(\"Adopter Last Name is correct\", function () {",
+											"    pm.expect(jsonData.last_name).to.eql(pm.environment.get(\"adopterLastName\"));",
+											"});",
+											"",
+											"pm.test(\"Adopter Phone is correct\", function () {",
+											"    pm.expect(jsonData.phone).to.not.be.undefined;",
+											"});",
+											"",
+											"pm.test(\"Adopter Address is correct\", function () {",
+											"    pm.expect(jsonData.address).to.eql(pm.environment.get(\"adopterAddress\"));",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"{{adopterName}}\",\r\n  \"lastName\": \"{{adopterLastName}}\",\r\n  \"dateOfBirth\": \"2000-05-06T17:28:27.459Z\",\r\n  \"phone\": \"{{$randomPhoneNumber}}\",\r\n  \"address\": \"{{adopterAddress}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/adopters",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"adopters"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "C598989 Add new cat",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"var jsonData = pm.response.json();",
+											"pm.environment.set(\"catID\", jsonData.id);",
+											"",
+											"pm.test(\"Cat Name is correct\", function () {",
+											"    pm.expect(jsonData.name).to.not.be.empty;",
+											"});",
+											"",
+											"pm.test(\"Cat age is correct\", function () {",
+											"    pm.expect(jsonData.age).to.eql(1);",
+											"});",
+											"",
+											"pm.test(\"Cat breed is correct\", function () {",
+											"    pm.expect(jsonData.breed).to.eql(\"Persian\");",
+											"});",
+											"",
+											"pm.test(\"Cat is vaccinated\", function () {",
+											"    pm.expect(jsonData.vaccinated).to.eql(true);",
+											"});",
+											"",
+											"pm.test(\"Cat temperament is an array\", function () {",
+											"    pm.expect(Array.isArray(jsonData.temperament)).to.eql(true);",
+											"});",
+											"",
+											"pm.test(\"Staff in charge is\", function () {",
+											"    pm.expect(jsonData.staffInCharge).to.eql(pm.environment.get(\"staffID\"));",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"{{catName}}\",\r\n  \"age\": 1,\r\n  \"breed\": \"Persian\",\r\n  \"dateJoined\": \"2025-05-08T18:19:37.105Z\",\r\n  \"vaccinated\": true,\r\n  \"temperament\": [\r\n    \"Curious\"\r\n  ],\r\n  \"staffInCharge\": \"{{staffID}}\",\r\n  \"isAdopted\": false\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/cats",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"cats"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "happy path",
+					"item": [
+						{
+							"name": "C1587845 Update cat adopter",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response time is less than 200ms\", function () { ",
+											"    pm.expect(pm.response.responseTime).to.be.below(200);",
+											"});",
+											"",
+											"pm.test(\"Cat is adopted\", function () {",
+											"    pm.expect(pm.response.json().isAdopted).to.be.true;",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"adopterId\": {{adopterID}}\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/cats/{{catID}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"cats",
+										"{{catID}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "validation",
+					"item": [
+						{
+							"name": "C1587846 Update cat adopter non existent adopter id",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											"pm.test(\"Body matches string\", function () {",
+											"    pm.expect(pm.response.text()).to.include(\"Adopter not found\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"adopterId\": {{nonExistentAdopterID}}\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/cats/{{catID}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"cats",
+										"{{catID}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "C1587846 Update cat adopter not valid adopter id",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"pm.test(\"Body matches string\", function () {",
+											"    pm.expect(pm.response.text()).to.include(\"Expected number, received string\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"adopterId\": \"Cat\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/cats/{{catID}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"cats",
+										"{{catID}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "clean up",
+					"item": [
+						{
+							"name": "C598990 Delete cat",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{base_url}}/api/cats/{{catID}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"cats",
+										"{{catID}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "C598990 Delete adopter",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											"pm.test(\"Body matches string\", function () {",
+											"    pm.expect(pm.response.text()).to.include(\"\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/adopters/{{adopterID}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"adopters",
+										"{{adopterID}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "C598990 Remove staff member",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											"pm.test(\"Body is correct\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/staff/{{staffID}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"staff",
+										"{{staffID}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							"pm.test(\"Response time is under 1s\", function () {\r",
+							"    pm.expect(pm.response.responseTime).to.be.below(1000);\r",
+							"});"
+						]
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "adopterID",
+			"value": ""
+		},
+		{
+			"key": "catID",
+			"value": ""
+		},
+		{
+			"key": "token",
+			"value": ""
+		},
+		{
+			"key": "staffID",
+			"value": ""
+		},
+		{
+			"key": "nonExistentAdopterID",
+			"value": ""
+		}
+	]
+}

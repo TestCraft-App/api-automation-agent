@@ -174,10 +174,24 @@ class PostmanUtils:
 
     @staticmethod
     def to_camel_case(s: str) -> str:
+        # Split by any non-alphanumeric character
         parts = [p for p in re.split(r"[^A-Za-z0-9]+", s) if p]
         if not parts:
             return ""
-        return parts[0].lower() + "".join(p.title() for p in parts[1:])
+
+        # Normalize the ID part: ensure it starts with 'C' if it looks like an ID
+        first = parts[0]
+        if re.match(r"^[Cc]\d+$", first):
+            first = "C" + first[1:]
+
+        # Convert the rest to lowercase hyphen-separated (kebab-case)
+        rest = "-".join(p.lower() for p in parts[1:])
+
+        # Clean up duplicate or edge hyphens
+        rest = re.sub(r"-{2,}", "-", rest).strip("-")
+
+        # Join with no spaces around the dash
+        return f"{first}-{rest}" if rest else first
 
     @staticmethod
     def _strip_leading_postman_variable(path: str) -> str:
