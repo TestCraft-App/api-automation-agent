@@ -74,8 +74,20 @@ class FileCreationTool(BaseTool):
         if len(valid_files) != len(files_data):
             self.logger.info(f"Filtered out {len(files_data) - len(valid_files)} invalid file specifications")
 
+        # Normalize field names - Bedrock returns snake_case (file_content) but we need camelCase (fileContent)
+        normalized_files = []
+        for file_spec in valid_files:
+            normalized = {}
+            for key, value in file_spec.items():
+                # Convert snake_case to camelCase for known fields
+                if key == "file_content":
+                    normalized["fileContent"] = value
+                else:
+                    normalized[key] = value
+            normalized_files.append(normalized)
+
         spec_class = ModelFileSpec if self.are_models else FileSpec
-        file_specs = [spec_class(**file_spec) for file_spec in valid_files]
+        file_specs = [spec_class(**file_spec) for file_spec in normalized_files]
         for file_spec in file_specs:
             if file_spec.path.startswith("/"):
                 file_spec.path = f".{file_spec.path}"

@@ -45,7 +45,7 @@ class Model(Enum):
         Provider.ANTHROPIC,
     )
     CLAUDE_SONNET_4_5_BEDROCK = (
-        "anthropic.claude-sonnet-4-5-20250929-v1:0",
+        "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
         ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
         Provider.BEDROCK,
     )

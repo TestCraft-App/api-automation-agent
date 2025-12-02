@@ -97,6 +97,8 @@ class LLMService:
                 Provider.BEDROCK: lambda: ChatBedrockConverse(
                     model=self.config.model.value,
                     temperature=1,
+                    region_name="us-east-1",
+                    max_tokens=8192,
                     aws_access_key_id=pydantic.SecretStr(self.config.aws_access_key_id),
                     aws_secret_access_key=pydantic.SecretStr(self.config.aws_secret_access_key),
                 ),
