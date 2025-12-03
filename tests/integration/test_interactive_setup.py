@@ -103,7 +103,7 @@ LANGCHAIN_DEBUG=False
         provider = InteractiveSetup.SUPPORTED_PROVIDERS["2"]
 
         with patch("builtins.print"):
-            result = InteractiveSetup.update_env_file(provider, "gpt-5-mini", "test-key")
+            result = InteractiveSetup.update_env_file(provider, "gpt-5-mini", {"OPENAI_API_KEY": "test-key"})
 
         assert result is True
         content = self.env_file.read_text()
@@ -125,7 +125,7 @@ DEBUG=False
         provider = InteractiveSetup.SUPPORTED_PROVIDERS["2"]
 
         with patch("builtins.print"):
-            result = InteractiveSetup.update_env_file(provider, "gpt-5-mini", "new-key")
+            result = InteractiveSetup.update_env_file(provider, "gpt-5-mini", {"OPENAI_API_KEY": "new-key"})
 
         assert result is True
         content = self.env_file.read_text()
@@ -141,12 +141,36 @@ DEBUG=False
         provider = InteractiveSetup.SUPPORTED_PROVIDERS["1"]
 
         with patch("builtins.print"):
-            result = InteractiveSetup.update_env_file(provider, "claude-sonnet-4-20250514", "sk-ant-key")
+            result = InteractiveSetup.update_env_file(
+                provider, "claude-sonnet-4-20250514", {"ANTHROPIC_API_KEY": "sk-ant-key"}
+            )
 
         assert result is True
         content = self.env_file.read_text()
         assert "ANTHROPIC_API_KEY=sk-ant-key" in content
         assert "MODEL=claude-sonnet-4-20250514" in content
+
+    @patch.object(InteractiveSetup, "get_executable_directory")
+    def test_update_env_file_bedrock_provider(self, mock_get_dir):
+        """Test updating env file with AWS Bedrock provider."""
+        mock_get_dir.return_value = self.test_dir
+        provider = InteractiveSetup.SUPPORTED_PROVIDERS["4"]
+
+        credentials = {
+            "AWS_ACCESS_KEY_ID": "AKIAIOSFODNN7EXAMPLE",
+            "AWS_SECRET_ACCESS_KEY": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "AWS_REGION": "eu-west-1",
+        }
+
+        with patch("builtins.print"):
+            result = InteractiveSetup.update_env_file(provider, "openai.gpt-5.1", credentials)
+
+        assert result is True
+        content = self.env_file.read_text()
+        assert "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE" in content
+        assert "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" in content
+        assert "AWS_REGION=eu-west-1" in content
+        assert "MODEL=openai.gpt-5.1" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_openai(self, mock_get_dir):
@@ -187,6 +211,32 @@ DEBUG=False
         assert "MODEL=claude-sonnet-4-5-20250929" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
+    def test_complete_setup_flow_bedrock(self, mock_get_dir):
+        """Test complete setup flow for AWS Bedrock provider."""
+        mock_get_dir.return_value = self.test_dir
+
+        # Mock inputs for AWS credentials: access key, secret key, region
+        def mock_credentials_input(prompt):
+            if "Access Key ID" in prompt:
+                return "AKIAIOSFODNN7EXAMPLE"
+            elif "Secret Access Key" in prompt:
+                return "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+            return ""
+
+        with patch("builtins.input", side_effect=["4", "", "us-west-2"]):
+            with patch("builtins.print"):
+                result = InteractiveSetup.run_interactive_setup(input_func=mock_credentials_input)
+
+        assert result is True
+        assert self.env_file.exists()
+
+        content = self.env_file.read_text()
+        assert "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE" in content
+        assert "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" in content
+        assert "AWS_REGION=us-west-2" in content
+        assert "MODEL=anthropic.claude-sonnet-4-5-20250929-v1:0" in content
+
+    @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_invalid_provider_then_valid(self, mock_get_dir):
         """Test setup flow with invalid provider input then valid input."""
         mock_get_dir.return_value = self.test_dir
@@ -194,7 +244,7 @@ DEBUG=False
         def mock_api_key_input(prompt):
             return "sk-test-key"
 
-        with patch("builtins.input", side_effect=["4", "1", ""]):
+        with patch("builtins.input", side_effect=["5", "1", ""]):
             with patch("builtins.print"):
                 result = InteractiveSetup.run_interactive_setup(input_func=mock_api_key_input)
 
@@ -225,10 +275,11 @@ class TestInteractiveSetupConfiguration:
         providers = InteractiveSetup.SUPPORTED_PROVIDERS
 
         assert isinstance(providers, dict)
-        assert len(providers) == 3
+        assert len(providers) == 4
         assert "1" in providers
         assert "2" in providers
         assert "3" in providers
+        assert "4" in providers
 
     def test_openai_provider_configuration(self):
         """Test OpenAI provider configuration."""
@@ -249,6 +300,20 @@ class TestInteractiveSetupConfiguration:
         assert len(anthropic_config["models"]) > 0
         assert anthropic_config["default_model"] in anthropic_config["models"]
         assert "claude-sonnet-4-20250514" in anthropic_config["models"]
+
+    def test_bedrock_provider_configuration(self):
+        """Test AWS Bedrock provider configuration."""
+        bedrock_config = InteractiveSetup.SUPPORTED_PROVIDERS["4"]
+
+        assert bedrock_config["name"] == "AWS Bedrock"
+        assert bedrock_config["env_key"] == "AWS_ACCESS_KEY_ID"
+        assert "additional_keys" in bedrock_config
+        assert "AWS_SECRET_ACCESS_KEY" in bedrock_config["additional_keys"]
+        assert "AWS_REGION" in bedrock_config["additional_keys"]
+        assert len(bedrock_config["models"]) > 0
+        assert bedrock_config["default_model"] in bedrock_config["models"]
+        assert "anthropic.claude-sonnet-4-5-20250929-v1:0" in bedrock_config["models"]
+        assert "openai.gpt-5.1" in bedrock_config["models"]
 
     def test_get_executable_directory_returns_path(self):
         """Test that get_executable_directory returns a valid path."""
