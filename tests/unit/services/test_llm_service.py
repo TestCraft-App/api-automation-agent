@@ -286,6 +286,8 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
         (Model.GPT_5_MINI, True, "required", "openai_force_single", lambda: [DummyTool()]),
         (Model.CLAUDE_SONNET_4, False, "auto", "anthropic_no_force_single", lambda: [DummyTool()]),
         (Model.CLAUDE_SONNET_4, True, "any", "anthropic_force_single", lambda: [DummyTool()]),
+        (Model.BEDROCK_CLAUDE_SONNET_4_5, False, "auto", "bedrock_no_force_single", lambda: [DummyTool()]),
+        (Model.BEDROCK_CLAUDE_SONNET_4_5, True, "any", "bedrock_force_single", lambda: [DummyTool()]),
         # Multiple tools cases (should behave identically wrt tool_choice)
         (Model.GPT_5_MINI, True, "required", "openai_force_multi", lambda: [DummyTool("a"), DummyTool("b")]),
         (
@@ -293,6 +295,13 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
             True,
             "any",
             "anthropic_force_multi",
+            lambda: [DummyTool("a"), DummyTool("b")],
+        ),
+        (
+            Model.BEDROCK_GPT_5_1,
+            True,
+            "any",
+            "bedrock_force_multi",
             lambda: [DummyTool("a"), DummyTool("b")],
         ),
     ]
@@ -594,3 +603,75 @@ def test_select_language_model_propagates_initialization_error(llm_service, monk
 
     with pytest.raises(RuntimeError, match="init failure"):
         llm_service._select_language_model()
+
+
+def test_select_language_model_returns_bedrock_client_for_bedrock_model(llm_service, monkeypatch):
+    """Test that Bedrock models return ChatBedrock client with correct configuration."""
+    captured = {}
+
+    class FakeBedrock:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    from src.configuration.models import Model
+
+    llm_service.config.model = Model.BEDROCK_CLAUDE_SONNET_4_5
+    llm_service.config.aws_access_key_id = "test-access-key"
+    llm_service.config.aws_secret_access_key = "test-secret-key"
+    llm_service.config.aws_region = "us-west-2"
+
+    monkeypatch.setattr("src.services.llm_service.ChatBedrock", FakeBedrock)
+
+    result = llm_service._select_language_model()
+
+    assert isinstance(result, FakeBedrock)
+    assert captured["model_id"] == Model.BEDROCK_CLAUDE_SONNET_4_5.value
+    assert captured["region_name"] == "us-west-2"
+    assert captured["aws_access_key_id"] == "test-access-key"
+    assert captured["aws_secret_access_key"] == "test-secret-key"
+    assert "model_kwargs" in captured
+    assert captured["model_kwargs"]["temperature"] == 1
+
+
+def test_select_language_model_bedrock_gpt_model(llm_service, monkeypatch):
+    """Test that Bedrock GPT models use correct model IDs."""
+    captured = {}
+
+    class FakeBedrock:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    from src.configuration.models import Model
+
+    llm_service.config.model = Model.BEDROCK_GPT_5_1
+    llm_service.config.aws_region = "eu-west-1"
+
+    monkeypatch.setattr("src.services.llm_service.ChatBedrock", FakeBedrock)
+
+    result = llm_service._select_language_model()
+
+    assert isinstance(result, FakeBedrock)
+    assert captured["model_id"] == Model.BEDROCK_GPT_5_1.value
+    assert captured["region_name"] == "eu-west-1"
+
+
+def test_select_language_model_bedrock_gemini_model(llm_service, monkeypatch):
+    """Test that Bedrock Gemini models use correct model IDs."""
+    captured = {}
+
+    class FakeBedrock:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    from src.configuration.models import Model
+
+    llm_service.config.model = Model.BEDROCK_GEMINI_3_PRO_PREVIEW
+    llm_service.config.aws_region = "ap-southeast-1"
+
+    monkeypatch.setattr("src.services.llm_service.ChatBedrock", FakeBedrock)
+
+    result = llm_service._select_language_model()
+
+    assert isinstance(result, FakeBedrock)
+    assert captured["model_id"] == Model.BEDROCK_GEMINI_3_PRO_PREVIEW.value
+    assert captured["region_name"] == "ap-southeast-1"

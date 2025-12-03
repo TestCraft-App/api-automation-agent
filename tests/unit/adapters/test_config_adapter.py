@@ -283,3 +283,42 @@ class TestConfigAdapterEdgeCases:
 
         # os.getenv returns empty string when env var is set to empty
         assert config.destination_folder == ""
+
+    @patch("src.adapters.config_adapter.set_debug")
+    @patch("src.adapters.config_adapter.load_dotenv")
+    @patch.dict(
+        os.environ,
+        {
+            "MODEL": "anthropic.claude-sonnet-4-5-20250929-v1:0",
+            "AWS_ACCESS_KEY_ID": "test-access-key-id",
+            "AWS_SECRET_ACCESS_KEY": "test-secret-access-key",
+            "AWS_REGION": "us-west-2",
+        },
+        clear=True,
+    )
+    def test_get_base_config_with_bedrock_credentials(self, mock_load_dotenv, mock_set_debug):
+        """Test config loading with AWS Bedrock credentials."""
+        config = BaseConfigAdapter.get_base_config(Envs.DEV)
+
+        assert config.model == Model.BEDROCK_CLAUDE_SONNET_4_5
+        assert config.aws_access_key_id == "test-access-key-id"
+        assert config.aws_secret_access_key == "test-secret-access-key"
+        assert config.aws_region == "us-west-2"
+
+    @patch("src.adapters.config_adapter.set_debug")
+    @patch("src.adapters.config_adapter.load_dotenv")
+    @patch.dict(
+        os.environ,
+        {
+            "MODEL": "openai.gpt-5.1",
+        },
+        clear=True,
+    )
+    def test_get_base_config_with_bedrock_model_defaults(self, mock_load_dotenv, mock_set_debug):
+        """Test that AWS region defaults to us-east-1 when not specified."""
+        config = BaseConfigAdapter.get_base_config(Envs.DEV)
+
+        assert config.model == Model.BEDROCK_GPT_5_1
+        assert config.aws_access_key_id == ""
+        assert config.aws_secret_access_key == ""
+        assert config.aws_region == "us-east-1"

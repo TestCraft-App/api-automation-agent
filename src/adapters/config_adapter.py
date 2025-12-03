@@ -23,6 +23,9 @@ class BaseConfigAdapter(containers.DeclarativeContainer):
         config.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY", "")
         config.openai_api_key = os.getenv("OPENAI_API_KEY", "")
         config.google_api_key = os.getenv("GOOGLE_API_KEY", "")
+        config.aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID", "")
+        config.aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+        config.aws_region = os.getenv("AWS_REGION", "us-east-1")
         config.destination_folder = os.getenv(
             "DESTINATION_FOLDER",
             f"./generated/generated-framework_{datetime.now().strftime('%Y%m%d-%H%M%S')}",

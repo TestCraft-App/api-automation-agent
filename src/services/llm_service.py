@@ -2,6 +2,7 @@ from typing import Any, List, Optional
 
 import pydantic
 from langchain_anthropic import ChatAnthropic
+from langchain_aws import ChatBedrock
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
@@ -98,6 +99,15 @@ class LLMService:
                     google_api_key=pydantic.SecretStr(self.config.google_api_key),
                     max_retries=3,
                 )
+            if self.config.model.is_bedrock():
+                return ChatBedrock(
+                    model_id=self.config.model.value,
+                    model_kwargs={"temperature": 1, "max_tokens": 8192},
+                    region_name=self.config.aws_region,
+                    credentials_profile_name=None,
+                    aws_access_key_id=self.config.aws_access_key_id,
+                    aws_secret_access_key=self.config.aws_secret_access_key,
+                )
             return ChatOpenAI(
                 model=self.config.model.value,
                 temperature=1,
@@ -163,7 +173,11 @@ class LLMService:
 
             if tools:
                 tool_choice = "auto"
-                if self.config.model.is_anthropic() or self.config.model.is_google():
+                if (
+                    self.config.model.is_anthropic()
+                    or self.config.model.is_google()
+                    or self.config.model.is_bedrock()
+                ):
                     if must_use_tool:
                         tool_choice = "any"
                 else:
