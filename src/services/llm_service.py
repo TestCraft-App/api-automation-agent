@@ -2,7 +2,7 @@ from typing import Any, List, Optional
 
 import pydantic
 from langchain_anthropic import ChatAnthropic
-from langchain_aws import ChatBedrock
+from langchain_aws.chat_models.bedrock_converse import ChatBedrockConverse
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
@@ -101,16 +101,19 @@ class LLMService:
                 )
             if self.config.model.is_bedrock():
                 bedrock_kwargs = {
-                    "model_id": self.config.model.value,
-                    "model_kwargs": {"temperature": 1, "max_tokens": 8192},
+                    "model": self.config.model.value,
+                    "temperature": 1,
+                    "max_tokens": 8192,
                     "region_name": self.config.aws_region or "us-east-1",
                 }
 
                 if self.config.aws_access_key_id and self.config.aws_secret_access_key:
-                    bedrock_kwargs["aws_access_key_id"] = self.config.aws_access_key_id
-                    bedrock_kwargs["aws_secret_access_key"] = self.config.aws_secret_access_key
+                    bedrock_kwargs["aws_access_key_id"] = pydantic.SecretStr(self.config.aws_access_key_id)
+                    bedrock_kwargs["aws_secret_access_key"] = pydantic.SecretStr(
+                        self.config.aws_secret_access_key
+                    )
 
-                return ChatBedrock(**bedrock_kwargs)
+                return ChatBedrockConverse(**bedrock_kwargs)
             return ChatOpenAI(
                 model=self.config.model.value,
                 temperature=1,
