@@ -4,6 +4,7 @@ PyYAML~=6.0.2
 python-dotenv~=1.0.1
 langchain-anthropic>=0.3.6
 langchain-google-genai>=2.0.0
+langchain-aws~=0.2.6
 pydantic~=2.9.2
 dependency-injector~=4.43.0
 black~=24.3.0

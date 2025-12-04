@@ -286,6 +286,8 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
         (Model.GPT_5_MINI, True, "required", "openai_force_single", lambda: [DummyTool()]),
         (Model.CLAUDE_SONNET_4, False, "auto", "anthropic_no_force_single", lambda: [DummyTool()]),
         (Model.CLAUDE_SONNET_4, True, "any", "anthropic_force_single", lambda: [DummyTool()]),
+        (Model.BEDROCK_CLAUDE_SONNET_4_5, False, "auto", "bedrock_no_force_single", lambda: [DummyTool()]),
+        (Model.BEDROCK_CLAUDE_SONNET_4_5, True, "any", "bedrock_force_single", lambda: [DummyTool()]),
         # Multiple tools cases (should behave identically wrt tool_choice)
         (Model.GPT_5_MINI, True, "required", "openai_force_multi", lambda: [DummyTool("a"), DummyTool("b")]),
         (
@@ -293,6 +295,13 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
             True,
             "any",
             "anthropic_force_multi",
+            lambda: [DummyTool("a"), DummyTool("b")],
+        ),
+        (
+            Model.BEDROCK_GPT_5_1,
+            True,
+            "any",
+            "bedrock_force_multi",
             lambda: [DummyTool("a"), DummyTool("b")],
         ),
     ]
@@ -420,7 +429,8 @@ def test_create_ai_chain_tool_call_invokes_selected_tool(llm_service, monkeypatc
 
 
 def test_create_ai_chain_tool_call_name_not_found_returns_content(llm_service, monkeypatch, tmp_path):
-    """If response.tool_calls contains a name not in tool_map, the chain should fall back to returning response.content."""
+    """If response.tool_calls contains a name not in tool_map,
+    the chain should fall back to returning response.content."""
 
     class FakeResponse:
         def __init__(self, content, usage_metadata, tool_calls):
@@ -559,7 +569,8 @@ def test_select_language_model_override_updates_config(llm_service, monkeypatch)
 
 
 def test_select_language_model_without_override_ignores_language_model_arg(llm_service, monkeypatch):
-    """When override is False, provided language_model argument should be ignored and config.model preserved."""
+    """When override is False, provided language_model argument should be ignored and
+    config.model preserved."""
 
     from src.configuration.models import Model
 
@@ -594,3 +605,121 @@ def test_select_language_model_propagates_initialization_error(llm_service, monk
 
     with pytest.raises(RuntimeError, match="init failure"):
         llm_service._select_language_model()
+
+
+def test_select_language_model_returns_bedrock_client_for_bedrock_model(llm_service, monkeypatch):
+    """Test that Bedrock models return ChatBedrockConverse client with correct configuration."""
+    captured = {}
+
+    class FakeBedrock:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    from src.configuration.models import Model
+
+    llm_service.config.model = Model.BEDROCK_CLAUDE_SONNET_4_5
+    llm_service.config.aws_access_key_id = "test-access-key"
+    llm_service.config.aws_secret_access_key = "test-secret-key"
+    llm_service.config.aws_region = "us-west-2"
+
+    monkeypatch.setattr("src.services.llm_service.ChatBedrockConverse", FakeBedrock)
+
+    result = llm_service._select_language_model()
+
+    assert isinstance(result, FakeBedrock)
+    assert captured["model"] == Model.BEDROCK_CLAUDE_SONNET_4_5.value
+    assert captured["region_name"] == "us-west-2"
+    assert captured["aws_access_key_id"].get_secret_value() == "test-access-key"
+    assert captured["aws_secret_access_key"].get_secret_value() == "test-secret-key"
+    assert captured["temperature"] == 1
+    assert captured["max_tokens"] == 8192
+
+
+def test_select_language_model_bedrock_gpt_model(llm_service, monkeypatch):
+    """Test that Bedrock GPT models use correct model IDs."""
+    captured = {}
+
+    class FakeBedrock:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    from src.configuration.models import Model
+
+    llm_service.config.model = Model.BEDROCK_GPT_5_1
+    llm_service.config.aws_region = "eu-west-1"
+
+    monkeypatch.setattr("src.services.llm_service.ChatBedrockConverse", FakeBedrock)
+
+    result = llm_service._select_language_model()
+
+    assert isinstance(result, FakeBedrock)
+    assert captured["model"] == Model.BEDROCK_GPT_5_1.value
+    assert captured["region_name"] == "eu-west-1"
+
+
+def test_select_language_model_bedrock_gemini_model(llm_service, monkeypatch):
+    """Test that Bedrock Gemini models use correct model IDs."""
+    captured = {}
+
+    class FakeBedrock:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    from src.configuration.models import Model
+
+    llm_service.config.model = Model.BEDROCK_GEMINI_3_PRO_PREVIEW
+    llm_service.config.aws_region = "ap-southeast-1"
+
+    monkeypatch.setattr("src.services.llm_service.ChatBedrockConverse", FakeBedrock)
+
+    result = llm_service._select_language_model()
+
+    assert isinstance(result, FakeBedrock)
+    assert captured["model"] == Model.BEDROCK_GEMINI_3_PRO_PREVIEW.value
+    assert captured["region_name"] == "ap-southeast-1"
+
+
+def test_select_language_model_bedrock_without_credentials(llm_service, monkeypatch):
+    """Test Bedrock model initialization without explicit credentials (AWS CLI auth)."""
+    captured = {}
+
+    class FakeBedrock:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    llm_service.config.model = Model.BEDROCK_CLAUDE_SONNET_4_5
+    llm_service.config.aws_region = "eu-west-1"
+    llm_service.config.aws_access_key_id = ""  # No credentials provided
+    llm_service.config.aws_secret_access_key = ""
+
+    monkeypatch.setattr("src.services.llm_service.ChatBedrockConverse", FakeBedrock)
+
+    result = llm_service._select_language_model()
+
+    assert isinstance(result, FakeBedrock)
+    assert captured["model"] == Model.BEDROCK_CLAUDE_SONNET_4_5.value
+    assert captured["region_name"] == "eu-west-1"
+    # Verify credentials were NOT passed (will use AWS default credential chain)
+    assert "aws_access_key_id" not in captured
+    assert "aws_secret_access_key" not in captured
+
+
+def test_select_language_model_bedrock_default_region(llm_service, monkeypatch):
+    """Test Bedrock model initialization with default region when not specified."""
+    captured = {}
+
+    class FakeBedrock:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    llm_service.config.model = Model.BEDROCK_CLAUDE_SONNET_4_5
+    llm_service.config.aws_region = ""  # No region specified
+    llm_service.config.aws_access_key_id = ""
+    llm_service.config.aws_secret_access_key = ""
+
+    monkeypatch.setattr("src.services.llm_service.ChatBedrockConverse", FakeBedrock)
+
+    result = llm_service._select_language_model()
+
+    assert isinstance(result, FakeBedrock)
+    assert captured["region_name"] == "us-east-1"  # Default region

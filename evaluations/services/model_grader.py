@@ -74,6 +74,7 @@ You must respond with a JSON object in this exact format:
         # Directly create the model instance (same logic as LLMService._select_language_model)
         import pydantic
         from langchain_anthropic import ChatAnthropic
+        from langchain_aws import ChatBedrock
         from langchain_google_genai import ChatGoogleGenerativeAI
         from langchain_openai import ChatOpenAI
 
@@ -95,6 +96,18 @@ You must respond with a JSON object in this exact format:
                     google_api_key=pydantic.SecretStr(self.config.google_api_key),
                     max_retries=3,
                 )
+            if self.config.model.is_bedrock():
+                bedrock_kwargs = {
+                    "model_id": self.config.model.value,
+                    "model_kwargs": {"temperature": 1, "max_tokens": 8192},
+                    "region_name": self.config.aws_region or "us-east-1",
+                }
+
+                if self.config.aws_access_key_id and self.config.aws_secret_access_key:
+                    bedrock_kwargs["aws_access_key_id"] = self.config.aws_access_key_id
+                    bedrock_kwargs["aws_secret_access_key"] = self.config.aws_secret_access_key
+
+                return ChatBedrock(**bedrock_kwargs)
             return ChatOpenAI(
                 model=self.config.model.value,
                 temperature=1,

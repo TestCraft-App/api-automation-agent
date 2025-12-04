@@ -70,11 +70,14 @@ Download the standalone executable:
    OPENAI_API_KEY=your_openai_api_key_here
    ANTHROPIC_API_KEY=your_anthropic_api_key_here
    GOOGLE_API_KEY=your_gemini_api_key_here
+   AWS_ACCESS_KEY_ID=your_aws_access_key_id_here
+   AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key_here
+   AWS_REGION=us-east-1
    ```
 
 ## Large Language Models
 
-This project supports Anthropic, OpenAI, and Google Generative AI language models.
+This project supports Anthropic, OpenAI, Google Generative AI, and AWS Bedrock language models.
 
 **Security Note**: Claude models are significantly more resistant to prompt injection attacks compared to OpenAI or Google models when processing API definitions. This is particularly important when working with API specifications from untrusted sources. See the [prompt injection evaluation dataset](evaluations/data/prompt_injection_dataset/) for details.
 
@@ -97,6 +100,37 @@ This project supports Anthropic, OpenAI, and Google Generative AI language model
 **Google**
 
 - Gemini 3 Pro Preview (gemini-3-pro-preview)
+
+**AWS Bedrock**
+
+AWS Bedrock provides access to multiple model families through a unified API. Use the actual Bedrock model IDs:
+
+- Claude models: anthropic.claude-sonnet-4-5-20250929-v1:0, anthropic.claude-haiku-4-5-20251001-v1:0, anthropic.claude-opus-4-5-20251101-v1:0, anthropic.claude-sonnet-4-20250514-v1:0
+- OpenAI models: openai.gpt-5.1, openai.gpt-5, openai.gpt-4.1, openai.gpt-5-mini
+- Google models: google.gemini-3-pro-preview
+
+**Authentication Options:**
+
+*Option 1: AWS CLI (Recommended)*
+```bash
+# One-time setup
+aws configure
+# Enter your AWS Access Key, Secret Key, Region, and Output format
+
+# Then in your .env file:
+MODEL=anthropic.claude-sonnet-4-5-20250929-v1:0
+AWS_REGION=us-east-1
+```
+
+*Option 2: Environment Variables*
+```env
+MODEL=anthropic.claude-sonnet-4-5-20250929-v1:0
+AWS_ACCESS_KEY_ID=your_access_key_id
+AWS_SECRET_ACCESS_KEY=your_secret_access_key
+AWS_REGION=us-east-1
+```
+
+The agent will automatically use your AWS CLI configuration if credentials are not explicitly provided in the `.env` file. This approach is more secure and supports IAM roles, AWS SSO, and other AWS authentication methods.
 
 You can configure your preferred model in the `.env` file:
 

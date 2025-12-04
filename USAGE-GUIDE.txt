@@ -5,7 +5,7 @@
 PREREQUISITES
 - Windows 7+ or macOS 10.14+
 - Node.js (download from https://nodejs.org/)
-- API key (OpenAI or Anthropic)
+- API key (OpenAI, Anthropic, Google, or AWS Bedrock credentials)
 - Internet connection
 
 ================================================================================================
@@ -14,9 +14,9 @@ SETUP STEPS
 
 INTERACTIVE SETUP (RECOMMENDED - FIRST TIME USE):
 When you run the CLI for the first time, it will automatically guide you through setup:
-1. Select AI Provider (OpenAI or Anthropic)
+1. Select AI Provider (Anthropic, OpenAI, Google, or AWS Bedrock)
 2. Choose Model from supported options  
-3. Enter your API key
+3. Enter your API key or AWS credentials
 The CLI will create a .env file automatically.
 
 SUPPORTED MODELS:
@@ -32,6 +32,17 @@ OpenAI Models:
 - gpt-5-mini
 - gpt-4.1
 
+Google Models:
+- gemini-3-pro-preview
+
+AWS Bedrock Models:
+- anthropic.claude-sonnet-4-5-20250929-v1:0 (recommended)
+- anthropic.claude-haiku-4-5-20251001-v1:0
+- anthropic.claude-opus-4-5-20251101-v1:0
+- anthropic.claude-sonnet-4-20250514-v1:0
+- openai.gpt-5.1, openai.gpt-5, openai.gpt-5-mini, openai.gpt-4.1
+- google.gemini-3-pro-preview
+
 MANUAL SETUP (ALTERNATIVE):
 
 WINDOWS:
@@ -43,6 +54,15 @@ WINDOWS:
    OPENAI_API_KEY=your_key_here
    OR
    ANTHROPIC_API_KEY=your_key_here
+   OR
+   GOOGLE_API_KEY=your_key_here
+   OR (for AWS Bedrock - Option 1: AWS CLI - Recommended):
+   First run: aws configure
+   Then in .env: AWS_REGION=us-east-1
+   OR (for AWS Bedrock - Option 2: Environment Variables):
+   AWS_ACCESS_KEY_ID=your_access_key_id
+   AWS_SECRET_ACCESS_KEY=your_secret_key
+   AWS_REGION=us-east-1
 
 MACOS:
 1. Extract the tar.gz file:
@@ -54,6 +74,15 @@ MACOS:
    OPENAI_API_KEY=your_key_here
    OR
    ANTHROPIC_API_KEY=your_key_here
+   OR
+   GOOGLE_API_KEY=your_key_here
+   OR (for AWS Bedrock - Option 1: AWS CLI - Recommended):
+   First run: aws configure
+   Then in .env: AWS_REGION=us-east-1
+   OR (for AWS Bedrock - Option 2: Environment Variables):
+   AWS_ACCESS_KEY_ID=your_access_key_id
+   AWS_SECRET_ACCESS_KEY=your_secret_key
+   AWS_REGION=us-east-1
 4. Make executable (if needed):
    chmod +x api-agent
 
