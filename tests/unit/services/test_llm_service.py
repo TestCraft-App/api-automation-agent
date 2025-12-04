@@ -608,7 +608,7 @@ def test_select_language_model_propagates_initialization_error(llm_service, monk
 
 
 def test_select_language_model_returns_bedrock_client_for_bedrock_model(llm_service, monkeypatch):
-    """Test that Bedrock models return ChatBedrock client with correct configuration."""
+    """Test that Bedrock models return ChatBedrockConverse client with correct configuration."""
     captured = {}
 
     class FakeBedrock:
@@ -622,17 +622,17 @@ def test_select_language_model_returns_bedrock_client_for_bedrock_model(llm_serv
     llm_service.config.aws_secret_access_key = "test-secret-key"
     llm_service.config.aws_region = "us-west-2"
 
-    monkeypatch.setattr("src.services.llm_service.ChatBedrock", FakeBedrock)
+    monkeypatch.setattr("src.services.llm_service.ChatBedrockConverse", FakeBedrock)
 
     result = llm_service._select_language_model()
 
     assert isinstance(result, FakeBedrock)
-    assert captured["model_id"] == Model.BEDROCK_CLAUDE_SONNET_4_5.value
+    assert captured["model"] == Model.BEDROCK_CLAUDE_SONNET_4_5.value
     assert captured["region_name"] == "us-west-2"
-    assert captured["aws_access_key_id"] == "test-access-key"
-    assert captured["aws_secret_access_key"] == "test-secret-key"
-    assert "model_kwargs" in captured
-    assert captured["model_kwargs"]["temperature"] == 1
+    assert captured["aws_access_key_id"].get_secret_value() == "test-access-key"
+    assert captured["aws_secret_access_key"].get_secret_value() == "test-secret-key"
+    assert captured["temperature"] == 1
+    assert captured["max_tokens"] == 8192
 
 
 def test_select_language_model_bedrock_gpt_model(llm_service, monkeypatch):
@@ -648,12 +648,12 @@ def test_select_language_model_bedrock_gpt_model(llm_service, monkeypatch):
     llm_service.config.model = Model.BEDROCK_GPT_5_1
     llm_service.config.aws_region = "eu-west-1"
 
-    monkeypatch.setattr("src.services.llm_service.ChatBedrock", FakeBedrock)
+    monkeypatch.setattr("src.services.llm_service.ChatBedrockConverse", FakeBedrock)
 
     result = llm_service._select_language_model()
 
     assert isinstance(result, FakeBedrock)
-    assert captured["model_id"] == Model.BEDROCK_GPT_5_1.value
+    assert captured["model"] == Model.BEDROCK_GPT_5_1.value
     assert captured["region_name"] == "eu-west-1"
 
 
@@ -670,12 +670,12 @@ def test_select_language_model_bedrock_gemini_model(llm_service, monkeypatch):
     llm_service.config.model = Model.BEDROCK_GEMINI_3_PRO_PREVIEW
     llm_service.config.aws_region = "ap-southeast-1"
 
-    monkeypatch.setattr("src.services.llm_service.ChatBedrock", FakeBedrock)
+    monkeypatch.setattr("src.services.llm_service.ChatBedrockConverse", FakeBedrock)
 
     result = llm_service._select_language_model()
 
     assert isinstance(result, FakeBedrock)
-    assert captured["model_id"] == Model.BEDROCK_GEMINI_3_PRO_PREVIEW.value
+    assert captured["model"] == Model.BEDROCK_GEMINI_3_PRO_PREVIEW.value
     assert captured["region_name"] == "ap-southeast-1"
 
 
@@ -692,12 +692,12 @@ def test_select_language_model_bedrock_without_credentials(llm_service, monkeypa
     llm_service.config.aws_access_key_id = ""  # No credentials provided
     llm_service.config.aws_secret_access_key = ""
 
-    monkeypatch.setattr("src.services.llm_service.ChatBedrock", FakeBedrock)
+    monkeypatch.setattr("src.services.llm_service.ChatBedrockConverse", FakeBedrock)
 
     result = llm_service._select_language_model()
 
     assert isinstance(result, FakeBedrock)
-    assert captured["model_id"] == Model.BEDROCK_CLAUDE_SONNET_4_5.value
+    assert captured["model"] == Model.BEDROCK_CLAUDE_SONNET_4_5.value
     assert captured["region_name"] == "eu-west-1"
     # Verify credentials were NOT passed (will use AWS default credential chain)
     assert "aws_access_key_id" not in captured
@@ -717,7 +717,7 @@ def test_select_language_model_bedrock_default_region(llm_service, monkeypatch):
     llm_service.config.aws_access_key_id = ""
     llm_service.config.aws_secret_access_key = ""
 
-    monkeypatch.setattr("src.services.llm_service.ChatBedrock", FakeBedrock)
+    monkeypatch.setattr("src.services.llm_service.ChatBedrockConverse", FakeBedrock)
 
     result = llm_service._select_language_model()
 
