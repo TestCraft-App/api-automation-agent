@@ -109,13 +109,28 @@ AWS Bedrock provides access to multiple model families through a unified API. Us
 - OpenAI models: openai.gpt-5.1, openai.gpt-5, openai.gpt-4.1, openai.gpt-5-mini
 - Google models: google.gemini-3-pro-preview
 
-To use Bedrock, configure your AWS credentials in the `.env` file:
+**Authentication Options:**
+
+*Option 1: AWS CLI (Recommended)*
+```bash
+# One-time setup
+aws configure
+# Enter your AWS Access Key, Secret Key, Region, and Output format
+
+# Then in your .env file:
+MODEL=anthropic.claude-sonnet-4-5-20250929-v1:0
+AWS_REGION=us-east-1
+```
+
+*Option 2: Environment Variables*
 ```env
+MODEL=anthropic.claude-sonnet-4-5-20250929-v1:0
 AWS_ACCESS_KEY_ID=your_access_key_id
 AWS_SECRET_ACCESS_KEY=your_secret_access_key
 AWS_REGION=us-east-1
-MODEL=anthropic.claude-sonnet-4-5-20250929-v1:0
 ```
+
+The agent will automatically use your AWS CLI configuration if credentials are not explicitly provided in the `.env` file. This approach is more secure and supports IAM roles, AWS SSO, and other AWS authentication methods.
 
 You can configure your preferred model in the `.env` file:
 

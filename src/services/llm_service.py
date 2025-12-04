@@ -100,14 +100,17 @@ class LLMService:
                     max_retries=3,
                 )
             if self.config.model.is_bedrock():
-                return ChatBedrock(
-                    model_id=self.config.model.value,
-                    model_kwargs={"temperature": 1, "max_tokens": 8192},
-                    region_name=self.config.aws_region,
-                    credentials_profile_name=None,
-                    aws_access_key_id=self.config.aws_access_key_id,
-                    aws_secret_access_key=self.config.aws_secret_access_key,
-                )
+                bedrock_kwargs = {
+                    "model_id": self.config.model.value,
+                    "model_kwargs": {"temperature": 1, "max_tokens": 8192},
+                    "region_name": self.config.aws_region or "us-east-1",
+                }
+
+                if self.config.aws_access_key_id and self.config.aws_secret_access_key:
+                    bedrock_kwargs["aws_access_key_id"] = self.config.aws_access_key_id
+                    bedrock_kwargs["aws_secret_access_key"] = self.config.aws_secret_access_key
+
+                return ChatBedrock(**bedrock_kwargs)
             return ChatOpenAI(
                 model=self.config.model.value,
                 temperature=1,

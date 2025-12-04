@@ -134,10 +134,13 @@ class InteractiveSetup:
         credentials = {}
 
         if provider["name"] == "AWS Bedrock":
-            print(f"\n🔑 ENTER {provider['name'].upper()} CREDENTIALS")
-            print("Get your AWS credentials from:")
-            print("https://console.aws.amazon.com/iam/")
-            print("\n⚠️  Your credentials will be stored securely in the .env file")
+            print(f"\n🔑 {provider['name'].upper()} AUTHENTICATION")
+            print("\n📋 You can authenticate in two ways:")
+            print("  1. AWS CLI (recommended) - Run 'aws configure' first")
+            print("  2. Environment variables - Enter credentials below")
+            print("\n💡 If you've already configured AWS CLI, press Enter to skip credential input.")
+            print("   The agent will use your AWS CLI configuration automatically.")
+            print("\nGet AWS credentials from: https://console.aws.amazon.com/iam/")
 
             if input_func is None:
 
@@ -148,14 +151,17 @@ class InteractiveSetup:
 
             while True:
                 try:
-                    access_key = input_func("Enter AWS Access Key ID: ").strip()
+                    access_key = input_func("Enter AWS Access Key ID (or press Enter to skip): ").strip()
+
                     if not access_key:
-                        print("❌ Access Key ID cannot be empty.")
-                        continue
+                        region = input("Enter AWS Region (default: us-east-1): ").strip() or "us-east-1"
+                        credentials["AWS_REGION"] = region
+                        print("✅ Will use AWS CLI default credentials")
+                        return credentials
 
                     secret_key = input_func("Enter AWS Secret Access Key: ").strip()
                     if not secret_key:
-                        print("❌ Secret Access Key cannot be empty.")
+                        print("❌ Secret Access Key cannot be empty when Access Key is provided.")
                         continue
 
                     region = input("Enter AWS Region (default: us-east-1): ").strip() or "us-east-1"

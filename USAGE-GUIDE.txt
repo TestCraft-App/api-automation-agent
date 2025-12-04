@@ -56,7 +56,10 @@ WINDOWS:
    ANTHROPIC_API_KEY=your_key_here
    OR
    GOOGLE_API_KEY=your_key_here
-   OR (for AWS Bedrock):
+   OR (for AWS Bedrock - Option 1: AWS CLI - Recommended):
+   First run: aws configure
+   Then in .env: AWS_REGION=us-east-1
+   OR (for AWS Bedrock - Option 2: Environment Variables):
    AWS_ACCESS_KEY_ID=your_access_key_id
    AWS_SECRET_ACCESS_KEY=your_secret_key
    AWS_REGION=us-east-1
@@ -73,7 +76,10 @@ MACOS:
    ANTHROPIC_API_KEY=your_key_here
    OR
    GOOGLE_API_KEY=your_key_here
-   OR (for AWS Bedrock):
+   OR (for AWS Bedrock - Option 1: AWS CLI - Recommended):
+   First run: aws configure
+   Then in .env: AWS_REGION=us-east-1
+   OR (for AWS Bedrock - Option 2: Environment Variables):
    AWS_ACCESS_KEY_ID=your_access_key_id
    AWS_SECRET_ACCESS_KEY=your_secret_key
    AWS_REGION=us-east-1

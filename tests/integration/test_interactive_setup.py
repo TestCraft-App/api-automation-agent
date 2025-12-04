@@ -237,6 +237,28 @@ DEBUG=False
         assert "MODEL=anthropic.claude-sonnet-4-5-20250929-v1:0" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
+    def test_complete_setup_flow_bedrock_aws_cli(self, mock_get_dir):
+        """Test complete setup flow for AWS Bedrock with AWS CLI authentication."""
+        mock_get_dir.return_value = self.test_dir
+
+        # Mock skipping credentials (pressing Enter) to use AWS CLI
+        def mock_credentials_input(prompt):
+            return ""  # Skip credential input
+
+        with patch("builtins.input", side_effect=["4", "", "eu-central-1"]):
+            with patch("builtins.print"):
+                result = InteractiveSetup.run_interactive_setup(input_func=mock_credentials_input)
+
+        assert result is True
+        assert self.env_file.exists()
+
+        content = self.env_file.read_text()
+        # Should only have region, no access keys
+        assert "AWS_REGION=eu-central-1" in content
+        assert "AWS_ACCESS_KEY_ID" not in content or "AWS_ACCESS_KEY_ID=" in content
+        assert "MODEL=anthropic.claude-sonnet-4-5-20250929-v1:0" in content
+
+    @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_invalid_provider_then_valid(self, mock_get_dir):
         """Test setup flow with invalid provider input then valid input."""
         mock_get_dir.return_value = self.test_dir
