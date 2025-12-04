@@ -4,7 +4,9 @@ from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict
 
 
-EvaluationType = Literal["generate_first_test", "generate_models", "generate_additional_tests"]
+EvaluationType = Literal[
+    "generate_first_test", "generate_models", "generate_additional_tests", "get_additional_models"
+]
 
 
 class EvaluationTestCase(BaseModel):
@@ -18,11 +20,13 @@ class EvaluationTestCase(BaseModel):
     )
     test_id: str = Field(description="Unique identifier for the test case (e.g., 'test_001')")
     name: str = Field(description="Name of the test case")
-    api_definition_file: str = Field(
+    api_definition_file: Optional[str] = Field(
+        default=None,
         description=(
             "Name of the API definition file (YAML) in the definitions folder. "
-            "Should be prefixed with test_id (e.g., 'test_001_user_post_api.yaml')"
-        )
+            "Should be prefixed with test_id (e.g., 'test_001_user_post_api.yaml'). "
+            "Optional for evaluations that don't use API definitions (e.g., get_additional_models)."
+        ),
     )
     model_files: List[str] = Field(
         default_factory=list,
@@ -37,6 +41,20 @@ class EvaluationTestCase(BaseModel):
         description=(
             "Path to the first test file relative to the tests folder. Used for generate_additional_tests "
             "to provide the initial test (e.g., 'test_001_user_test.ts')."
+        ),
+    )
+    available_model_files: List[str] = Field(
+        default_factory=list,
+        description=(
+            "List of available model file paths for get_additional_models evaluation. "
+            "These represent models that could potentially be read by the LLM."
+        ),
+    )
+    expected_files: List[str] = Field(
+        default_factory=list,
+        description=(
+            "List of expected file paths that should be returned by get_additional_models. "
+            "Used for assertion-based grading (no LLM grading needed)."
         ),
     )
     evaluation_criteria: List[str] = Field(

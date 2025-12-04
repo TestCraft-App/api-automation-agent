@@ -9,6 +9,7 @@ from typing import List, Optional, Sequence
 
 from src.ai_tools.models.file_spec import FileSpec
 from src.configuration.config import Config
+from src.models.api_model import APIModel
 from src.models.generated_model import GeneratedModel
 from src.services.file_service import FileService
 from src.services.llm_service import LLMService
@@ -503,6 +504,159 @@ class EvaluationRunner:
         finally:
             self.config.destination_folder = original_destination
 
+    def _load_available_models(self, available_model_files: Sequence[str]) -> List[APIModel]:
+        """
+        Load available model files from the models folder and convert them to APIModel objects.
+
+        Args:
+            available_model_files: Iterable of model file paths relative to the models folder
+
+        Returns:
+            List of APIModel objects representing available models
+        """
+        models_folder = os.path.join(self.test_data_folder, "models")
+        available_models: List[APIModel] = []
+
+        for model_file in available_model_files:
+            file_path = os.path.join(models_folder, model_file)
+            if not os.path.exists(file_path):
+                self.logger.warning(f"Available model file not found: {file_path}, skipping")
+                continue
+
+            clean_path = self._normalize_dataset_path(model_file)
+            final_path = f"src/models/{clean_path}"
+
+            api_model = APIModel(path=final_path, files=[final_path], models=[])
+            available_models.append(api_model)
+            self.logger.debug(f"Loaded available model: {model_file} -> {final_path}")
+
+        return available_models
+
+    def evaluate_get_additional_models(self, test_case: EvaluationTestCase) -> EvaluationResult:
+        """
+        Evaluate the get_additional_models method for a single test case.
+        Uses assertion-based grading instead of LLM grading.
+
+        Args:
+            test_case: The test case to evaluate
+
+        Returns:
+            EvaluationResult with the evaluation outcome
+        """
+        self.logger.info(
+            "Evaluating get_additional_models for test case: %s - %s",
+            test_case.test_id,
+            test_case.name,
+        )
+
+        relevant_models = self._load_models(test_case.model_files)
+        if not relevant_models and test_case.model_files:
+            return EvaluationResult(
+                test_id=test_case.test_id,
+                test_case_name=test_case.name,
+                api_definition_file=test_case.api_definition_file,
+                status="ERROR",
+                error_message=f"Failed to load model files: {', '.join(test_case.model_files)}",
+                evaluation_criteria=test_case.evaluation_criteria,
+            )
+
+        available_models = self._load_available_models(test_case.available_model_files)
+        if not available_models and test_case.available_model_files:
+            return EvaluationResult(
+                test_id=test_case.test_id,
+                test_case_name=test_case.name,
+                api_definition_file=test_case.api_definition_file,
+                status="ERROR",
+                error_message=(
+                    f"Failed to load available model files: " f"{', '.join(test_case.available_model_files)}"
+                ),
+                evaluation_criteria=test_case.evaluation_criteria,
+            )
+
+        try:
+            result_files = self.llm_service.get_additional_models(relevant_models, available_models)
+
+            actual_paths = sorted([f.path for f in result_files])
+
+            expected_paths = sorted(
+                [
+                    f"src/models/{self._normalize_dataset_path(p)}" if not p.startswith("src/") else p
+                    for p in test_case.expected_files
+                ]
+            )
+
+            evaluation_results: List[EvaluationCriterionResult] = []
+
+            missing_files = set(expected_paths) - set(actual_paths)
+            extra_files = set(actual_paths) - set(expected_paths)
+
+            # Criterion 1: All expected files are returned
+            expected_met = len(missing_files) == 0
+            evaluation_results.append(
+                EvaluationCriterionResult(
+                    criteria="All expected files are returned",
+                    met=expected_met,
+                    details=(
+                        "All expected files were correctly identified"
+                        if expected_met
+                        else f"Missing files: {list(missing_files)}"
+                    ),
+                )
+            )
+
+            # Criterion 2: No unnecessary files are returned
+            no_extra_met = len(extra_files) == 0
+            evaluation_results.append(
+                EvaluationCriterionResult(
+                    criteria="No unnecessary files are returned",
+                    met=no_extra_met,
+                    details=(
+                        "No unnecessary files were read"
+                        if no_extra_met
+                        else f"Extra files returned: {list(extra_files)}"
+                    ),
+                )
+            )
+
+            criteria_met = sum(1 for r in evaluation_results if r.met)
+            score = criteria_met / len(evaluation_results) if evaluation_results else 0.0
+
+            grade_result = ModelGradeResult(
+                score=score,
+                evaluation=evaluation_results,
+                reasoning=(
+                    f"Expected {len(expected_paths)} file(s), got {len(actual_paths)}. "
+                    f"Missing: {len(missing_files)}, Extra: {len(extra_files)}."
+                ),
+            )
+
+            return EvaluationResult(
+                test_id=test_case.test_id,
+                test_case_name=test_case.name,
+                api_definition_file=test_case.api_definition_file,
+                status="GRADED",
+                generated_files=actual_paths,
+                grade_result=grade_result,
+                evaluation_criteria=test_case.evaluation_criteria,
+            )
+
+        except Exception as e:
+            self.logger.error(
+                "Error during get_additional_models evaluation of test case %s - %s: %s",
+                test_case.test_id,
+                test_case.name,
+                e,
+                exc_info=True,
+            )
+            return EvaluationResult(
+                test_id=test_case.test_id,
+                test_case_name=test_case.name,
+                api_definition_file=test_case.api_definition_file,
+                status="ERROR",
+                error_message=str(e),
+                evaluation_criteria=test_case.evaluation_criteria,
+            )
+
     def _evaluate_single_test_case(
         self, test_case: EvaluationTestCase, base_output_dir: str
     ) -> EvaluationResult:
@@ -524,6 +678,8 @@ class EvaluationRunner:
             result = self.evaluate_generate_first_test(test_case, test_output_dir)
         elif test_case.case_type == "generate_additional_tests":
             result = self.evaluate_generate_additional_tests(test_case, test_output_dir)
+        elif test_case.case_type == "get_additional_models":
+            result = self.evaluate_get_additional_models(test_case)
         else:
             self.logger.error(
                 "Unknown evaluation type '%s' for test %s",
