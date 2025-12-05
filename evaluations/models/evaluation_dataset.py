@@ -98,7 +98,7 @@ class EvaluationResult(BaseModel):
 
     test_id: str = Field(description="Unique identifier for the test case")
     test_case_name: str = Field(description="Name of the test case")
-    api_definition_file: str = Field(description="API definition file used")
+    api_definition_file: Optional[str] = Field(default=None, description="API definition file used")
     status: str = Field(description="Status: GRADED, NOT_EVALUATED, ERROR")
     error_message: Optional[str] = Field(default=None, description="Error message if status is ERROR")
     generated_files: List[str] = Field(default_factory=list, description="Paths of generated test files")

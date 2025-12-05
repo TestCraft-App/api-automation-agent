@@ -115,6 +115,8 @@ class EvaluationRunner:
             List of GeneratedModel objects with paths like "src/models/requests/UserModel.ts"
         """
         models_folder = os.path.join(self.test_data_folder, "models")
+        if not os.path.exists(models_folder):
+            models_folder = os.path.join(self.test_data_folder, "src", "models")
         generated_models = []
         for model_file in model_files:
             file_path = os.path.join(models_folder, model_file)
@@ -515,6 +517,8 @@ class EvaluationRunner:
             List of APIModel objects representing available models
         """
         models_folder = os.path.join(self.test_data_folder, "models")
+        if not os.path.exists(models_folder):
+            models_folder = os.path.join(self.test_data_folder, "src", "models")
         available_models: List[APIModel] = []
 
         for model_file in available_model_files:
@@ -572,6 +576,9 @@ class EvaluationRunner:
                 ),
                 evaluation_criteria=test_case.evaluation_criteria,
             )
+
+        original_destination = self.config.destination_folder
+        self.config.destination_folder = self.test_data_folder
 
         try:
             result_files = self.llm_service.get_additional_models(relevant_models, available_models)
@@ -656,6 +663,8 @@ class EvaluationRunner:
                 error_message=str(e),
                 evaluation_criteria=test_case.evaluation_criteria,
             )
+        finally:
+            self.config.destination_folder = original_destination
 
     def _evaluate_single_test_case(
         self, test_case: EvaluationTestCase, base_output_dir: str
@@ -774,7 +783,6 @@ class EvaluationRunner:
                         f"Unexpected error processing test case {test_case.test_id}: {e}",
                         exc_info=True,
                     )
-                    # Create an error result for the failed test case
                     error_result = EvaluationResult(
                         test_id=test_case.test_id,
                         test_case_name=test_case.name,
