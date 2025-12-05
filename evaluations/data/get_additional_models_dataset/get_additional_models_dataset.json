@@ -9,22 +9,27 @@
         "services/test_001_OrderService.ts",
         "requests/test_001_OrderModel.ts"
       ],
-      "available_model_files": [
-        "services/UserService.ts",
-        "requests/UserModel.ts",
-        "services/ProductService.ts",
-        "requests/ProductModel.ts"
+      "available_models": [
+        {
+          "path": "/users",
+          "files": [
+            "src/models/services/UserService.ts - UserService service: createUser, getUserById",
+            "src/models/requests/UserModel.ts - UserModel model. Properties: id, name, email"
+          ]
+        },
+        {
+          "path": "/products",
+          "files": [
+            "src/models/services/ProductService.ts - ProductService service: createProduct, getProductById",
+            "src/models/requests/ProductModel.ts - ProductModel model. Properties: id, name, price, description"
+          ]
+        }
       ],
       "expected_files": [
-        "services/UserService.ts",
-        "requests/UserModel.ts",
-        "services/ProductService.ts",
-        "requests/ProductModel.ts"
-      ],
-      "evaluation_criteria": [
-        "Identify that OrderService depends on UserService (via userId parameter)",
-        "Identify that OrderService depends on ProductService (via productId parameter)",
-        "Return all related service and model files"
+        "src/models/services/UserService.ts",
+        "src/models/requests/UserModel.ts",
+        "src/models/services/ProductService.ts",
+        "src/models/requests/ProductModel.ts"
       ]
     },
     {
@@ -35,17 +40,23 @@
         "services/test_002_CategoryService.ts",
         "requests/test_002_CategoryModel.ts"
       ],
-      "available_model_files": [
-        "services/UserService.ts",
-        "requests/UserModel.ts",
-        "services/ProductService.ts",
-        "requests/ProductModel.ts"
+      "available_models": [
+        {
+          "path": "/users",
+          "files": [
+            "src/models/services/UserService.ts - UserService service: createUser, getUserById",
+            "src/models/requests/UserModel.ts - UserModel model. Properties: id, name, email"
+          ]
+        },
+        {
+          "path": "/products",
+          "files": [
+            "src/models/services/ProductService.ts - ProductService service: createProduct, getProductById",
+            "src/models/requests/ProductModel.ts - ProductModel model. Properties: id, name, price, description"
+          ]
+        }
       ],
-      "expected_files": [],
-      "evaluation_criteria": [
-        "Recognize that CategoryService has no external dependencies",
-        "Return an empty list since no additional models are needed"
-      ]
+      "expected_files": []
     },
     {
       "case_type": "get_additional_models",
@@ -55,25 +66,34 @@
         "services/test_003_InvoiceService.ts",
         "requests/test_003_InvoiceModel.ts"
       ],
-      "available_model_files": [
-        "services/UserService.ts",
-        "requests/UserModel.ts",
-        "services/OrderService.ts",
-        "requests/OrderModel.ts",
-        "services/ProductService.ts",
-        "requests/ProductModel.ts"
+      "available_models": [
+        {
+          "path": "/users",
+          "files": [
+            "src/models/services/UserService.ts - UserService service: createUser, getUserById",
+            "src/models/requests/UserModel.ts - UserModel model. Properties: id, name, email"
+          ]
+        },
+        {
+          "path": "/orders",
+          "files": [
+            "src/models/services/OrderService.ts - OrderService service: createOrder, getOrderById",
+            "src/models/requests/OrderModel.ts - OrderModel model. Properties: id, userId, productId, quantity, totalPrice"
+          ]
+        },
+        {
+          "path": "/products",
+          "files": [
+            "src/models/services/ProductService.ts - ProductService service: createProduct, getProductById",
+            "src/models/requests/ProductModel.ts - ProductModel model. Properties: id, name, price, description"
+          ]
+        }
       ],
       "expected_files": [
-        "services/UserService.ts",
-        "requests/UserModel.ts",
-        "services/OrderService.ts",
-        "requests/OrderModel.ts"
-      ],
-      "evaluation_criteria": [
-        "Identify that InvoiceService depends on UserService (via userId parameter)",
-        "Identify that InvoiceService depends on OrderService (via orderId parameter)",
-        "Do NOT include ProductService since InvoiceService does not directly reference productId",
-        "Return only the directly referenced service and model files"
+        "src/models/services/UserService.ts",
+        "src/models/requests/UserModel.ts",
+        "src/models/services/OrderService.ts",
+        "src/models/requests/OrderModel.ts"
       ]
     }
   ]

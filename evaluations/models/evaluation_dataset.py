@@ -1,6 +1,6 @@
 """Models for evaluation datasets."""
 
-from typing import List, Optional, Literal
+from typing import Any, Dict, List, Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -50,6 +50,14 @@ class EvaluationTestCase(BaseModel):
             "These represent models that could potentially be read by the LLM."
         ),
     )
+    available_models: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description=(
+            "List of available API models for get_additional_models evaluation. "
+            "Each entry has 'path' (API path like '/users') and 'files' (list of "
+            "'file_path - summary' strings). Mimics real ModelInfo structure."
+        ),
+    )
     expected_files: List[str] = Field(
         default_factory=list,
         description=(
@@ -58,7 +66,11 @@ class EvaluationTestCase(BaseModel):
         ),
     )
     evaluation_criteria: List[str] = Field(
-        description="List of criteria used to evaluate if the generated test meets requirements"
+        default_factory=list,
+        description=(
+            "List of criteria used to evaluate if the generated test meets requirements. "
+            "Not required for assertion-based evaluations like get_additional_models."
+        ),
     )
 
 

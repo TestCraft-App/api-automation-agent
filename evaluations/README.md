@@ -206,8 +206,10 @@ This evaluation:
 #### Dataset Structure
 
 The `get_additional_models` evaluation requires additional fields in the test case:
-- `model_files`: The main service and model files to analyze
-- `available_model_files`: All available models that could potentially be dependencies
+- `model_files`: The main service and model files to analyze (stored in `src/models/`)
+- `available_models`: List of API models mimicking real `ModelInfo` structure:
+  - `path`: API path (e.g., `/users`, `/products`)
+  - `files`: List of `"file_path - summary"` strings (matches real scenario)
 - `expected_files`: The files that should be returned (for assertion-based grading)
 - `api_definition_file`: Not required (can be omitted)
 

@@ -5,7 +5,7 @@ import re
 import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from typing import List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 from src.ai_tools.models.file_spec import FileSpec
 from src.configuration.config import Config
@@ -23,6 +23,7 @@ from evaluations.models.evaluation_dataset import (
     ModelGradeResult,
 )
 from evaluations.services.model_grader import ModelGrader
+from evaluations.services.mock_file_reading_tool import MockFileReadingTool
 
 
 class EvaluationRunner:
@@ -506,33 +507,31 @@ class EvaluationRunner:
         finally:
             self.config.destination_folder = original_destination
 
-    def _load_available_models(self, available_model_files: Sequence[str]) -> List[APIModel]:
+    def _load_available_models_from_test_case(
+        self, available_models_data: Sequence[Dict[str, Any]]
+    ) -> List[APIModel]:
         """
-        Load available model files from the models folder and convert them to APIModel objects.
+        Load available models from test case data and convert them to APIModel objects.
+
+        This mimics the real scenario where APIModel has:
+        - path: API path (e.g., '/users')
+        - files: list of 'file_path - summary' strings
 
         Args:
-            available_model_files: Iterable of model file paths relative to the models folder
+            available_models_data: List of dicts with 'path' and 'files' keys
 
         Returns:
             List of APIModel objects representing available models
         """
-        models_folder = os.path.join(self.test_data_folder, "models")
-        if not os.path.exists(models_folder):
-            models_folder = os.path.join(self.test_data_folder, "src", "models")
         available_models: List[APIModel] = []
 
-        for model_file in available_model_files:
-            file_path = os.path.join(models_folder, model_file)
-            if not os.path.exists(file_path):
-                self.logger.warning(f"Available model file not found: {file_path}, skipping")
-                continue
+        for model_data in available_models_data:
+            api_path = model_data.get("path", "")
+            files = model_data.get("files", [])
 
-            clean_path = self._normalize_dataset_path(model_file)
-            final_path = f"src/models/{clean_path}"
-
-            api_model = APIModel(path=final_path, files=[final_path], models=[])
+            api_model = APIModel(path=api_path, files=files)
             available_models.append(api_model)
-            self.logger.debug(f"Loaded available model: {model_file} -> {final_path}")
+            self.logger.debug(f"Loaded available model for path {api_path}: {len(files)} file(s)")
 
         return available_models
 
@@ -564,24 +563,22 @@ class EvaluationRunner:
                 evaluation_criteria=test_case.evaluation_criteria,
             )
 
-        available_models = self._load_available_models(test_case.available_model_files)
-        if not available_models and test_case.available_model_files:
+        available_models = self._load_available_models_from_test_case(test_case.available_models)
+        if not available_models and test_case.available_models:
             return EvaluationResult(
                 test_id=test_case.test_id,
                 test_case_name=test_case.name,
                 api_definition_file=test_case.api_definition_file,
                 status="ERROR",
-                error_message=(
-                    f"Failed to load available model files: " f"{', '.join(test_case.available_model_files)}"
-                ),
+                error_message="Failed to load available models from test case",
                 evaluation_criteria=test_case.evaluation_criteria,
             )
 
-        original_destination = self.config.destination_folder
-        self.config.destination_folder = self.test_data_folder
-
         try:
-            result_files = self.llm_service.get_additional_models(relevant_models, available_models)
+            mock_tool = MockFileReadingTool()
+            result_files = self.llm_service.get_additional_models(
+                relevant_models, available_models, file_reading_tool=mock_tool
+            )
 
             actual_paths = sorted([f.path for f in result_files])
 
@@ -663,8 +660,6 @@ class EvaluationRunner:
                 error_message=str(e),
                 evaluation_criteria=test_case.evaluation_criteria,
             )
-        finally:
-            self.config.destination_folder = original_destination
 
     def _evaluate_single_test_case(
         self, test_case: EvaluationTestCase, base_output_dir: str

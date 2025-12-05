@@ -149,16 +149,18 @@ The `get_additional_models` evaluation tests the LLM's ability to identify model
         "services/test_001_OrderService.ts",
         "requests/test_001_OrderModel.ts"
       ],
-      "available_model_files": [
-        "services/UserService.ts",
-        "requests/UserModel.ts"
+      "available_models": [
+        {
+          "path": "/users",
+          "files": [
+            "src/models/services/UserService.ts - UserService service: createUser, getUserById",
+            "src/models/requests/UserModel.ts - UserModel model. Properties: id, name, email"
+          ]
+        }
       ],
       "expected_files": [
-        "services/UserService.ts",
-        "requests/UserModel.ts"
-      ],
-      "evaluation_criteria": [
-        "Identify that OrderService depends on UserService"
+        "src/models/services/UserService.ts",
+        "src/models/requests/UserModel.ts"
       ]
     }
   ]
@@ -167,10 +169,13 @@ The `get_additional_models` evaluation tests the LLM's ability to identify model
 
 ### Key Differences
 
-- **`api_definition_file`**: Not required for `get_additional_models` (omit from test cases)
-- **`model_files`**: The main service/models to analyze for dependencies
-- **`available_model_files`**: All models that could potentially be dependencies
-- **`expected_files`**: The exact files that should be returned (for assertion comparison)
+- **`api_definition_file`**: Not required (omit from test cases)
+- **`evaluation_criteria`**: Not required (assertion-based grading doesn't use it)
+- **`model_files`**: The main service/models to analyze for dependencies (stored in `src/models/`)
+- **`available_models`**: List of API models mimicking real `ModelInfo` structure:
+  - `path`: API path (e.g., `/users`, `/products`)
+  - `files`: List of `"file_path - summary"` strings (matches real scenario)
+- **`expected_files`**: The exact file paths that should be returned (for assertion comparison)
 - **Grading**: Uses assertion-based comparison instead of LLM grading
 
 See `evaluations/data/get_additional_models_dataset/` for a complete example.
