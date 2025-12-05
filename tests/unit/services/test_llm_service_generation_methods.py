@@ -321,8 +321,8 @@ def _build_api_models():
     from src.models.api_model import APIModel
 
     return [
-        APIModel(path="./services/UserService.ts", files=["UserService.ts"], models=[]),
-        APIModel(path="./models/UserModel.ts", files=["UserModel.ts"], models=[]),
+        APIModel(path="./services/UserService.ts", files=["UserService.ts"]),
+        APIModel(path="./models/UserModel.ts", files=["UserModel.ts"]),
     ]
 
 

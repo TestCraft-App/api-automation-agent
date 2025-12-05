@@ -1,0 +1,100 @@
+{
+  "dataset_name": "get_additional_models_dataset",
+  "test_cases": [
+    {
+      "case_type": "get_additional_models",
+      "test_id": "test_001",
+      "name": "order_service_depends_on_user_and_product",
+      "model_files": [
+        "services/test_001_OrderService.ts",
+        "requests/test_001_OrderModel.ts"
+      ],
+      "available_models": [
+        {
+          "path": "/users",
+          "files": [
+            "src/models/services/UserService.ts - UserService service: createUser, getUserById",
+            "src/models/requests/UserModel.ts - UserModel model. Properties: id, name, email"
+          ]
+        },
+        {
+          "path": "/products",
+          "files": [
+            "src/models/services/ProductService.ts - ProductService service: createProduct, getProductById",
+            "src/models/requests/ProductModel.ts - ProductModel model. Properties: id, name, price, description"
+          ]
+        }
+      ],
+      "expected_files": [
+        "src/models/services/UserService.ts",
+        "src/models/requests/UserModel.ts",
+        "src/models/services/ProductService.ts",
+        "src/models/requests/ProductModel.ts"
+      ]
+    },
+    {
+      "case_type": "get_additional_models",
+      "test_id": "test_002",
+      "name": "category_service_no_dependencies",
+      "model_files": [
+        "services/test_002_CategoryService.ts",
+        "requests/test_002_CategoryModel.ts"
+      ],
+      "available_models": [
+        {
+          "path": "/users",
+          "files": [
+            "src/models/services/UserService.ts - UserService service: createUser, getUserById",
+            "src/models/requests/UserModel.ts - UserModel model. Properties: id, name, email"
+          ]
+        },
+        {
+          "path": "/products",
+          "files": [
+            "src/models/services/ProductService.ts - ProductService service: createProduct, getProductById",
+            "src/models/requests/ProductModel.ts - ProductModel model. Properties: id, name, price, description"
+          ]
+        }
+      ],
+      "expected_files": []
+    },
+    {
+      "case_type": "get_additional_models",
+      "test_id": "test_003",
+      "name": "invoice_service_depends_on_order_and_user",
+      "model_files": [
+        "services/test_003_InvoiceService.ts",
+        "requests/test_003_InvoiceModel.ts"
+      ],
+      "available_models": [
+        {
+          "path": "/users",
+          "files": [
+            "src/models/services/UserService.ts - UserService service: createUser, getUserById",
+            "src/models/requests/UserModel.ts - UserModel model. Properties: id, name, email"
+          ]
+        },
+        {
+          "path": "/orders",
+          "files": [
+            "src/models/services/OrderService.ts - OrderService service: createOrder, getOrderById",
+            "src/models/requests/OrderModel.ts - OrderModel model. Properties: id, userId, productId, quantity, totalPrice"
+          ]
+        },
+        {
+          "path": "/products",
+          "files": [
+            "src/models/services/ProductService.ts - ProductService service: createProduct, getProductById",
+            "src/models/requests/ProductModel.ts - ProductModel model. Properties: id, name, price, description"
+          ]
+        }
+      ],
+      "expected_files": [
+        "src/models/services/UserService.ts",
+        "src/models/requests/UserModel.ts",
+        "src/models/services/OrderService.ts",
+        "src/models/requests/OrderModel.ts"
+      ]
+    }
+  ]
+}

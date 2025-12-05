@@ -1,10 +1,12 @@
 """Models for evaluation datasets."""
 
-from typing import List, Optional, Literal
+from typing import Any, Dict, List, Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict
 
 
-EvaluationType = Literal["generate_first_test", "generate_models", "generate_additional_tests"]
+EvaluationType = Literal[
+    "generate_first_test", "generate_models", "generate_additional_tests", "get_additional_models"
+]
 
 
 class EvaluationTestCase(BaseModel):
@@ -18,11 +20,13 @@ class EvaluationTestCase(BaseModel):
     )
     test_id: str = Field(description="Unique identifier for the test case (e.g., 'test_001')")
     name: str = Field(description="Name of the test case")
-    api_definition_file: str = Field(
+    api_definition_file: Optional[str] = Field(
+        default=None,
         description=(
             "Name of the API definition file (YAML) in the definitions folder. "
-            "Should be prefixed with test_id (e.g., 'test_001_user_post_api.yaml')"
-        )
+            "Should be prefixed with test_id (e.g., 'test_001_user_post_api.yaml'). "
+            "Optional for evaluations that don't use API definitions (e.g., get_additional_models)."
+        ),
     )
     model_files: List[str] = Field(
         default_factory=list,
@@ -39,8 +43,34 @@ class EvaluationTestCase(BaseModel):
             "to provide the initial test (e.g., 'test_001_user_test.ts')."
         ),
     )
+    available_model_files: List[str] = Field(
+        default_factory=list,
+        description=(
+            "List of available model file paths for get_additional_models evaluation. "
+            "These represent models that could potentially be read by the LLM."
+        ),
+    )
+    available_models: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description=(
+            "List of available API models for get_additional_models evaluation. "
+            "Each entry has 'path' (API path like '/users') and 'files' (list of "
+            "'file_path - summary' strings). Mimics real ModelInfo structure."
+        ),
+    )
+    expected_files: List[str] = Field(
+        default_factory=list,
+        description=(
+            "List of expected file paths that should be returned by get_additional_models. "
+            "Used for assertion-based grading (no LLM grading needed)."
+        ),
+    )
     evaluation_criteria: List[str] = Field(
-        description="List of criteria used to evaluate if the generated test meets requirements"
+        default_factory=list,
+        description=(
+            "List of criteria used to evaluate if the generated test meets requirements. "
+            "Not required for assertion-based evaluations like get_additional_models."
+        ),
     )
 
 
@@ -80,7 +110,7 @@ class EvaluationResult(BaseModel):
 
     test_id: str = Field(description="Unique identifier for the test case")
     test_case_name: str = Field(description="Name of the test case")
-    api_definition_file: str = Field(description="API definition file used")
+    api_definition_file: Optional[str] = Field(default=None, description="API definition file used")
     status: str = Field(description="Status: GRADED, NOT_EVALUATED, ERROR")
     error_message: Optional[str] = Field(default=None, description="Error message if status is ERROR")
     generated_files: List[str] = Field(default_factory=list, description="Paths of generated test files")

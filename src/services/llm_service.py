@@ -267,13 +267,21 @@ class LLMService:
         self,
         relevant_models: List[GeneratedModel],
         available_models: List[APIModel],
+        file_reading_tool: Optional[BaseTool] = None,
     ) -> List[FileSpec]:
-        """Trigger read file tool to decide what additional model info is needed"""
+        """Trigger read file tool to decide what additional model info is needed
+
+        Args:
+            relevant_models: Models directly related to the current API verb
+            available_models: All other available models that could be dependencies
+            file_reading_tool: Optional custom tool for reading files (useful for testing/evaluation)
+        """
         self.logger.info("\nGetting additional models...")
+        tool = file_reading_tool or FileReadingTool(self.config, self.file_service)
         try:
             result = self.create_ai_chain(
                 PromptConfig.ADD_INFO,
-                tools=[FileReadingTool(self.config, self.file_service)],
+                tools=[tool],
                 must_use_tool=True,
             ).invoke(
                 {

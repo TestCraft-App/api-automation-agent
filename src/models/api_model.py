@@ -8,11 +8,10 @@ class APIModel:
 
     path: str
     files: List[str] = field(default_factory=list)
-    models: List[Dict[str, Any]] = field(default_factory=list)
 
     def to_json(self) -> Dict[str, Any]:
         """Convert the model to a JSON-serializable dictionary"""
-        return {"path": self.path, "files": self.files, "models": self.models}
+        return {"path": self.path, "files": self.files}
 
 
 def api_models_to_json(list_of_models: List[APIModel]) -> List[Dict[str, Any]]:

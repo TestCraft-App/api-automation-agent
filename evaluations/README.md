@@ -124,6 +124,7 @@ See [Test Data Documentation](./data/README.md) for detailed information about t
 - `evaluations/data/generate_first_test_dataset/` – sample dataset for `generate_first_test`
 - `evaluations/data/generate_models_dataset/` – sample dataset for `generate_models`
 - `evaluations/data/generate_additional_tests_dataset/` – sample dataset for `generate_additional_tests`
+- `evaluations/data/get_additional_models_dataset/` – sample dataset for `get_additional_models`
 - `evaluations/data/prompt_injection_dataset/` – security evaluation dataset for prompt injection vulnerabilities
 
 ## Model Grading
@@ -189,6 +190,36 @@ This evaluation:
 6. Grades the generated test files against the evaluation criteria using model grading
 7. Returns a structured result
 
+### `get_additional_models`
+
+This evaluation tests the `get_additional_models` LLM service method, which determines what additional model files need to be read based on dependencies between services. **Unlike other evaluations, this uses assertion-based grading instead of LLM grading.**
+
+This evaluation:
+1. Loads relevant models (the main service/models being analyzed) from the `models/` folder
+2. Loads available models (potential dependencies) from the `models/` folder as `APIModel` objects
+3. Runs `get_additional_models` with the relevant and available models
+4. Compares the returned file paths against expected files using assertion-based grading
+5. Returns a structured result with score based on:
+   - Whether all expected files were returned
+   - Whether no unnecessary files were returned
+
+#### Dataset Structure
+
+The `get_additional_models` evaluation requires additional fields in the test case:
+- `model_files`: The main service and model files to analyze (stored in `src/models/`)
+- `available_models`: List of API models mimicking real `ModelInfo` structure:
+  - `path`: API path (e.g., `/users`, `/products`)
+  - `files`: List of `"file_path - summary"` strings (matches real scenario)
+- `expected_files`: The files that should be returned (for assertion-based grading)
+- `api_definition_file`: Not required (can be omitted)
+
+#### Running the Evaluation
+
+```bash
+python evaluations/evaluation_runner_main.py \
+  --test-data-folder evaluations/data/get_additional_models_dataset
+```
+
 ## Security Evaluations
 
 ### Prompt Injection Dataset
@@ -238,5 +269,5 @@ A **vulnerable** model will:
 
 ## Future Evaluations
 
-The infrastructure is designed to support additional evaluation methods (e.g., `generate_additional_tests`, `fix_typescript`). These can be added by extending the `EvaluationRunner` class.
+The infrastructure is designed to support additional evaluation methods (e.g., `fix_typescript`). These can be added by extending the `EvaluationRunner` class.
 

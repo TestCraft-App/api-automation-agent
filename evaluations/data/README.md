@@ -57,12 +57,14 @@ A dataset file should be a JSON file with the following structure:
 
 - `dataset_name`: Name of the evaluation dataset (should match the folder name)
 - `test_cases`: Array of test cases
-  - `case_type`: Type of evaluation to run. Supported values: `"generate_first_test"` (default), `"generate_models"`, `"generate_additional_tests"`.
+  - `case_type`: Type of evaluation to run. Supported values: `"generate_first_test"` (default), `"generate_models"`, `"generate_additional_tests"`, `"get_additional_models"`.
   - `test_id`: **Required** unique identifier for the test case (e.g., "test_001"). This is used to organize generated artifacts and file prefixes.
   - `name`: Unique name for the test case
-  - `api_definition_file`: Name of the API definition file (YAML/JSON) in the `definitions/` folder. **Must be prefixed with test_id** (e.g., "test_001_user_post_api.yaml").
+  - `api_definition_file`: Name of the API definition file (YAML/JSON) in the `definitions/` folder. **Must be prefixed with test_id** (e.g., "test_001_user_post_api.yaml"). Optional for evaluations that don't use API definitions (e.g., `get_additional_models`).
   - `model_files`: List of model file paths relative to the `models/` folder. Filenames may optionally start with a `test_###_` prefix (e.g., "requests/test_001_UserModel.ts"); if present, the prefix is removed automatically and "src/models/" is prepended when creating GeneratedModel objects for evaluation. Leave empty if no seed model files are required (e.g., for `generate_models` evaluations).
   - `first_test_file`: Single test file path relative to the `tests/` folder. Used only for `"generate_additional_tests"` to provide the initial seed test. Filenames may optionally start with a `test_###_` prefix; if present, the prefix is removed and `"src/tests/"` is prepended.
+  - `available_model_files`: List of available model file paths for `"get_additional_models"` evaluation. These represent models that could potentially be read by the LLM.
+  - `expected_files`: List of expected file paths that should be returned by `"get_additional_models"`. Used for assertion-based grading (no LLM grading needed).
   - `evaluation_criteria`: Ordered list of specific criteria the generated test should satisfy
 
 ## API Definition Files
@@ -128,6 +130,55 @@ When running the `generate_additional_tests` evaluation, you must provide the in
 - Provide exactly one existing test file via the `first_test_file` field for each `"generate_additional_tests"` case.
 - The content should represent the "first test" that `generate_additional_tests` builds upon.
 
+
+## get_additional_models Dataset
+
+The `get_additional_models` evaluation tests the LLM's ability to identify model dependencies. This evaluation uses **assertion-based grading** instead of LLM grading.
+
+### Dataset Structure
+
+```json
+{
+  "dataset_name": "get_additional_models_dataset",
+  "test_cases": [
+    {
+      "case_type": "get_additional_models",
+      "test_id": "test_001",
+      "name": "order_service_depends_on_user",
+      "model_files": [
+        "services/test_001_OrderService.ts",
+        "requests/test_001_OrderModel.ts"
+      ],
+      "available_models": [
+        {
+          "path": "/users",
+          "files": [
+            "src/models/services/UserService.ts - UserService service: createUser, getUserById",
+            "src/models/requests/UserModel.ts - UserModel model. Properties: id, name, email"
+          ]
+        }
+      ],
+      "expected_files": [
+        "src/models/services/UserService.ts",
+        "src/models/requests/UserModel.ts"
+      ]
+    }
+  ]
+}
+```
+
+### Key Differences
+
+- **`api_definition_file`**: Not required (omit from test cases)
+- **`evaluation_criteria`**: Not required (assertion-based grading doesn't use it)
+- **`model_files`**: The main service/models to analyze for dependencies (stored in `src/models/`)
+- **`available_models`**: List of API models mimicking real `ModelInfo` structure:
+  - `path`: API path (e.g., `/users`, `/products`)
+  - `files`: List of `"file_path - summary"` strings (matches real scenario)
+- **`expected_files`**: The exact file paths that should be returned (for assertion comparison)
+- **Grading**: Uses assertion-based comparison instead of LLM grading
+
+See `evaluations/data/get_additional_models_dataset/` for a complete example.
 
 ## Example Dataset
 

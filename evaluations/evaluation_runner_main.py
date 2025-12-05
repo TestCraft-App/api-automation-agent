@@ -311,16 +311,16 @@ def main():
         dataset_folder = os.path.normpath(dataset_folder)
 
         if not os.path.exists(dataset_folder):
-            print(f"Error: Test data folder not found: {dataset_folder}")
-            sys.exit(1)
+            print(f"Warning: Test data folder not found: {dataset_folder}, skipping...")
+            continue
 
         folder_name = os.path.basename(dataset_folder)
         dataset_file = os.path.join(dataset_folder, f"{folder_name}.json")
 
         if not os.path.exists(dataset_file):
-            print(f"Error: Dataset file not found: {dataset_file}")
-            print(f"Expected dataset file: {folder_name}.json in {dataset_folder}")
-            sys.exit(1)
+            print(f"Warning: Dataset file not found: {dataset_file}")
+            print(f"Expected dataset file: {folder_name}.json in {dataset_folder}, skipping...")
+            continue
 
         print(f"Loading evaluation dataset from: {dataset_file}\n")
         dataset = load_evaluation_dataset(dataset_file)
