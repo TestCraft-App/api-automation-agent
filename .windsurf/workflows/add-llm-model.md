@@ -17,12 +17,12 @@ This workflow guides you through adding support for a new LLM model to the API A
 ## Steps
 
 // turbo
-1. **Create a feature branch**
+1. **Create a branch**
    
    Create a new branch for the model addition and check it out:
    ```bash
-   git checkout -b feature/add-model-<model_name>
-   git push -u origin feature/add-model-<model_name>
+   git checkout -b add-model-<model_name>
+   git push -u origin add-model-<model_name>
    ```
    
    Replace `<model_name>` with a short identifier (e.g., `gpt-5-2`, `claude-opus-4-5`).
