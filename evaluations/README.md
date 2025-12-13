@@ -24,8 +24,11 @@ evaluations/
 │   └── evaluation_dataset.py      # Pydantic models for datasets and results
 ├── services/
 │   ├── __init__.py
+│   ├── evaluation_runner.py       # Main evaluation orchestration
+│   ├── evaluation_data_loader.py  # Test data loading utilities
+│   ├── evaluation_file_writer.py  # Generated file persistence
 │   ├── model_grader.py            # LLM-based grading service
-│   └── evaluation_runner.py       # Main evaluation orchestration
+│   └── mock_file_reading_tool.py  # Mock tool for get_additional_models tests
 └── data/
     ├── generate_first_test_dataset/               # Example first-test dataset
     └── generate_models_dataset/                   # Example models dataset

@@ -2,17 +2,15 @@
 
 import json
 import os
-import re
 import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import contextmanager
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Generator, List, Literal, Optional, Sequence
 
 from src.ai_tools.models.file_spec import FileSpec
 from src.configuration.config import Config
 from src.configuration.data_sources import DataSource
-from src.models.api_model import APIModel
-from src.models.generated_model import GeneratedModel
 from src.processors.postman.postman_utils import PostmanUtils
 from src.services.file_service import FileService
 from src.services.llm_service import LLMService
@@ -25,6 +23,8 @@ from evaluations.models.evaluation_dataset import (
     EvaluationTestCase,
     ModelGradeResult,
 )
+from evaluations.services.evaluation_data_loader import EvaluationDataLoader
+from evaluations.services.evaluation_file_writer import EvaluationFileWriter
 from evaluations.services.model_grader import ModelGrader
 from evaluations.services.mock_file_reading_tool import MockFileReadingTool
 
@@ -62,158 +62,46 @@ class EvaluationRunner:
         grader_config_to_use = grader_config or config
         self.model_grader = model_grader or ModelGrader(grader_config_to_use)
         self.max_workers = max_workers
+        self.data_loader = EvaluationDataLoader(test_data_folder)
+        self.file_writer = EvaluationFileWriter()
 
-    def _load_api_definition(self, api_definition_file: str) -> Optional[str]:
-        """
-        Load API definition content from the definitions folder within the test data folder.
+    # -------------------------------------------------------------------------
+    # Helper Methods
+    # -------------------------------------------------------------------------
 
-        Args:
-            api_definition_file: Name of the API definition file
+    def _error_result(
+        self,
+        test_case: EvaluationTestCase,
+        message: str,
+        status: Literal["ERROR", "NOT_EVALUATED"] = "ERROR",
+    ) -> EvaluationResult:
+        """Create an error or not-evaluated result for a test case."""
+        return EvaluationResult(
+            test_id=test_case.test_id,
+            test_case_name=test_case.name,
+            api_definition_file=test_case.api_definition_file,
+            status=status,
+            error_message=message,
+            evaluation_criteria=test_case.evaluation_criteria,
+        )
 
-        Returns:
-            Content of the API definition file, or None if not found
-        """
-        definitions_folder = os.path.join(self.test_data_folder, "definitions")
-        file_path = os.path.join(definitions_folder, api_definition_file)
-        if not os.path.exists(file_path):
-            self.logger.error(f"API definition file not found: {file_path}")
-            return None
+    def _setup_output_dir(self, output_dir: str) -> None:
+        """Setup output directory, clearing it if it exists."""
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+        os.makedirs(output_dir, exist_ok=True)
 
+    @contextmanager
+    def _temporary_config(self, **overrides: Any) -> Generator[None, None, None]:
+        """Context manager for temporarily overriding config values."""
+        originals = {k: getattr(self.config, k) for k in overrides}
+        for k, v in overrides.items():
+            setattr(self.config, k, v)
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                return f.read()
-        except Exception as e:
-            self.logger.error(f"Error reading API definition file {file_path}: {e}")
-            return None
-
-    def _normalize_dataset_path(self, path: str) -> str:
-        """
-        Normalize a model file path by removing the test prefix from the filename.
-
-        Args:
-            path: File path where filename may start with "test_###_"
-
-        Returns:
-            Path with test_id prefix removed from filename (e.g., "requests/UserModel.ts")
-        """
-        directory = os.path.dirname(path)
-        filename = os.path.basename(path)
-
-        filename = re.sub(r"^test_\d+_", "", filename)
-
-        if directory:
-            return os.path.join(directory, filename)
-        return filename
-
-    def _load_models(self, model_files: Sequence[str]) -> List[GeneratedModel]:
-        """
-        Load model files from the models folder within the test data folder
-        and convert them to GeneratedModel objects.
-        The test prefix is removed from filenames and 'src/models/' is prepended.
-
-        Args:
-            model_files: Iterable of model file paths relative to the models folder
-                (e.g., "requests/test_001_UserModel.ts")
-
-        Returns:
-            List of GeneratedModel objects with paths like "src/models/requests/UserModel.ts"
-        """
-        models_folder = os.path.join(self.test_data_folder, "models")
-        if not os.path.exists(models_folder):
-            models_folder = os.path.join(self.test_data_folder, "src", "models")
-        generated_models = []
-        for model_file in model_files:
-            file_path = os.path.join(models_folder, model_file)
-            if not os.path.exists(file_path):
-                self.logger.warning(f"Model file not found: {file_path}, skipping")
-                continue
-
-            try:
-                with open(file_path, "r", encoding="utf-8") as f:
-                    file_content = f.read()
-
-                clean_path = self._normalize_dataset_path(model_file)
-                final_path = f"src/models/{clean_path}"
-
-                generated_model = GeneratedModel(
-                    path=final_path,
-                    fileContent=file_content,
-                    summary="",  # Models loaded from files don't have summaries
-                )
-                generated_models.append(generated_model)
-                self.logger.debug(f"Loaded model file: {model_file} -> {final_path}")
-            except Exception as e:
-                self.logger.error(f"Error reading model file {file_path}: {e}")
-                continue
-
-        if not generated_models:
-            self.logger.warning("No model files were successfully loaded")
-        else:
-            self.logger.info(f"Successfully loaded {len(generated_models)} model file(s)")
-
-        return generated_models
-
-    def _load_first_test_file(self, test_file: Optional[str]) -> Optional[FileSpec]:
-        """
-        Load the first test file from the tests folder within the test data folder
-        and convert it to a FileSpec object.
-
-        Args:
-            test_file: Test file path relative to the tests folder.
-
-        Returns:
-            FileSpec object with normalized path, or None if not found.
-        """
-        if not test_file:
-            self.logger.warning("No first_test_file provided for generate_additional_tests case")
-            return None
-
-        tests_folder = os.path.join(self.test_data_folder, "tests")
-        file_path = os.path.join(tests_folder, test_file)
-        if not os.path.exists(file_path):
-            self.logger.error(f"First test file not found: {file_path}")
-            return None
-
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                file_content = f.read()
-
-            clean_path = self._normalize_dataset_path(test_file)
-            final_path = f"src/tests/{clean_path}"
-            self.logger.debug(f"Loaded first test file: {test_file} -> {final_path}")
-            return FileSpec(path=final_path, fileContent=file_content)
-        except Exception as e:
-            self.logger.error(f"Error reading first test file {file_path}: {e}")
-            return None
-
-    def _save_generated_files(self, generated_files: List[FileSpec], output_dir: str) -> List[str]:
-        """
-        Persist generated files to disk within the specified output directory.
-
-        Args:
-            generated_files: List of generated FileSpec objects.
-            output_dir: Destination directory to save the files.
-
-        Returns:
-            List of absolute paths to the saved files.
-        """
-        saved_paths: List[str] = []
-
-        for file in generated_files:
-            relative_path = file.path.lstrip("/\\")
-            destination_path = os.path.join(output_dir, relative_path)
-            os.makedirs(os.path.dirname(destination_path), exist_ok=True)
-
-            try:
-                with open(destination_path, "w", encoding="utf-8") as f:
-                    f.write(file.fileContent)
-                absolute_path = os.path.abspath(destination_path)
-                saved_paths.append(absolute_path)
-                self.logger.debug("Saved generated file to %s", absolute_path)
-            except Exception as e:
-                self.logger.error("Failed to save generated file %s: %s", destination_path, e)
-
-        return saved_paths
+            yield
+        finally:
+            for k, v in originals.items():
+                setattr(self.config, k, v)
 
     def _evaluate_generated_files(
         self, generated_files: List[FileSpec], evaluation_criteria: Sequence[str]
@@ -247,6 +135,10 @@ class EvaluationRunner:
 
         return self.model_grader.grade(combined_content, evaluation_criteria)
 
+    # -------------------------------------------------------------------------
+    # Evaluation Methods
+    # -------------------------------------------------------------------------
+
     def evaluate_generate_first_test(
         self,
         test_case: EvaluationTestCase,
@@ -268,79 +160,46 @@ class EvaluationRunner:
         self.logger.info(f"Evaluating test case: {test_case.test_id} - {test_case.name}")
 
         if api_definition_content is None:
-            api_definition_content = self._load_api_definition(test_case.api_definition_file)
+            api_definition_content = self.data_loader.load_api_definition(test_case.api_definition_file)
         if not api_definition_content:
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
-                status="ERROR",
-                error_message=f"Failed to load API definition file: {test_case.api_definition_file}",
-                evaluation_criteria=test_case.evaluation_criteria,
+            return self._error_result(
+                test_case, f"Failed to load API definition file: {test_case.api_definition_file}"
             )
 
-        models = self._load_models(test_case.model_files)
+        models = self.data_loader.load_models(test_case.model_files)
         if not models:
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
-                status="ERROR",
-                error_message=f"Failed to load model files: {', '.join(test_case.model_files)}",
-                evaluation_criteria=test_case.evaluation_criteria,
+            return self._error_result(
+                test_case, f"Failed to load model files: {', '.join(test_case.model_files)}"
             )
 
-        original_destination = self.config.destination_folder
-        os.makedirs(output_dir, exist_ok=True)
-        if os.listdir(output_dir):
-            shutil.rmtree(output_dir)
-            os.makedirs(output_dir, exist_ok=True)
+        self._setup_output_dir(output_dir)
 
         try:
-            self.config.destination_folder = output_dir
+            with self._temporary_config(destination_folder=output_dir):
+                generated_files = self.llm_service.generate_first_test(api_definition_content, models)
 
-            generated_files = self.llm_service.generate_first_test(api_definition_content, models)
+                if not generated_files:
+                    return self._error_result(test_case, "No files were generated", status="NOT_EVALUATED")
 
-            if not generated_files:
+                saved_paths = self.file_writer.save_generated_files(generated_files, output_dir)
+                grade_result = self._evaluate_generated_files(generated_files, test_case.evaluation_criteria)
+
                 return EvaluationResult(
                     test_id=test_case.test_id,
                     test_case_name=test_case.name,
                     api_definition_file=test_case.api_definition_file,
-                    status="NOT_EVALUATED",
-                    error_message="No files were generated",
+                    status="GRADED" if grade_result else "NOT_EVALUATED",
+                    generated_files=saved_paths,
+                    grade_result=grade_result,
                     evaluation_criteria=test_case.evaluation_criteria,
                 )
-
-            saved_paths = self._save_generated_files(generated_files, output_dir)
-            grade_result = self._evaluate_generated_files(generated_files, test_case.evaluation_criteria)
-
-            status = "GRADED" if grade_result else "NOT_EVALUATED"
-
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
-                status=status,
-                generated_files=saved_paths,
-                grade_result=grade_result,
-                evaluation_criteria=test_case.evaluation_criteria,
-            )
 
         except Exception as e:
             self.logger.error(
                 f"Error during evaluation of test case {test_case.test_id} - {test_case.name}: {e}",
                 exc_info=True,
             )
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
-                status="ERROR",
-                error_message=str(e),
-                evaluation_criteria=test_case.evaluation_criteria,
-            )
-        finally:
-            self.config.destination_folder = original_destination
+            return self._error_result(test_case, str(e))
 
     def _preprocess_postman_definition(self, raw_content: str) -> Optional[str]:
         """
@@ -402,189 +261,122 @@ class EvaluationRunner:
         Returns:
             EvaluationResult with the evaluation outcome
         """
-        raw_definition = self._load_api_definition(test_case.api_definition_file)
+        raw_definition = self.data_loader.load_api_definition(test_case.api_definition_file)
         if not raw_definition:
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
-                status="ERROR",
-                error_message=f"Failed to load API definition file: {test_case.api_definition_file}",
-                evaluation_criteria=test_case.evaluation_criteria,
+            return self._error_result(
+                test_case, f"Failed to load API definition file: {test_case.api_definition_file}"
             )
 
         api_definition_content = self._preprocess_postman_definition(raw_definition)
         if not api_definition_content:
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
-                status="ERROR",
-                error_message="Failed to preprocess Postman collection",
-                evaluation_criteria=test_case.evaluation_criteria,
-            )
+            return self._error_result(test_case, "Failed to preprocess Postman collection")
 
-        original_data_source = self.config.data_source
-        try:
-            self.config.data_source = DataSource.POSTMAN
+        with self._temporary_config(data_source=DataSource.POSTMAN):
             return self.evaluate_generate_first_test(test_case, output_dir, api_definition_content)
-        finally:
-            self.config.data_source = original_data_source
 
     def evaluate_generate_models(self, test_case: EvaluationTestCase, output_dir: str) -> EvaluationResult:
-        """
-        Evaluate the generate_models method for a single test case.
-        """
+        """Evaluate the generate_models method for a single test case."""
         self.logger.info(f"Evaluating models for test case: {test_case.test_id} - {test_case.name}")
 
-        api_definition_content = self._load_api_definition(test_case.api_definition_file)
+        api_definition_content = self.data_loader.load_api_definition(test_case.api_definition_file)
         if not api_definition_content:
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
-                status="ERROR",
-                error_message=f"Failed to load API definition file: {test_case.api_definition_file}",
-                evaluation_criteria=test_case.evaluation_criteria,
+            return self._error_result(
+                test_case, f"Failed to load API definition file: {test_case.api_definition_file}"
             )
 
-        original_destination = self.config.destination_folder
-        if os.path.exists(output_dir):
-            shutil.rmtree(output_dir)
-        os.makedirs(output_dir, exist_ok=True)
+        self._setup_output_dir(output_dir)
 
         try:
-            self.config.destination_folder = output_dir
+            with self._temporary_config(destination_folder=output_dir):
+                generated_model_specs = self.llm_service.generate_models(api_definition_content)
 
-            generated_model_specs = self.llm_service.generate_models(api_definition_content)
+                if not generated_model_specs:
+                    return self._error_result(test_case, "No models were generated", status="NOT_EVALUATED")
 
-            if not generated_model_specs:
+                file_specs = [
+                    FileSpec(path=model_spec.path, fileContent=model_spec.fileContent)
+                    for model_spec in generated_model_specs
+                ]
+
+                saved_paths = self.file_writer.save_generated_files(file_specs, output_dir)
+                grade_result = self._evaluate_generated_files(file_specs, test_case.evaluation_criteria)
+
                 return EvaluationResult(
                     test_id=test_case.test_id,
                     test_case_name=test_case.name,
                     api_definition_file=test_case.api_definition_file,
-                    status="NOT_EVALUATED",
-                    error_message="No models were generated",
+                    status="GRADED" if grade_result else "NOT_EVALUATED",
+                    generated_files=saved_paths,
+                    grade_result=grade_result,
                     evaluation_criteria=test_case.evaluation_criteria,
                 )
-
-            file_specs = [
-                FileSpec(path=model_spec.path, fileContent=model_spec.fileContent)
-                for model_spec in generated_model_specs
-            ]
-
-            saved_paths = self._save_generated_files(file_specs, output_dir)
-            grade_result = self._evaluate_generated_files(file_specs, test_case.evaluation_criteria)
-            status = "GRADED" if grade_result else "NOT_EVALUATED"
-
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
-                status=status,
-                generated_files=saved_paths,
-                grade_result=grade_result,
-                evaluation_criteria=test_case.evaluation_criteria,
-            )
 
         except Exception as e:
             self.logger.error(
                 f"Error during model evaluation of test case {test_case.test_id} - {test_case.name}: {e}",
                 exc_info=True,
             )
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
-                status="ERROR",
-                error_message=str(e),
-                evaluation_criteria=test_case.evaluation_criteria,
-            )
-        finally:
-            self.config.destination_folder = original_destination
+            return self._error_result(test_case, str(e))
 
     def evaluate_generate_additional_tests(
         self, test_case: EvaluationTestCase, output_dir: str
     ) -> EvaluationResult:
-        """
-        Evaluate the generate_additional_tests method for a single test case.
-        """
+        """Evaluate the generate_additional_tests method for a single test case."""
         self.logger.info(
             "Evaluating additional tests for test case: %s - %s",
             test_case.test_id,
             test_case.name,
         )
 
-        api_definition_content = self._load_api_definition(test_case.api_definition_file)
+        api_definition_content = self.data_loader.load_api_definition(test_case.api_definition_file)
         if not api_definition_content:
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
-                status="ERROR",
-                error_message=f"Failed to load API definition file: {test_case.api_definition_file}",
-                evaluation_criteria=test_case.evaluation_criteria,
+            return self._error_result(
+                test_case, f"Failed to load API definition file: {test_case.api_definition_file}"
             )
 
-        models = self._load_models(test_case.model_files)
+        models = self.data_loader.load_models(test_case.model_files)
         if not models:
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
+            return self._error_result(
+                test_case,
+                "No models were available to generate additional tests",
                 status="NOT_EVALUATED",
-                error_message="No models were available to generate additional tests",
-                evaluation_criteria=test_case.evaluation_criteria,
             )
 
-        first_test = self._load_first_test_file(test_case.first_test_file)
+        first_test = self.data_loader.load_first_test_file(test_case.first_test_file)
         if not first_test:
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
+            return self._error_result(
+                test_case,
+                "First test file could not be loaded for generating additional tests",
                 status="NOT_EVALUATED",
-                error_message="First test file could not be loaded for generating additional tests",
-                evaluation_criteria=test_case.evaluation_criteria,
             )
 
-        original_destination = self.config.destination_folder
-        if os.path.exists(output_dir):
-            shutil.rmtree(output_dir)
-        os.makedirs(output_dir, exist_ok=True)
+        self._setup_output_dir(output_dir)
 
         try:
-            self.config.destination_folder = output_dir
+            with self._temporary_config(destination_folder=output_dir):
+                generated_files = self.llm_service.generate_additional_tests(
+                    tests=[first_test],
+                    models=models,
+                    definition_content=api_definition_content,
+                )
 
-            generated_files = self.llm_service.generate_additional_tests(
-                tests=[first_test],
-                models=models,
-                definition_content=api_definition_content,
-            )
+                if not generated_files:
+                    return self._error_result(
+                        test_case, "No additional tests were generated", status="NOT_EVALUATED"
+                    )
 
-            if not generated_files:
+                saved_paths = self.file_writer.save_generated_files(generated_files, output_dir)
+                grade_result = self._evaluate_generated_files(generated_files, test_case.evaluation_criteria)
+
                 return EvaluationResult(
                     test_id=test_case.test_id,
                     test_case_name=test_case.name,
                     api_definition_file=test_case.api_definition_file,
-                    status="NOT_EVALUATED",
-                    error_message="No additional tests were generated",
+                    status="GRADED" if grade_result else "NOT_EVALUATED",
+                    generated_files=saved_paths,
+                    grade_result=grade_result,
                     evaluation_criteria=test_case.evaluation_criteria,
                 )
-
-            saved_paths = self._save_generated_files(generated_files, output_dir)
-            grade_result = self._evaluate_generated_files(generated_files, test_case.evaluation_criteria)
-            status = "GRADED" if grade_result else "NOT_EVALUATED"
-
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
-                status=status,
-                generated_files=saved_paths,
-                grade_result=grade_result,
-                evaluation_criteria=test_case.evaluation_criteria,
-            )
 
         except Exception as e:
             self.logger.error(
@@ -594,55 +386,12 @@ class EvaluationRunner:
                 e,
                 exc_info=True,
             )
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
-                status="ERROR",
-                error_message=str(e),
-                evaluation_criteria=test_case.evaluation_criteria,
-            )
-        finally:
-            self.config.destination_folder = original_destination
-
-    def _load_available_models_from_test_case(
-        self, available_models_data: Sequence[Dict[str, Any]]
-    ) -> List[APIModel]:
-        """
-        Load available models from test case data and convert them to APIModel objects.
-
-        This mimics the real scenario where APIModel has:
-        - path: API path (e.g., '/users')
-        - files: list of 'file_path - summary' strings
-
-        Args:
-            available_models_data: List of dicts with 'path' and 'files' keys
-
-        Returns:
-            List of APIModel objects representing available models
-        """
-        available_models: List[APIModel] = []
-
-        for model_data in available_models_data:
-            api_path = model_data.get("path", "")
-            files = model_data.get("files", [])
-
-            api_model = APIModel(path=api_path, files=files)
-            available_models.append(api_model)
-            self.logger.debug(f"Loaded available model for path {api_path}: {len(files)} file(s)")
-
-        return available_models
+            return self._error_result(test_case, str(e))
 
     def evaluate_get_additional_models(self, test_case: EvaluationTestCase) -> EvaluationResult:
         """
         Evaluate the get_additional_models method for a single test case.
         Uses assertion-based grading instead of LLM grading.
-
-        Args:
-            test_case: The test case to evaluate
-
-        Returns:
-            EvaluationResult with the evaluation outcome
         """
         self.logger.info(
             "Evaluating get_additional_models for test case: %s - %s",
@@ -650,27 +399,15 @@ class EvaluationRunner:
             test_case.name,
         )
 
-        relevant_models = self._load_models(test_case.model_files)
+        relevant_models = self.data_loader.load_models(test_case.model_files)
         if not relevant_models and test_case.model_files:
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
-                status="ERROR",
-                error_message=f"Failed to load model files: {', '.join(test_case.model_files)}",
-                evaluation_criteria=test_case.evaluation_criteria,
+            return self._error_result(
+                test_case, f"Failed to load model files: {', '.join(test_case.model_files)}"
             )
 
-        available_models = self._load_available_models_from_test_case(test_case.available_models)
+        available_models = self.data_loader.load_available_models(test_case.available_models)
         if not available_models and test_case.available_models:
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
-                status="ERROR",
-                error_message="Failed to load available models from test case",
-                evaluation_criteria=test_case.evaluation_criteria,
-            )
+            return self._error_result(test_case, "Failed to load available models from test case")
 
         try:
             mock_tool = MockFileReadingTool()
@@ -682,7 +419,11 @@ class EvaluationRunner:
 
             expected_paths = sorted(
                 [
-                    f"src/models/{self._normalize_dataset_path(p)}" if not p.startswith("src/") else p
+                    (
+                        f"src/models/{self.data_loader.normalize_dataset_path(p)}"
+                        if not p.startswith("src/")
+                        else p
+                    )
                     for p in test_case.expected_files
                 ]
             )
@@ -750,14 +491,7 @@ class EvaluationRunner:
                 e,
                 exc_info=True,
             )
-            return EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
-                status="ERROR",
-                error_message=str(e),
-                evaluation_criteria=test_case.evaluation_criteria,
-            )
+            return self._error_result(test_case, str(e))
 
     def _evaluate_single_test_case(
         self, test_case: EvaluationTestCase, base_output_dir: str
@@ -790,14 +524,7 @@ class EvaluationRunner:
                 test_case.case_type,
                 test_case.test_id,
             )
-            result = EvaluationResult(
-                test_id=test_case.test_id,
-                test_case_name=test_case.name,
-                api_definition_file=test_case.api_definition_file,
-                status="ERROR",
-                error_message=f"Unknown evaluation type '{test_case.case_type}'",
-                evaluation_criteria=test_case.evaluation_criteria,
-            )
+            result = self._error_result(test_case, f"Unknown evaluation type '{test_case.case_type}'")
 
         self.logger.info(f"Test case '{test_case.name}': {result.status}")
         return result
@@ -878,15 +605,9 @@ class EvaluationRunner:
                         f"Unexpected error processing test case {test_case.test_id}: {e}",
                         exc_info=True,
                     )
-                    error_result = EvaluationResult(
-                        test_id=test_case.test_id,
-                        test_case_name=test_case.name,
-                        api_definition_file=test_case.api_definition_file,
-                        status="ERROR",
-                        error_message=f"Unexpected error during parallel execution: {str(e)}",
-                        evaluation_criteria=test_case.evaluation_criteria,
+                    results.append(
+                        self._error_result(test_case, f"Unexpected error during parallel execution: {str(e)}")
                     )
-                    results.append(error_result)
                     error_count += 1
 
         self.logger.info(
