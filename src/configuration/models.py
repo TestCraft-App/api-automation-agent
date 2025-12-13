@@ -15,6 +15,7 @@ class Model(Enum):
     GPT_4_1 = ("gpt-4.1", ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=8.0))
     GPT_5 = ("gpt-5", ModelCost(input_cost_per_million_tokens=1.25, output_cost_per_million_tokens=10.0))
     GPT_5_1 = ("gpt-5.1", ModelCost(input_cost_per_million_tokens=1.25, output_cost_per_million_tokens=10.0))
+    GPT_5_2 = ("gpt-5.2", ModelCost(input_cost_per_million_tokens=1.75, output_cost_per_million_tokens=14.0))
     CLAUDE_SONNET_4 = (
         "claude-sonnet-4-20250514",
         ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
@@ -67,6 +68,10 @@ class Model(Enum):
         "openai.gpt-5.1",
         ModelCost(input_cost_per_million_tokens=1.25, output_cost_per_million_tokens=10.0),
     )
+    BEDROCK_GPT_5_2 = (
+        "openai.gpt-5.2",
+        ModelCost(input_cost_per_million_tokens=1.75, output_cost_per_million_tokens=14.0),
+    )
     BEDROCK_GEMINI_3_PRO_PREVIEW = (
         "google.gemini-3-pro-preview",
         ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=12.0),
@@ -105,6 +110,7 @@ class Model(Enum):
             Model.BEDROCK_GPT_4_1,
             Model.BEDROCK_GPT_5,
             Model.BEDROCK_GPT_5_1,
+            Model.BEDROCK_GPT_5_2,
             Model.BEDROCK_GEMINI_3_PRO_PREVIEW,
         ]
 
