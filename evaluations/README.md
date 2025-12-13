@@ -6,7 +6,7 @@ This evaluation suite provides infrastructure for evaluating LLMService generati
 
 The evaluation suite allows you to:
 - Define test cases with API definitions and evaluation criteria
-- Run evaluations for `generate_first_test`, `generate_models`, and `generate_additional_tests`
+- Run evaluations for `generate_first_test`, `generate_models`, `generate_additional_tests`, and `get_additional_models`
 - Automatically grade generated files using LLM-based evaluation
 - Generate detailed reports of evaluation results
 
@@ -122,6 +122,7 @@ See [Test Data Documentation](./data/README.md) for detailed information about t
 ## Example Datasets
 
 - `evaluations/data/generate_first_test_dataset/` – sample dataset for `generate_first_test`
+- `evaluations/data/generate_first_test_postman_dataset/` – sample dataset for `generate_first_test_postman`
 - `evaluations/data/generate_models_dataset/` – sample dataset for `generate_models`
 - `evaluations/data/generate_additional_tests_dataset/` – sample dataset for `generate_additional_tests`
 - `evaluations/data/get_additional_models_dataset/` – sample dataset for `get_additional_models`
@@ -169,6 +170,22 @@ This evaluation:
 4. Reads the generated test file content
 5. Grades it against the evaluation criteria using model grading
 6. Returns a structured result
+
+### `generate_first_test_postman`
+
+This evaluation is similar to `generate_first_test` but uses **Postman collections** as the API definition source instead of OpenAPI/Swagger specifications. It uses the Postman-specific prompt for test generation.
+
+This evaluation:
+1. Loads the raw Postman collection JSON from the `definitions/` folder within the dataset folder
+2. **Preprocesses** the collection to extract the first request and format it as the real `PostmanProcessor.get_api_verb_content()` would (JSON with `file_path`, `root_path`, `full_path`, `verb`, `body`, `prerequest`, `script`, `name`)
+3. Loads model files (TypeScript) from the `models/` folder and converts them to `GeneratedModel` objects
+4. Sets the data source to `POSTMAN` to use the Postman-specific prompt
+5. Runs `generate_first_test` with the preprocessed API definition and loaded models
+6. Reads the generated test file content
+7. Grades it against the evaluation criteria using model grading
+8. Returns a structured result
+
+> **Note**: The preprocessing step ensures the evaluation uses the same input format that `llm_service.generate_first_test()` receives in real scenarios, making the evaluation results more representative of actual usage.
 
 ### `generate_models`
 

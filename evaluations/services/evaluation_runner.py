@@ -1,5 +1,6 @@
 """Service for running evaluations on LLMService generation methods."""
 
+import json
 import os
 import re
 import shutil
@@ -9,8 +10,10 @@ from typing import Any, Dict, List, Optional, Sequence
 
 from src.ai_tools.models.file_spec import FileSpec
 from src.configuration.config import Config
+from src.configuration.data_sources import DataSource
 from src.models.api_model import APIModel
 from src.models.generated_model import GeneratedModel
+from src.processors.postman.postman_utils import PostmanUtils
 from src.services.file_service import FileService
 from src.services.llm_service import LLMService
 from src.utils.logger import Logger
@@ -245,7 +248,10 @@ class EvaluationRunner:
         return self.model_grader.grade(combined_content, evaluation_criteria)
 
     def evaluate_generate_first_test(
-        self, test_case: EvaluationTestCase, output_dir: str
+        self,
+        test_case: EvaluationTestCase,
+        output_dir: str,
+        api_definition_content: Optional[str] = None,
     ) -> EvaluationResult:
         """
         Evaluate the generate_first_test method for a single test case.
@@ -253,13 +259,16 @@ class EvaluationRunner:
         Args:
             test_case: The test case to evaluate
             output_dir: Destination directory where generated files should be written
+            api_definition_content: Optional pre-loaded/preprocessed API definition content.
+                If not provided, loads from test_case.api_definition_file.
 
         Returns:
             EvaluationResult with the evaluation outcome
         """
         self.logger.info(f"Evaluating test case: {test_case.test_id} - {test_case.name}")
 
-        api_definition_content = self._load_api_definition(test_case.api_definition_file)
+        if api_definition_content is None:
+            api_definition_content = self._load_api_definition(test_case.api_definition_file)
         if not api_definition_content:
             return EvaluationResult(
                 test_id=test_case.test_id,
@@ -332,6 +341,95 @@ class EvaluationRunner:
             )
         finally:
             self.config.destination_folder = original_destination
+
+    def _preprocess_postman_definition(self, raw_content: str) -> Optional[str]:
+        """
+        Preprocess a raw Postman collection into the format expected by llm_service.
+
+        In real scenarios, PostmanProcessor.get_api_verb_content() returns a JSON with:
+        - file_path, root_path, full_path, verb, body, prerequest, script, name
+
+        This method extracts the first request from the collection and formats it
+        the same way the real processor does.
+
+        Args:
+            raw_content: Raw Postman collection JSON string
+
+        Returns:
+            Preprocessed JSON string in the format expected by generate_first_test,
+            or None if parsing fails
+        """
+        try:
+            data = json.loads(raw_content)
+            requests = PostmanUtils.extract_requests(data, prefixes=self.config.prefixes)
+
+            if not requests:
+                self.logger.error("No requests found in Postman collection")
+                return None
+
+            api_verb = requests[0]
+
+            return json.dumps(
+                {
+                    "file_path": api_verb.file_path,
+                    "root_path": api_verb.root_path,
+                    "full_path": api_verb.full_path,
+                    "verb": api_verb.verb,
+                    "body": api_verb.body,
+                    "prerequest": api_verb.prerequest,
+                    "script": api_verb.script,
+                    "name": api_verb.name,
+                }
+            )
+        except json.JSONDecodeError as e:
+            self.logger.error(f"Failed to parse Postman collection: {e}")
+            return None
+
+    def evaluate_generate_first_test_postman(
+        self, test_case: EvaluationTestCase, output_dir: str
+    ) -> EvaluationResult:
+        """
+        Evaluate the generate_first_test method for a Postman-based test case.
+
+        This method preprocesses the Postman collection to match the format that
+        llm_service.generate_first_test receives in real scenarios (via
+        PostmanProcessor.get_api_verb_content()), then delegates to evaluate_generate_first_test.
+
+        Args:
+            test_case: The test case to evaluate
+            output_dir: Destination directory where generated files should be written
+
+        Returns:
+            EvaluationResult with the evaluation outcome
+        """
+        raw_definition = self._load_api_definition(test_case.api_definition_file)
+        if not raw_definition:
+            return EvaluationResult(
+                test_id=test_case.test_id,
+                test_case_name=test_case.name,
+                api_definition_file=test_case.api_definition_file,
+                status="ERROR",
+                error_message=f"Failed to load API definition file: {test_case.api_definition_file}",
+                evaluation_criteria=test_case.evaluation_criteria,
+            )
+
+        api_definition_content = self._preprocess_postman_definition(raw_definition)
+        if not api_definition_content:
+            return EvaluationResult(
+                test_id=test_case.test_id,
+                test_case_name=test_case.name,
+                api_definition_file=test_case.api_definition_file,
+                status="ERROR",
+                error_message="Failed to preprocess Postman collection",
+                evaluation_criteria=test_case.evaluation_criteria,
+            )
+
+        original_data_source = self.config.data_source
+        try:
+            self.config.data_source = DataSource.POSTMAN
+            return self.evaluate_generate_first_test(test_case, output_dir, api_definition_content)
+        finally:
+            self.config.data_source = original_data_source
 
     def evaluate_generate_models(self, test_case: EvaluationTestCase, output_dir: str) -> EvaluationResult:
         """
@@ -680,6 +778,8 @@ class EvaluationRunner:
             result = self.evaluate_generate_models(test_case, test_output_dir)
         elif test_case.case_type == "generate_first_test":
             result = self.evaluate_generate_first_test(test_case, test_output_dir)
+        elif test_case.case_type == "generate_first_test_postman":
+            result = self.evaluate_generate_first_test_postman(test_case, test_output_dir)
         elif test_case.case_type == "generate_additional_tests":
             result = self.evaluate_generate_additional_tests(test_case, test_output_dir)
         elif test_case.case_type == "get_additional_models":

@@ -1,0 +1,20 @@
+{
+  "dataset_name": "generate_first_test_postman_dataset",
+  "test_cases": [
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_001",
+      "name": "create_user_assert_status_code",
+      "api_definition_file": "test_001_users_collection.json",
+      "model_files": [
+        "requests/UserModel.ts",
+        "services/test_001_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for a POST endpoint to create a user",
+        "Use the UserService.createUser method with UserModel type",
+        "Assert that the status code is 201"
+      ]
+    }
+  ]
+}

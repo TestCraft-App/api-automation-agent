@@ -5,7 +5,11 @@ from pydantic import BaseModel, Field, ConfigDict
 
 
 EvaluationType = Literal[
-    "generate_first_test", "generate_models", "generate_additional_tests", "get_additional_models"
+    "generate_first_test",
+    "generate_first_test_postman",
+    "generate_models",
+    "generate_additional_tests",
+    "get_additional_models",
 ]
 
 

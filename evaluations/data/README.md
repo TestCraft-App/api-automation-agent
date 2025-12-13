@@ -57,7 +57,7 @@ A dataset file should be a JSON file with the following structure:
 
 - `dataset_name`: Name of the evaluation dataset (should match the folder name)
 - `test_cases`: Array of test cases
-  - `case_type`: Type of evaluation to run. Supported values: `"generate_first_test"` (default), `"generate_models"`, `"generate_additional_tests"`, `"get_additional_models"`.
+  - `case_type`: Type of evaluation to run. Supported values: `"generate_models"`,`"generate_first_test"` (default), `"generate_first_test_postman"`, `"generate_additional_tests"`, `"get_additional_models"`.
   - `test_id`: **Required** unique identifier for the test case (e.g., "test_001"). This is used to organize generated artifacts and file prefixes.
   - `name`: Unique name for the test case
   - `api_definition_file`: Name of the API definition file (YAML/JSON) in the `definitions/` folder. **Must be prefixed with test_id** (e.g., "test_001_user_post_api.yaml"). Optional for evaluations that don't use API definitions (e.g., `get_additional_models`).
@@ -180,7 +180,59 @@ The `get_additional_models` evaluation tests the LLM's ability to identify model
 
 See `evaluations/data/get_additional_models_dataset/` for a complete example.
 
-## Example Dataset
+## generate_first_test_postman Dataset
 
-See `evaluations/data/generate_first_test_dataset/generate_first_test_dataset.json` for a complete example.
+The `generate_first_test_postman` evaluation tests the LLM's ability to generate tests from **Postman collections** instead of OpenAPI/Swagger definitions. This uses the Postman-specific prompt for test generation.
+
+### Dataset Structure
+
+```json
+{
+  "dataset_name": "generate_first_test_postman_dataset",
+  "test_cases": [
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_001",
+      "name": "create_user_postman",
+      "api_definition_file": "test_001_users_collection.json",
+      "model_files": [
+        "requests/UserModel.ts",
+        "services/test_001_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for a POST endpoint to create a user",
+        "Use the UserService.createUser method with UserModel type",
+        "Assert that the status code is 201"
+      ]
+    }
+  ]
+}
+```
+
+### Key Differences from generate_first_test
+
+- **`case_type`**: Must be `"generate_first_test_postman"`
+- **`api_definition_file`**: Should be a Postman collection JSON file (not OpenAPI YAML)
+- **Prompt**: Uses the Postman-specific prompt (`create-first-test-postman.txt`) for test generation
+- **Preprocessing**: The raw Postman collection is automatically preprocessed to match the format that `llm_service.generate_first_test()` receives in real scenarios (via `PostmanProcessor.get_api_verb_content()`)
+
+### Postman Collection Format
+
+The API definition file should be a valid Postman Collection v2.1 JSON file containing at least one request. The evaluation will extract the first request and preprocess it into a JSON format with:
+- `file_path`: Generated test file path
+- `root_path`: Root API path (e.g., `/users`)
+- `full_path`: Full API path
+- `verb`: HTTP method (GET, POST, etc.)
+- `body`: Request body as parsed JSON object
+- `prerequest`: Pre-request scripts
+- `script`: Test scripts
+- `name`: Request name in camelCase
+
+See `tests/fixtures/postman/` for examples of Postman collection formats.
+
+See `evaluations/data/generate_first_test_postman_dataset/` for a complete example.
+
+## Example Datasets
+
+See `evaluations/data/` for a several example datasets.
 
