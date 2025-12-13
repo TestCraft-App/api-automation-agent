@@ -1,0 +1,292 @@
+{
+  "dataset_name": "generate_first_test_postman_dataset",
+  "test_cases": [
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_001",
+      "name": "create_user_assert_status_code",
+      "api_definition_file": "test_001_users_collection.json",
+      "model_files": [
+        "requests/UserModel.ts",
+        "services/test_001_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for a POST endpoint to create a user",
+        "Use the UserService.createUser method with UserModel type",
+        "Assert that the status code is 201"
+      ]
+    },
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_002",
+      "name": "list_users",
+      "api_definition_file": "test_002_users_collection.json",
+      "model_files": [
+        "responses/UserListResponse.ts",
+        "services/test_002_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for the GET /users endpoint that retrieves a paginated list of users",
+        "Call UserService.getUsers",
+        "Assert that the response status is 200"
+      ]
+    },
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_003",
+      "name": "get_user_by_id",
+      "api_definition_file": "test_003_users_collection.json",
+      "model_files": [
+        "responses/UserResponse.ts",
+        "services/test_003_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for the GET /users/{userId} endpoint that retrieves a single user",
+        "Call UserService.getUserById with a valid user id",
+        "Assert that the response status is 200"
+      ]
+    },
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_004",
+      "name": "update_user",
+      "api_definition_file": "test_004_users_collection.json",
+      "model_files": [
+        "requests/UserModel.ts",
+        "requests/UpdateUserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_004_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the update target ",
+        "Test the main positive scenario for the PUT /users/{userId} endpoint that updates an existing user",
+        "Call UserService.updateUser with the created user's id and a payload typed as UpdateUserModel",
+        "Assert that the update response status is 200"
+      ]
+    },
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_005",
+      "name": "patch_user",
+      "api_definition_file": "test_005_users_collection.json",
+      "model_files": [
+        "requests/UserModel.ts",
+        "requests/PatchUserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_005_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the patch target",
+        "Test the main positive scenario for the PATCH /users/{userId} endpoint that performs a partial update",
+        "Call UserService.patchUser with the created user's id and a payload typed as PatchUserModel that only changes a subset of fields",
+        "Assert that the patch response status is 200"
+      ]
+    },
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_006",
+      "name": "delete_user",
+      "api_definition_file": "test_006_users_collection.json",
+      "model_files": [
+        "requests/UserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_006_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the delete target",
+        "Test the main positive scenario for the DELETE /users/{userId} endpoint that removes an existing user",
+        "Call UserService.deleteUser with the created user's id",
+        "Assert that the delete response status is 204"
+      ]
+    },
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_007",
+      "name": "get_user_by_id_with_precondition",
+      "api_definition_file": "test_007_users_collection.json",
+      "model_files": [
+        "requests/UserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_007_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook",
+        "Test the main positive scenario for the GET /users/{userId} endpoint that retrieves a single user",
+        "Call UserService.getUserById with the id from the created user",
+        "Assert that the response status is 200"
+      ]
+    },
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_008",
+      "name": "delete_user_with_get_check",
+      "api_definition_file": "test_008_users_collection.json",
+      "model_files": [
+        "requests/UserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_008_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the delete target",
+        "Test the main positive scenario for the DELETE /users/{userId} endpoint that removes an existing user",
+        "Call UserService.deleteUser with the created user's id",
+        "Assert that the delete response status is 204",
+        "After the delete, attempt to retrieve the deleted user using UserService.getUserById and assert that it results in a 404"
+      ]
+    },
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_009",
+      "name": "create_user_with_postcondition",
+      "api_definition_file": "test_009_users_collection.json",
+      "model_files": [
+        "requests/UserModel.ts",
+        "services/test_009_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for a POST endpoint to create a user",
+        "Use the UserService.createUser method with UserModel type",
+        "Assert that the status code is 201",
+        "Assert that the response data contains the created user's id, name, and email using optional chaining (e.g., response.data?.id)",
+        "Delete the created user using UserService.deleteUser inside an after or afterEach hook"
+      ]
+    },
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_010",
+      "name": "create_user_verify_response_body",
+      "api_definition_file": "test_010_users_collection.json",
+      "model_files": [
+        "requests/UserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_010_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for a POST endpoint to create a user",
+        "Use the UserService.createUser method with UserModel type",
+        "Assert that the status code is 201",
+        "Assert that the response contains a numeric id",
+        "Assert that the response name matches the request name",
+        "Assert that the response email matches the request email"
+      ]
+    },
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_011",
+      "name": "create_user_verify_with_get",
+      "api_definition_file": "test_011_users_collection.json",
+      "model_files": [
+        "requests/UserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_011_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for a POST endpoint to create a user",
+        "Use the UserService.createUser method with UserModel type",
+        "Assert that the status code is 201",
+        "After creating the user, call UserService.getUserById with the created user's id",
+        "Assert that the GET response status is 200",
+        "Assert that the retrieved user's name matches the created user's name",
+        "Assert that the retrieved user's email matches the created user's email"
+      ]
+    },
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_012",
+      "name": "update_user_verify_response_body",
+      "api_definition_file": "test_012_users_collection.json",
+      "model_files": [
+        "requests/UserModel.ts",
+        "requests/UpdateUserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_012_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the update target",
+        "Test the main positive scenario for the PUT /users/{userId} endpoint that updates an existing user",
+        "Call UserService.updateUser with the created user's id and a payload typed as UpdateUserModel",
+        "Assert that the update response status is 200",
+        "Assert that the response contains the same user id as the created user",
+        "Assert that the response name matches the updated name",
+        "Assert that the response email matches the updated email"
+      ]
+    },
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_013",
+      "name": "update_user_verify_with_get",
+      "api_definition_file": "test_013_users_collection.json",
+      "model_files": [
+        "requests/UserModel.ts",
+        "requests/UpdateUserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_013_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the update target",
+        "Test the main positive scenario for the PUT /users/{userId} endpoint that updates an existing user",
+        "Call UserService.updateUser with the created user's id and a payload typed as UpdateUserModel",
+        "Assert that the update response status is 200",
+        "After updating the user, call UserService.getUserById with the user's id",
+        "Assert that the GET response status is 200",
+        "Assert that the retrieved user's name matches the updated name",
+        "Assert that the retrieved user's email matches the updated email"
+      ]
+    },
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_014",
+      "name": "patch_user_verify_partial_update",
+      "api_definition_file": "test_014_users_collection.json",
+      "model_files": [
+        "requests/UserModel.ts",
+        "requests/PatchUserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_014_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the patch target",
+        "Test the main positive scenario for the PATCH /users/{userId} endpoint that performs a partial update",
+        "Call UserService.patchUser with the created user's id and a payload typed as PatchUserModel that only changes the name field",
+        "Assert that the patch response status is 200",
+        "Assert that the response name matches the patched name",
+        "Assert that the response email remains unchanged from the original user (verifying partial update behavior)"
+      ]
+    },
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_015",
+      "name": "list_users_verify_response_structure",
+      "api_definition_file": "test_015_users_collection.json",
+      "model_files": [
+        "responses/UserListResponse.ts",
+        "services/test_015_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for the GET /users endpoint that retrieves a list of users",
+        "Call UserService.getUsers",
+        "Assert that the response status is 200",
+        "Assert that the response contains a data property that is an array",
+        "Assert that the response contains a total property that is a number",
+        "If the data array is not empty, assert that users have id, name, and email properties"
+      ]
+    },
+    {
+      "case_type": "generate_first_test_postman",
+      "test_id": "test_016",
+      "name": "create_user_with_random_data",
+      "api_definition_file": "test_016_users_collection.json",
+      "model_files": [
+        "requests/UserModel.ts",
+        "responses/UserResponse.ts",
+        "services/test_016_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for a POST endpoint to create a user",
+        "Generate random name and email values to create the user",
+        "Use the UserService.createUser method with UserModel type using the generated random values",
+        "Assert that the status code is 201"
+      ]
+    }
+  ]
+}

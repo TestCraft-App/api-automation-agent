@@ -1,0 +1,70 @@
+{
+  "info": {
+    "name": "Users API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "BASEURL",
+      "value": "https://api.example.com"
+    }
+  ],
+  "item": [
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "url": "{{BASEURL}}/users",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"John Doe\", \"email\": \"john@example.com\", \"age\": 30}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function() {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const userId = pm.response.json().id;",
+                  "",
+                  "const getUserRequest = {",
+                  "  url: pm.variables.get('BASEURL') + '/users/' + userId,",
+                  "  method: 'GET',",
+                  "  header: { 'Content-Type': 'application/json' }",
+                  "};",
+                  "",
+                  "pm.sendRequest(getUserRequest, function (err, res) {",
+                  "  pm.test('GET returns the created user', function() {",
+                  "    pm.expect(res.code).to.equal(200);",
+                  "  });",
+                  "",
+                  "  pm.test('Retrieved user has correct name', function() {",
+                  "    pm.expect(res.json().name).to.equal('John Doe');",
+                  "  });",
+                  "",
+                  "  pm.test('Retrieved user has correct email', function() {",
+                  "    pm.expect(res.json().email).to.equal('john@example.com');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

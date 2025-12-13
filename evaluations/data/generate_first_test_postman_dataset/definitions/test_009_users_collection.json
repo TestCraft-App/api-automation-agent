@@ -1,0 +1,60 @@
+{
+  "info": {
+    "name": "Users API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "BASEURL",
+      "value": "https://api.example.com"
+    }
+  ],
+  "item": [
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "url": "{{BASEURL}}/users",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"John Doe\", \"email\": \"john@example.com\", \"age\": 30}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function() {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const userId = pm.response.json().id;",
+                  "pm.variables.set('userId', userId);",
+                  "",
+                  "const deleteUserRequest = {",
+                  "  url: pm.variables.get('BASEURL') + '/users/' + userId,",
+                  "  method: 'DELETE',",
+                  "  header: { 'Content-Type': 'application/json' }",
+                  "};",
+                  "pm.sendRequest(deleteUserRequest, function (err, res) {",
+                  "  console.log('Cleanup: User deleted');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
