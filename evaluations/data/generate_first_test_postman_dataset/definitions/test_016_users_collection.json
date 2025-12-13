@@ -1,0 +1,59 @@
+{
+  "info": {
+    "name": "Users API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "BASEURL",
+      "value": "https://api.example.com"
+    }
+  ],
+  "item": [
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "url": "{{BASEURL}}/users",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"{{randomName}}\", \"email\": \"{{randomEmail}}\", \"age\": 30}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const randomName = 'User_' + Math.random().toString(36).substring(7);",
+                  "const randomEmail = 'user_' + Math.random().toString(36).substring(7) + '@example.com';",
+                  "pm.variables.set('randomName', randomName);",
+                  "pm.variables.set('randomEmail', randomEmail);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function() {",
+                  "  pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

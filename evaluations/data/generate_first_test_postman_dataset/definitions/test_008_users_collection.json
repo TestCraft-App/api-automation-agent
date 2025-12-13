@@ -1,0 +1,76 @@
+{
+  "info": {
+    "name": "Users API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "BASEURL",
+      "value": "https://api.example.com"
+    }
+  ],
+  "item": [
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": "{{BASEURL}}/users/{{userId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const createUserRequest = {",
+                  "  url: pm.variables.get('BASEURL') + '/users',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: {",
+                  "    mode: 'raw',",
+                  "    raw: JSON.stringify({ name: 'John Doe', email: 'john@example.com', age: 30 })",
+                  "  }",
+                  "};",
+                  "pm.sendRequest(createUserRequest, function (err, res) {",
+                  "  const userId = res.json().id;",
+                  "  pm.variables.set('userId', userId);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 204', function() {",
+                  "  pm.response.to.have.status(204);",
+                  "});",
+                  "",
+                  "const userId = pm.variables.get('userId');",
+                  "const getUserRequest = {",
+                  "  url: pm.variables.get('BASEURL') + '/users/' + userId,",
+                  "  method: 'GET',",
+                  "  header: { 'Content-Type': 'application/json' }",
+                  "};",
+                  "pm.sendRequest(getUserRequest, function (err, res) {",
+                  "  pm.test('Deleted user returns 404', function() {",
+                  "    pm.expect(res.code).to.equal(404);",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

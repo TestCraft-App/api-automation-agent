@@ -1,0 +1,83 @@
+{
+  "info": {
+    "name": "Users API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "BASEURL",
+      "value": "https://api.example.com"
+    }
+  ],
+  "item": [
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "url": "{{BASEURL}}/users/{{userId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"Jane Doe\", \"email\": \"jane@example.com\", \"age\": 25}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const createUserRequest = {",
+                  "  url: pm.variables.get('BASEURL') + '/users',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: {",
+                  "    mode: 'raw',",
+                  "    raw: JSON.stringify({ name: 'John Doe', email: 'john@example.com', age: 30 })",
+                  "  }",
+                  "};",
+                  "pm.sendRequest(createUserRequest, function (err, res) {",
+                  "  const userId = res.json().id;",
+                  "  pm.variables.set('userId', userId);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains same user id', function() {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response.id).to.equal(pm.variables.get('userId'));",
+                  "});",
+                  "",
+                  "pm.test('Response contains updated name', function() {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response.name).to.equal('Jane Doe');",
+                  "});",
+                  "",
+                  "pm.test('Response contains updated email', function() {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response.email).to.equal('jane@example.com');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

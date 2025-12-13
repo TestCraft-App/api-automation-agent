@@ -1,0 +1,65 @@
+{
+  "info": {
+    "name": "Users API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "BASEURL",
+      "value": "https://api.example.com"
+    }
+  ],
+  "item": [
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "url": "{{BASEURL}}/users",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains data array', function() {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Response contains total count', function() {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response.total).to.be.a('number');",
+                  "  pm.expect(response.total).to.be.at.least(0);",
+                  "});",
+                  "",
+                  "pm.test('Users have required properties', function() {",
+                  "  const response = pm.response.json();",
+                  "  if (response.data.length > 0) {",
+                  "    const user = response.data[0];",
+                  "    pm.expect(user).to.have.property('id');",
+                  "    pm.expect(user).to.have.property('name');",
+                  "    pm.expect(user).to.have.property('email');",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
