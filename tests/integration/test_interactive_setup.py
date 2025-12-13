@@ -189,7 +189,7 @@ DEBUG=False
 
         content = self.env_file.read_text()
         assert "OPENAI_API_KEY=sk-test-openai-key" in content
-        assert "MODEL=gpt-5" in content
+        assert "MODEL=gpt-5.2" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_anthropic(self, mock_get_dir):
@@ -335,7 +335,7 @@ class TestInteractiveSetupConfiguration:
         assert len(bedrock_config["models"]) > 0
         assert bedrock_config["default_model"] in bedrock_config["models"]
         assert "anthropic.claude-sonnet-4-5-20250929-v1:0" in bedrock_config["models"]
-        assert "openai.gpt-5.1" in bedrock_config["models"]
+        assert "openai.gpt-5.2" in bedrock_config["models"]
 
     def test_get_executable_directory_returns_path(self):
         """Test that get_executable_directory returns a valid path."""

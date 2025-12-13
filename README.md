@@ -92,7 +92,8 @@ This project supports Anthropic, OpenAI, Google Generative AI, and AWS Bedrock l
 
 **OpenAI**
 
-- GPT-5.1 (gpt-5.1) - **Recommended**
+- GPT-5.2 (gpt-5.2) - **Recommended**
+- GPT-5.1 (gpt-5.1)
 - GPT-5 (gpt-5)
 - GPT-4.1 (gpt-4.1)
 - GPT-5 Mini (gpt-5-mini)
@@ -106,7 +107,7 @@ This project supports Anthropic, OpenAI, Google Generative AI, and AWS Bedrock l
 AWS Bedrock provides access to multiple model families through a unified API. Use the actual Bedrock model IDs:
 
 - Claude models: anthropic.claude-sonnet-4-5-20250929-v1:0, anthropic.claude-haiku-4-5-20251001-v1:0, anthropic.claude-opus-4-5-20251101-v1:0, anthropic.claude-sonnet-4-20250514-v1:0
-- OpenAI models: openai.gpt-5.1, openai.gpt-5, openai.gpt-4.1, openai.gpt-5-mini
+- OpenAI models: openai.gpt-5.2, openai.gpt-5.1, openai.gpt-5, openai.gpt-4.1, openai.gpt-5-mini
 - Google models: google.gemini-3-pro-preview
 
 **Authentication Options:**

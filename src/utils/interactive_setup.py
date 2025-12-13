@@ -25,8 +25,8 @@ class InteractiveSetup:
         "2": {
             "name": "OpenAI",
             "env_key": "OPENAI_API_KEY",
-            "models": ["gpt-5.1", "gpt-5", "gpt-5-mini", "gpt-4.1"],
-            "default_model": "gpt-5.1",
+            "models": ["gpt-5.2", "gpt-5.1", "gpt-5", "gpt-5-mini", "gpt-4.1"],
+            "default_model": "gpt-5.2",
         },
         "3": {
             "name": "Google Generative AI",
@@ -43,6 +43,7 @@ class InteractiveSetup:
                 "anthropic.claude-haiku-4-5-20251001-v1:0",
                 "anthropic.claude-opus-4-5-20251101-v1:0",
                 "anthropic.claude-sonnet-4-20250514-v1:0",
+                "openai.gpt-5.2",
                 "openai.gpt-5.1",
                 "openai.gpt-5",
                 "openai.gpt-5-mini",

@@ -23,24 +23,37 @@ This workflow fetches a GitHub issue from the repository, analyzes it, creates a
    
    Review the issue title, description, labels, and any comments to fully understand the requirements.
 
-2. **Analyze the codebase context**
+// turbo
+2. **Create a feature branch**
+   
+   Create a new branch for the issue and check it out:
+   ```bash
+   git checkout -b feature/issue-<ISSUE_NUMBER>-<short_description>
+   git push -u origin feature/issue-<ISSUE_NUMBER>-<short_description>
+   ```
+   
+   Replace `<ISSUE_NUMBER>` with the issue number and `<short_description>` with a brief kebab-case description of the issue (e.g., `feature/issue-42-add-retry-logic`).
+
+3. **Analyze the codebase context**
    
    Use the `code_search` tool to explore relevant parts of the codebase related to the issue. Search for:
    - Files mentioned in the issue
    - Related functionality or components
    - Existing patterns that should be followed
-   - Tests that may need updates
+   - Unit or Integration tests that may need updates
+   - Documentation mentioning impacted functionality
 
-3. **Create an implementation plan**
+4. **Create an implementation plan**
    
    Based on the issue requirements and codebase analysis, create a detailed plan using `update_plan` that includes:
    - Files that need to be created or modified
    - Key changes required in each file
-   - Test updates or new tests needed
+   - Unit or Integration test updates or new tests needed
+   - Update to the Benchmark or Evals in the `benchmarks/` or `evaluations/` folders
    - Documentation updates if applicable
    - Any dependencies or prerequisites
 
-4. **Implement the changes**
+5. **Implement the changes**
    
    Execute the plan step by step:
    - Make code changes using `edit` or `multi_edit` tools
@@ -48,14 +61,14 @@ This workflow fetches a GitHub issue from the repository, analyzes it, creates a
    - Add necessary imports and dependencies
    - Ensure changes are minimal and focused
 
-5. **Update or create tests**
+6. **Update or create tests**
    
    - Add new tests for new functionality
    - Update existing tests if behavior changed
    - Ensure test coverage for the changes
    
 // turbo
-6. **Run the test suite**
+7. **Run the test suite**
    
    Verify all tests pass:
    ```bash
@@ -64,21 +77,21 @@ This workflow fetches a GitHub issue from the repository, analyzes it, creates a
    
    If tests fail, analyze the failures and fix issues before proceeding.
 
-7. **Update documentation**
+8. **Update documentation**
    
    If the issue affects user-facing functionality:
    - Update README.md if needed
    - Update USAGE-GUIDE.txt if applicable
    - Update any relevant documentation in the `benchmarks/` or `evaluations/` folders per the rules
 
-8. **Verify the implementation**
+9. **Verify the implementation**
    
    - Review all changes made
    - Ensure the issue requirements are fully addressed
    - Check that no unrelated changes were introduced
    - Confirm code quality and style consistency
 
-9. **Prepare for PR/commit**
+10. **Prepare for PR/commit**
     
     Summarize the changes made and provide:
     - A concise description
