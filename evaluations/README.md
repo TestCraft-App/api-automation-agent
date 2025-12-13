@@ -28,10 +28,43 @@ evaluations/
 │   ├── evaluation_data_loader.py  # Test data loading utilities
 │   ├── evaluation_file_writer.py  # Generated file persistence
 │   ├── model_grader.py            # LLM-based grading service
-│   └── mock_file_reading_tool.py  # Mock tool for get_additional_models tests
+│   ├── mock_file_reading_tool.py  # Mock tool for get_additional_models tests
+│   └── evaluators/                # Strategy pattern evaluators
+│       ├── __init__.py
+│       ├── base_evaluator.py          # Abstract base class with shared logic
+│       ├── first_test_evaluator.py    # generate_first_test (OpenAPI & Postman)
+│       ├── models_evaluator.py        # generate_models (OpenAPI & Postman)
+│       ├── additional_tests_evaluator.py   # generate_additional_tests
+│       └── additional_models_evaluator.py  # get_additional_models
 └── data/
     ├── generate_first_test_dataset/               # Example first-test dataset
     └── generate_models_dataset/                   # Example models dataset
+```
+
+## Architecture
+
+The evaluation system uses a **Strategy Pattern** for extensibility:
+
+- **`EvaluationRunner`**: Orchestrates evaluation runs, manages parallel execution, and aggregates results
+- **`BaseEvaluator`**: Abstract base class providing shared logic (config management, file grading, Postman preprocessing)
+- **Concrete Evaluators**: Each handles specific case types (e.g., `FirstTestEvaluator` handles both `generate_first_test` and `generate_first_test_postman`)
+
+### Adding a New Evaluator
+
+1. Create a new class extending `BaseEvaluator` in `evaluations/services/evaluators/`
+2. Define `supported_case_types` (list of case type strings it handles)
+3. Implement the `evaluate()` method
+4. The evaluator is automatically registered when `EvaluationRunner` is instantiated
+
+```python
+from evaluations.services.evaluators.base_evaluator import BaseEvaluator
+
+class MyCustomEvaluator(BaseEvaluator):
+    supported_case_types = ["my_custom_type"]
+    
+    def evaluate(self, test_case, output_dir):
+        # Implementation here
+        pass
 ```
 
 ## Usage
