@@ -67,7 +67,7 @@ python benchmarks/benchmark_runner.py --openapi-spec <path_to_openapi_spec> --ll
 
 *   `--openapi-spec` (Required): Path to the OpenAPI specification file (e.g., `path/to/your/api.yaml`).
 *   `--llms` (Required): A comma-separated list of LLM models to benchmark. Do not use spaces between names.
-    *   Available choices: `GPT_5_2`, `GPT_5_1`, `GPT_5`, `GPT_4_1`, `GPT_5_MINI`, `CLAUDE_SONNET_4`, `CLAUDE_SONNET_4_5`, `CLAUDE_HAIKU_4_5`, `CLAUDE_OPUS_4_5`, `GEMINI_3_PRO_PREVIEW` (these are derived from the `Model` enum in `src/configuration/models.py`).
+    *   Available choices: `GPT_5_2`, `GPT_5_1`, `GPT_5`, `GPT_4_1`, `GPT_5_MINI`, `CLAUDE_SONNET_4`, `CLAUDE_SONNET_4_5`, `CLAUDE_HAIKU_4_5`, `CLAUDE_OPUS_4_5`, `GEMINI_3_PRO_PREVIEW`, `GEMINI_3_FLASH_PREVIEW` (these are derived from the `Model` enum in `src/configuration/models.py`).
     *   Example: `GPT_5_1,CLAUDE_SONNET_4_5`
 *   `--endpoints` (Optional): Specific endpoints to target from the OpenAPI specification. If not provided, all endpoints will be targeted.
     *   Example: `/users/{id}`

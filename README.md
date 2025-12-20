@@ -100,6 +100,7 @@ This project supports Anthropic, OpenAI, Google Generative AI, and AWS Bedrock l
 
 **Google**
 
+- Gemini 3 Flash Preview (gemini-3-flash-preview) - **Recommended: Fast + low cost**
 - Gemini 3 Pro Preview (gemini-3-pro-preview)
 
 **AWS Bedrock**
@@ -108,7 +109,7 @@ AWS Bedrock provides access to multiple model families through a unified API. Us
 
 - Claude models: anthropic.claude-sonnet-4-5-20250929-v1:0, anthropic.claude-haiku-4-5-20251001-v1:0, anthropic.claude-opus-4-5-20251101-v1:0, anthropic.claude-sonnet-4-20250514-v1:0
 - OpenAI models: openai.gpt-5.2, openai.gpt-5.1, openai.gpt-5, openai.gpt-4.1, openai.gpt-5-mini
-- Google models: google.gemini-3-pro-preview
+- Google models: google.gemini-3-flash-preview, google.gemini-3-pro-preview
 
 **Authentication Options:**
 

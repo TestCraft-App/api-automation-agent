@@ -31,8 +31,8 @@ class InteractiveSetup:
         "3": {
             "name": "Google Generative AI",
             "env_key": "GOOGLE_API_KEY",
-            "models": ["gemini-3-pro-preview"],
-            "default_model": "gemini-3-pro-preview",
+            "models": ["gemini-3-flash-preview", "gemini-3-pro-preview"],
+            "default_model": "gemini-3-flash-preview",
         },
         "4": {
             "name": "AWS Bedrock",
@@ -48,6 +48,7 @@ class InteractiveSetup:
                 "openai.gpt-5",
                 "openai.gpt-5-mini",
                 "openai.gpt-4.1",
+                "google.gemini-3-flash-preview",
                 "google.gemini-3-pro-preview",
             ],
             "default_model": "anthropic.claude-sonnet-4-5-20250929-v1:0",

@@ -336,6 +336,7 @@ class TestInteractiveSetupConfiguration:
         assert bedrock_config["default_model"] in bedrock_config["models"]
         assert "anthropic.claude-sonnet-4-5-20250929-v1:0" in bedrock_config["models"]
         assert "openai.gpt-5.2" in bedrock_config["models"]
+        assert "google.gemini-3-flash-preview" in bedrock_config["models"]
 
     def test_get_executable_directory_returns_path(self):
         """Test that get_executable_directory returns a valid path."""
