@@ -34,6 +34,7 @@ OpenAI Models:
 - gpt-4.1
 
 Google Models:
+- gemini-3-flash-preview (recommended - fast + low cost)
 - gemini-3-pro-preview
 
 AWS Bedrock Models:
@@ -42,7 +43,7 @@ AWS Bedrock Models:
 - anthropic.claude-opus-4-5-20251101-v1:0
 - anthropic.claude-sonnet-4-20250514-v1:0
 - openai.gpt-5.2, openai.gpt-5.1, openai.gpt-5, openai.gpt-5-mini, openai.gpt-4.1
-- google.gemini-3-pro-preview
+- google.gemini-3-flash-preview, google.gemini-3-pro-preview
 
 MANUAL SETUP (ALTERNATIVE):
 

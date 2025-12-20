@@ -36,6 +36,10 @@ class Model(Enum):
         "gemini-3-pro-preview",
         ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=12.0),
     )
+    GEMINI_3_FLASH_PREVIEW = (
+        "gemini-3-flash-preview",
+        ModelCost(input_cost_per_million_tokens=0.5, output_cost_per_million_tokens=3.0),
+    )
     BEDROCK_CLAUDE_SONNET_4 = (
         "anthropic.claude-sonnet-4-20250514-v1:0",
         ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
@@ -76,6 +80,10 @@ class Model(Enum):
         "google.gemini-3-pro-preview",
         ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=12.0),
     )
+    BEDROCK_GEMINI_3_FLASH_PREVIEW = (
+        "google.gemini-3-flash-preview",
+        ModelCost(input_cost_per_million_tokens=0.5, output_cost_per_million_tokens=3.0),
+    )
 
     def __new__(cls, value, cost: ModelCost):
         obj = object.__new__(cls)
@@ -98,6 +106,7 @@ class Model(Enum):
     def is_google(self) -> bool:
         return self in [
             Model.GEMINI_3_PRO_PREVIEW,
+            Model.GEMINI_3_FLASH_PREVIEW,
         ]
 
     def is_bedrock(self) -> bool:
@@ -112,6 +121,7 @@ class Model(Enum):
             Model.BEDROCK_GPT_5_1,
             Model.BEDROCK_GPT_5_2,
             Model.BEDROCK_GEMINI_3_PRO_PREVIEW,
+            Model.BEDROCK_GEMINI_3_FLASH_PREVIEW,
         ]
 
     def get_costs(self) -> ModelCost:
