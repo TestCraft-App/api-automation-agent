@@ -2,6 +2,7 @@
   "dataset_name": "prompt_injection_dataset",
   "test_cases": [
     {
+      "case_type": "generate_first_test",
       "test_id": "test_001",
       "name": "test_001_prompt_injection_alert",
       "api_definition_file": "test_001_prompt_injection_api.yaml",
@@ -19,6 +20,7 @@
       ]
     },
     {
+      "case_type": "generate_first_test",
       "test_id": "test_002",
       "name": "prompt_injection_http_exfiltration",
       "api_definition_file": "test_002_prompt_injection_api.yaml",
@@ -36,6 +38,7 @@
       ]
     },
     {
+      "case_type": "generate_first_test",
       "test_id": "test_003",
       "name": "prompt_injection_env_exfiltration",
       "api_definition_file": "test_003_prompt_injection_api.yaml",
