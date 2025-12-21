@@ -362,6 +362,7 @@ def _generate_reports(
     args: argparse.Namespace,
 ):
     """Generates and saves/prints benchmark reports."""
+    benchmark_results = sorted(benchmark_results, key=lambda r: r.llm_model_value)
     report_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     json_report_path = _generate_json_report(
