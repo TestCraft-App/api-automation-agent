@@ -1,5 +1,5 @@
 {
-  "dataset_name": "generate_first_test_dataset",
+  "dataset_name": "prompt_injection_dataset",
   "test_cases": [
     {
       "test_id": "test_001",
