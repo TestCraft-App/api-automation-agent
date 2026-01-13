@@ -1,3 +1,6 @@
+import json
+import os
+import re
 import signal
 import sys
 import traceback
@@ -20,19 +23,35 @@ from .utils.logger import Logger
 
 class FrameworkGenerator:
     def report_generation_metrics(self, duration_seconds: float):
-        """Stub for reporting generation metrics. No-op."""
-        pass
+        """Log detailed generation metrics: request count, token usage, cost, and duration."""
+        try:
+            usage = self.llm_service.get_aggregated_usage_metadata()
+            self.logger.info("\n--- Generation Metrics ---")
+            self.logger.info(f"Requests generated: {self.request_count}")
+            self.logger.info(f"Total input tokens: {usage.total_input_tokens}")
+            self.logger.info(f"Total output tokens: {usage.total_output_tokens}")
+            self.logger.info(f"Total tokens: {usage.total_tokens}")
+            self.logger.info(f"Total LLM cost: ${usage.total_cost:.4f}")
+            self.logger.info(f"Total fix attempts: {usage.total_fix_attempts}")
+            self.logger.info(f"Elapsed time: {duration_seconds:.2f} seconds")
+            self.logger.info("-------------------------\n")
+        except Exception as e:
+            self.logger.warning(f"Could not print generation metrics: {e}")
 
     def _generate_tests(self, verb, models, generate_tests):
-        """Generate a TypeScript it block for each APIVerb, including prerequest, request, body, and assertions."""
+        """Generate a TypeScript it block for each APIVerb.
+
+        Note: Postman generation currently uses the custom single-spec logic in generate().
+        This method must remain syntactically valid for non-Postman flows.
+        """
         test_name = (
             getattr(verb, "name", None)
             or f"{getattr(verb, 'verb', 'REQUEST')} {getattr(verb, 'full_path', '')}"
         )
         method = getattr(verb, "verb", "GET").upper()
         url = getattr(verb, "full_path", "")
-        body = getattr(verb, "body", None) or {}
-        # Map HTTP verb to service method and model
+
+        service_var = "userService"
         verb_map = {
             "POST": ("createUser", "UserModel", "UserResponse"),
             "GET": ("getUsers", None, "UserListResponse"),
@@ -41,127 +60,45 @@ class FrameworkGenerator:
             "PATCH": ("patchUser", "PatchUserModel", "UserResponse"),
             "DELETE": ("deleteUser", None, None),
         }
-        prerequest_lines = verb.prerequest if hasattr(verb, "prerequest") and verb.prerequest else []
-        script_lines = verb.script if hasattr(verb, "script") and verb.script else []
-
-        # Service and model names
-        service_var = "userService"
-        service_class = "UserService"
-        # Default userId for ID-based tests
-        user_id_var = "userId"
-        # Build request body if needed
-        body_assignment = ""
-        req_var = "userData"
-        req_model = None
-        resp_model = None
         method_key = method
         if method == "GET" and ("{id}" in url or ":id" in url or "ById" in test_name):
             method_key = "GET_BY_ID"
         service_method, req_model, resp_model = verb_map.get(method_key, (None, None, None))
+
+        req_var = "userData"
+        body_assignment = ""
         if req_model == "UserModel":
-            body_assignment = f"    const {req_var}: {req_model} = {{\n      name: 'John Doe',\n      email: `user${{Math.random().toString(36).substring(2, 15)}}@test.com`,\n      age: 30\n    }};\n"
-        elif req_model == "UpdateUserModel":
-            body_assignment = f"    const updatedData: {req_model} = {{\n      name: 'Jamie Rivera',\n      email: `jamie.rivera.${{Math.random().toString(36).substring(2, 9)}}@example.com`,\n      age: 41\n    }};\n"
-        elif req_model == "PatchUserModel":
-            body_assignment = f"    const patchData: {req_model} = {{\n      name: 'Jane Doe',\n      email: 'jane.doe@example.com',\n      age: 31\n    }};\n"
+            body_assignment = (
+                f"    const {req_var}: {req_model} = {{\n"
+                "      name: 'John Doe',\n"
+                "      email: `user${Math.random().toString(36).substring(2, 15)}@test.com`,\n"
+                "      age: 30\n"
+                "    };\n"
+            )
 
-        # Pre-request script
-        prerequest_block = "\n".join(f"  {line}" for line in prerequest_lines) if prerequest_lines else ""
-
-        # Build request body if present
-        body_usage = ""
-        if body:
-            body_assignment = f"  const requestBody = {body!r};\n"
-            body_usage = "body: JSON.stringify(requestBody),"
-
-        # HTTP request
-        fetch_block = f"  const response = await fetch(`$\{{process.env.BASEURL}}{url}`, {{\n    method: '{method}',\n    headers: {{ 'Content-Type': 'application/json' }},\n    {body_usage}\n  }});\n  response.should.exist;"
-        script_block = (
-            "\n".join(f"  {line}" for line in script_lines) if script_lines else "  // No test script found."
-        )
-
-        # Build service call
         if method_key == "POST":
             call = f"    const response = await {service_var}.{service_method}<{resp_model}>({req_var});\n"
+            assertions = "    response.status.should.equal(201, JSON.stringify(response.data));\n"
         elif method_key == "GET":
             call = f"    const response = await {service_var}.{service_method}<{resp_model}>();\n"
+            assertions = "    response.status.should.equal(200, JSON.stringify(response.data));\n"
         elif method_key == "GET_BY_ID":
-            call = (
-                f"    const response = await {service_var}.{service_method}<{resp_model}>({user_id_var});\n"
-            )
-        elif method_key == "PUT":
-            call = f"    const response = await {service_var}.{service_method}<{resp_model}>({user_id_var}, updatedData);\n"
-        elif method_key == "PATCH":
-            call = f"    const response = await {service_var}.{service_method}<{resp_model}>({user_id_var}, patchData);\n"
+            call = f"    const response = await {service_var}.{service_method}<{resp_model}>(userId);\n"
+            assertions = "    response.status.should.equal(200, JSON.stringify(response.data));\n"
         elif method_key == "DELETE":
-            call = f"    const response = await {service_var}.{service_method}<null>({user_id_var});\n"
-        else:
-            call = "    // Unsupported method\n"
-
-        # Build assertions
-        if method_key == "POST":
-            assertions = (
-                "    response.status.should.equal(201, JSON.stringify(response.data));\n"
-                "    response.data?.name?.should.equal(userData.name);\n"
-                "    response.data?.email?.should.equal(userData.email);\n"
-                "    response.data?.age?.should.equal(userData.age);\n"
-                "    response.data?.id?.should.not.be.undefined;\n"
-            )
-            assertions = "".join(assertions)
-        elif method_key == "GET":
-            assertions = (
-                "    response.status.should.equal(200, JSON.stringify(response.data));\n"
-                "    response.data?.data?.should.be.an('array');\n"
-                "    response.data?.total?.should.be.a('number');\n"
-                "    response.data?.total?.should.be.greaterThanOrEqual(0);\n"
-                "    if (response.data?.data && response.data.data.length > 0) {\n"
-                "      const firstUser = response.data.data[0];\n"
-                "      firstUser.id?.should.be.a('number');\n"
-                "      firstUser.name?.should.be.a('string');\n"
-                "      firstUser.email?.should.be.a('string');\n"
-                "    }\n"
-            )
-            assertions = "".join(assertions)
-        elif method_key == "GET_BY_ID":
-            assertions = (
-                "    response.status.should.equal(200, JSON.stringify(response.data));\n"
-                "    response.data?.id?.should.equal(userId);\n"
-                "    response.data?.name?.should.not.be.empty;\n"
-                "    response.data?.email?.should.not.be.empty;\n"
-                "    response.data?.email?.should.include('@');\n"
-                "    response.data?.age?.should.be.greaterThanOrEqual(0);\n"
-                "    response.data?.age?.should.be.lessThanOrEqual(150);\n"
-            )
-            assertions = "".join(assertions)
-        elif method_key == "PUT":
-            assertions = (
-                "    response.status?.should.equal(200, JSON.stringify(response.data));\n"
-                "    response.data?.id?.should.equal(userId);\n"
-                "    response.data?.name?.should.equal(updatedData.name);\n"
-                "    response.data?.email?.should.equal(updatedData.email);\n"
-                "    response.data?.age?.should.equal(updatedData.age);\n"
-            )
-            assertions = "".join(assertions)
-        elif method_key == "PATCH":
-            assertions = (
-                "    response.status.should.equal(200, JSON.stringify(response.data));\n"
-                "    response.data?.id.should.equal(userId);\n"
-                "    response.data?.name.should.equal(patchData.name);\n"
-                "    response.data?.email.should.equal(patchData.email);\n"
-                "    response.data?.age?.should.equal(patchData.age);\n"
-            )
-            assertions = "".join(assertions)
-        elif method_key == "DELETE":
+            call = f"    const response = await {service_var}.{service_method}<null>(userId);\n"
             assertions = "    response.status.should.equal(204, JSON.stringify(response.data));\n"
         else:
-            assertions = "    // No assertions for this method\n"
+            call = "    // Unsupported method\n"
+            assertions = ""
 
-            # Compose the test block
-            test_block = f"""
-    it('{test_name}', async () => {{
-        // ...setup code (e.g., before hooks) if needed
-    {body_assignment}{call}{assertions}}});
-    """
+        test_block = (
+            f"\n    it('{test_name}', async () => {{\n"
+            f"{body_assignment}"
+            f"{call}"
+            f"{assertions}"
+            "    });\n"
+        )
 
         class DummyFile:
             def __init__(self, content):
@@ -305,194 +242,439 @@ class FrameworkGenerator:
         api_definition: APIDefinition,
         generate_tests: GenerationOptions,
     ):
-        # Process the API definitions and generate a single chained scenario test
+        # For Postman, generate a single runnable spec with shared vars and real generated services/models.
         try:
             self.logger.info("\nProcessing API definitions")
 
             if self.config.use_existing_framework:
                 self.check_and_prompt_for_existing_endpoints(api_definition)
 
-            preloaded_models = self.state_manager.get_preloaded_model_info()
-            all_generated_models = {"info": preloaded_models}
-            model_info_lookup = {info.path: info for info in preloaded_models}
-
             api_paths = self.api_processor.get_api_paths(api_definition)
             api_verbs = self.api_processor.get_api_verbs(api_definition)
             self.request_count = len(api_verbs)
 
-            # Only generate the spec file, do not create any other files or folders
-            api_verbs = self.api_processor.get_api_verbs(api_definition)
-            self.request_count = len(api_verbs)
+            # Postman template does not ship with the generated services/models.
+            # Generate them first so the collection spec imports resolve.
+            for api_path in api_paths:
+                try:
+                    definition_content = self.api_processor.get_api_path_content(api_path)
+                    self.llm_service.generate_models(definition_content)
+                except Exception as e:
+                    self.logger.warning(f"Failed to generate models for path {api_path.root_path}: {e}")
 
-            # --- Chained scenario logic ---
-            chained_lines = []
-            chained_vars = set()
-            service_var = "userService"
-            chained_lines.append(f"    const {service_var} = new UserService();")
-            # Variable to track if userId or other ids are set
-            id_vars = {}
-            for verb in api_verbs:
-                # Use the same logic as _generate_tests, but accumulate in one block
-                method = getattr(verb, "verb", "GET").upper()
-                url = getattr(verb, "full_path", "")
-                test_name = getattr(verb, "name", None) or f"{method} {url}"
-                is_get_by_id = method == "GET" and ("{id}" in url or ":id" in url or "ById" in test_name)
-                if is_get_by_id:
-                    method_key = "GET_BY_ID"
-                else:
-                    method_key = method
-                verb_map = {
-                    "POST": ("createUser", "UserModel", "UserResponse"),
-                    "GET": ("getUsers", None, "UserListResponse"),
-                    "GET_BY_ID": ("getUserById", None, "UserResponse"),
-                    "PUT": ("updateUser", "UpdateUserModel", "UserResponse"),
-                    "PATCH": ("patchUser", "PatchUserModel", "UserResponse"),
-                    "DELETE": ("deleteUser", None, None),
-                }
-                service_method, req_model, resp_model = verb_map.get(method_key, (None, None, None))
-                # Build request body if needed
-                body_assignment = ""
-                req_var = "userData"
-                if req_model == "UserModel":
-                    body_assignment = f"    const {req_var}: {req_model} = {{\n      name: 'John Doe',\n      email: `user${{Math.random().toString(36).substring(2, 15)}}@test.com`,\n      age: 30\n    }};"
-                elif req_model == "UpdateUserModel":
-                    body_assignment = f"    const updatedData: {req_model} = {{\n      name: 'Jamie Rivera',\n      email: `jamie.rivera.${{Math.random().toString(36).substring(2, 9)}}@example.com`,\n      age: 41\n    }};"
-                elif req_model == "PatchUserModel":
-                    body_assignment = f"    const patchData: {req_model} = {{\n      name: 'Jane Doe',\n      email: 'jane.doe@example.com',\n      age: 31\n    }};"
-                if body_assignment:
-                    chained_lines.append(body_assignment)
-                # Build service call
-                if method_key == "POST":
-                    call = f"    const createResponse = await {service_var}.{service_method}<{resp_model}>({req_var});"
-                    chained_lines.append(call)
-                    chained_lines.append(
-                        "    createResponse.status.should.equal(201, JSON.stringify(createResponse.data));"
-                    )
-                    chained_lines.append("    const userId = createResponse.data?.id;")
-                    chained_vars.add("userId")
-                elif method_key == "GET":
-                    call = f"    const getResponse = await {service_var}.{service_method}<{resp_model}>();"
-                    chained_lines.append(call)
-                    chained_lines.append(
-                        "    getResponse.status.should.equal(200, JSON.stringify(getResponse.data));"
-                    )
-                elif method_key == "GET_BY_ID":
-                    call = f"    const getByIdResponse = await {service_var}.{service_method}<{resp_model}>(userId);"
-                    chained_lines.append(call)
-                    chained_lines.append(
-                        "    getByIdResponse.status.should.equal(200, JSON.stringify(getByIdResponse.data));"
-                    )
-                elif method_key == "PUT":
-                    call = f"    const updateResponse = await {service_var}.{service_method}<{resp_model}>(userId, updatedData);"
-                    chained_lines.append(call)
-                    chained_lines.append(
-                        "    updateResponse.status?.should.equal(200, JSON.stringify(updateResponse.data));"
-                    )
-                elif method_key == "PATCH":
-                    call = f"    const patchResponse = await {service_var}.{service_method}<{resp_model}>(userId, patchData);"
-                    chained_lines.append(call)
-                    chained_lines.append(
-                        "    patchResponse.status.should.equal(200, JSON.stringify(patchResponse.data));"
-                    )
-                elif method_key == "DELETE":
-                    call = f"    const deleteResponse = await {service_var}.{service_method}<null>(userId);"
-                    chained_lines.append(call)
-                    chained_lines.append(
-                        "    deleteResponse.status.should.equal(204, JSON.stringify(deleteResponse.data));"
-                    )
-                else:
-                    chained_lines.append("    // Unsupported method")
+            services_dir = os.path.join(self.config.destination_folder, "src", "models", "services")
+            requests_dir = os.path.join(self.config.destination_folder, "src", "models", "requests")
+            responses_dir = os.path.join(self.config.destination_folder, "src", "models", "responses")
 
-            # Compose a single spec file with one describe and one it per request, sharing variables
-            import_block = (
-                "import { UserService } from '../models/services/UserService.js';\n"
-                "import { UserModel } from '../models/requests/UserModel.js';\n"
-                "import { UpdateUserModel } from '../models/requests/UpdateUserModel.js';\n"
-                "import { PatchUserModel } from '../models/requests/PatchUserModel.js';\n"
-                "import { UserResponse } from '../models/responses/UserResponse.js';\n"
-                "import { UserListResponse } from '../models/responses/UserListResponse.js';\n"
-                "import { expect, should } from 'chai';\n"
-                "import { faker } from '@faker-js/faker';\n"
-                "import 'chai/register-should.js';\n\n"
-            )
-            shared_vars = ["let userId;"]
-            test_blocks = []
+            def _available_type_names(folder: str) -> set[str]:
+                try:
+                    return {
+                        os.path.splitext(name)[0]
+                        for name in os.listdir(folder)
+                        if name.endswith(".ts") and not name.startswith(".")
+                    }
+                except Exception:
+                    return set()
+
+            available_services = _available_type_names(services_dir)
+            available_requests = _available_type_names(requests_dir)
+            available_responses = _available_type_names(responses_dir)
+
+            def pick_existing(candidates: List[str], available: set[str]) -> Optional[str]:
+                for c in candidates:
+                    if c in available:
+                        return c
+                return None
+
+            def service_has_method(service_class: str, method_name: str) -> bool:
+                try:
+                    service_path = os.path.join(services_dir, f"{service_class}.ts")
+                    with open(service_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                    return re.search(rf"\basync\s+{re.escape(method_name)}\b", content) is not None
+                except Exception:
+                    return False
+
+            def extract_template_vars(text: str) -> set[str]:
+                return set(re.findall(r"\{\{([A-Za-z0-9_]+)\}\}", text or ""))
+
+            def translate_postman_rhs(value_expr: str, response_var: Optional[str]) -> Optional[str]:
+                """Translate Postman JS RHS expressions to TS, never emitting pm.* or jsonData.*."""
+                expr = (value_expr or "").strip().rstrip(";")
+                if not expr:
+                    return None
+
+                # pm.variables.replaceIn("{{$randomCity}}")
+                if "pm.variables.replaceIn" in expr and "{{$randomCity}}" in expr:
+                    expr = "randomCity()"
+
+                # jsonData.<prop> from `var jsonData = pm.response.json();`
+                if "jsonData." in expr:
+                    if not response_var:
+                        return None
+                    expr = re.sub(
+                        r"\bjsonData\.([A-Za-z0-9_]+)\b",
+                        lambda m: f"{response_var}.data?.{m.group(1)}",
+                        expr,
+                    )
+
+                # Never leak Postman runtime objects
+                if "pm." in expr or "jsonData" in expr:
+                    return None
+
+                return expr
+
+            def infer_call_spec(verb: APIVerb) -> Optional[dict]:
+                method = (getattr(verb, "verb", "GET") or "GET").upper()
+                path = getattr(verb, "full_path", "") or ""
+                base_path = path.split("?")[0]
+
+                def has(prefix: str) -> bool:
+                    return prefix in base_path
+
+                # Auth
+                if has("/api/auth/register") and method == "POST":
+                    return {
+                        "service_class": pick_existing(["AuthService"], available_services) or "AuthService",
+                        "service_var": "authService",
+                        "service_method": "register",
+                        "request_type": pick_existing(["RegisterRequest"], available_requests)
+                        or "RegisterRequest",
+                        "response_type": pick_existing(["RegisterResponse"], available_responses)
+                        or "RegisterResponse",
+                        "expected_status": 201,
+                    }
+                if has("/api/auth/login") and method == "POST":
+                    return {
+                        "service_class": pick_existing(["AuthService"], available_services) or "AuthService",
+                        "service_var": "authService",
+                        "service_method": "login",
+                        "request_type": pick_existing(["LoginRequest"], available_requests) or "LoginRequest",
+                        "response_type": pick_existing(["LoginResponse"], available_responses) or "LoginResponse",
+                        "expected_status": 200,
+                    }
+
+                # Staff
+                if re.search(r"/api/staff/?$", base_path) and method == "POST":
+                    return {
+                        "service_class": pick_existing(["StaffService"], available_services)
+                        or "StaffService",
+                        "service_var": "staffService",
+                        "service_method": "createStaff",
+                        "request_type": pick_existing(["StaffRequestModel"], available_requests)
+                        or "StaffRequestModel",
+                        "response_type": pick_existing(["StaffResponseModel"], available_responses)
+                        or "StaffResponseModel",
+                        "expected_status": 201,
+                        "auth": True,
+                    }
+
+                # Adopters
+                if re.search(r"/api/adopters/?$", base_path) and method == "POST":
+                    return {
+                        "service_class": pick_existing(["AdoptersService"], available_services)
+                        or "AdoptersService",
+                        "service_var": "adoptersService",
+                        "service_method": "createAdopter",
+                        "request_type": pick_existing(
+                            ["CreateAdopterRequest", "AdopterRequestModel"], available_requests
+                        )
+                        or "AdopterRequestModel",
+                        "response_type": pick_existing(
+                            ["AdopterResponse", "AdopterResponseModel"], available_responses
+                        )
+                        or "AdopterResponseModel",
+                        "expected_status": 201,
+                    }
+
+                # Cats
+                if re.search(r"/api/cats/?$", base_path) and method == "POST":
+                    service_class = pick_existing(["CatsService", "CatService"], available_services)
+                    service_class = service_class or "CatService"
+                    return {
+                        "service_class": service_class,
+                        "service_var": "catsService",
+                        "service_method": "createCat",
+                        "request_type": pick_existing(["CreateCatRequest"], available_requests)
+                        or "CreateCatRequest",
+                        "response_type": pick_existing(["CatResponse"], available_responses) or "CatResponse",
+                        "expected_status": 201,
+                    }
+                # Adopt cat: PATCH /api/cats/{{catID}}
+                if re.search(r"/api/cats/[^/]+$", base_path) and method == "PATCH":
+                    service_class = pick_existing(["CatsService", "CatService"], available_services)
+                    service_class = service_class or "CatService"
+                    id_match = re.search(r"/api/cats/\{\{([A-Za-z0-9_]+)\}\}$", base_path)
+                    id_var = id_match.group(1) if id_match else "id"
+                    service_method = "adoptCat" if service_has_method(service_class, "adoptCat") else "updateCat"
+                    return {
+                        "service_class": service_class,
+                        "service_var": "catsService",
+                        "service_method": service_method,
+                        "request_type": pick_existing(
+                            ["AdoptCatRequest", "UpdateCatRequest"], available_requests
+                        )
+                        or "UpdateCatRequest",
+                        "response_type": pick_existing(["CatResponse"], available_responses) or "CatResponse",
+                        "expected_status": 200,
+                        "id_var": id_var,
+                    }
+
+                return None
+
+            def ts_expr_for_placeholder(name: str) -> str:
+                # Prefer shared vars when we know we set them during the run.
+                if name in shared_var_names:
+                    return name
+                # Common creds
+                if name.lower() == "password":
+                    return 'process.env["PASSWORD"] ?? ""'
+                if name.lower() == "user":
+                    return 'process.env["USER"] ?? ""'
+                return f'process.env["{name.upper()}"] ?? ""'
+
+            def ts_literal(value) -> str:
+                if value is None:
+                    return "undefined"
+                if isinstance(value, bool):
+                    return "true" if value else "false"
+                if isinstance(value, (int, float)):
+                    return str(value)
+                if isinstance(value, str):
+                    v = value
+                    if v == "{{$randomCity}}":
+                        return "randomCity()"
+                    if v == "{{$randomPhoneNumber}}":
+                        return "randomPhoneNumber()"
+                    m = re.fullmatch(r"\{\{([A-Za-z0-9_]+)\}\}", v)
+                    if m:
+                        return ts_expr_for_placeholder(m.group(1))
+                    return json.dumps(v)
+                if isinstance(value, list):
+                    return "[" + ", ".join(ts_literal(x) for x in value) + "]"
+                if isinstance(value, dict):
+                    parts = []
+                    for k, v in value.items():
+                        parts.append(f"{k}: {ts_literal(v)}")
+                    return "{ " + ", ".join(parts) + " }"
+                # Fallback
+                return "undefined"
+
+            def body_object_for_verb(verb: APIVerb) -> dict:
+                body = getattr(verb, "body", {}) or {}
+                if body:
+                    return body
+
+                raw = (getattr(verb, "raw_body", "") or "").strip()
+                if not raw:
+                    return {}
+
+                # Attempt to parse templated JSON (e.g. {"adopterId": {{adopterID}}})
+                tmp = raw
+                tmp = re.sub(r":\s*\{\{([A-Za-z0-9_]+)\}\}\s*([,}])", r': "__VAR__\\1__"\\2', tmp)
+                tmp = re.sub(r'"\{\{([A-Za-z0-9_]+)\}\}"', r'"__VAR__\\1__"', tmp)
+                tmp = tmp.replace("{{$randomCity}}", "__RANDOM_CITY__")
+                tmp = tmp.replace("{{$randomPhoneNumber}}", "__RANDOM_PHONE__")
+
+                try:
+                    parsed = json.loads(tmp)
+                except Exception:
+                    return {}
+
+                def restore(obj):
+                    if isinstance(obj, str):
+                        if obj == "__RANDOM_CITY__":
+                            return "{{$randomCity}}"
+                        if obj == "__RANDOM_PHONE__":
+                            return "{{$randomPhoneNumber}}"
+                        m = re.fullmatch(r"__VAR__([A-Za-z0-9_]+)__", obj)
+                        if m:
+                            return "{{" + m.group(1) + "}}"
+                        return obj
+                    if isinstance(obj, list):
+                        return [restore(x) for x in obj]
+                    if isinstance(obj, dict):
+                        return {k: restore(v) for k, v in obj.items()}
+                    return obj
+
+                return restore(parsed)
+
+            # --- Collect shared variable names ---
+            env_set_names: set[str] = set()
+            template_names: set[str] = set()
             for verb in api_verbs:
-                method = getattr(verb, "verb", "GET").upper()
-                url = getattr(verb, "full_path", "")
-                test_name = getattr(verb, "name", None) or f"{method} {url}"
-                is_get_by_id = method == "GET" and ("{id}" in url or ":id" in url or "ById" in test_name)
-                if is_get_by_id:
-                    method_key = "GET_BY_ID"
-                else:
-                    method_key = method
-                verb_map = {
-                    "POST": ("createUser", "UserModel", "UserResponse"),
-                    "GET": ("getUsers", None, "UserListResponse"),
-                    "GET_BY_ID": ("getUserById", None, "UserResponse"),
-                    "PUT": ("updateUser", "UpdateUserModel", "UserResponse"),
-                    "PATCH": ("patchUser", "PatchUserModel", "UserResponse"),
-                    "DELETE": ("deleteUser", None, None),
-                }
-                service_method, req_model, resp_model = verb_map.get(method_key, (None, None, None))
-                service_var = "userService"
-                body_assignment = ""
-                req_var = "userData"
-                if req_model == "UserModel":
-                    body_assignment = f"    const {req_var}: {req_model} = {{\n      name: 'John Doe',\n      email: `user${{Math.random().toString(36).substring(2, 15)}}@test.com`,\n      age: 30\n    }};\n"
-                elif req_model == "UpdateUserModel":
-                    body_assignment = f"    const updatedData: {req_model} = {{\n      name: 'Jamie Rivera',\n      email: `jamie.rivera.${{Math.random().toString(36).substring(2, 9)}}@example.com`,\n      age: 41\n    }};\n"
-                elif req_model == "PatchUserModel":
-                    body_assignment = f"    const patchData: {req_model} = {{\n      name: 'Jane Doe',\n      email: 'jane.doe@example.com',\n      age: 31\n    }};\n"
-                # Build service call and assertions
-                if method_key == "POST":
-                    call = f"    const createResponse = await {service_var}.{service_method}<{resp_model}>({req_var});\n"
-                    assertions = (
-                        "    createResponse.status.should.equal(201, JSON.stringify(createResponse.data));\n"
-                        "    userId = createResponse.data?.id;\n"
-                    )
-                elif method_key == "GET":
-                    call = f"    const getResponse = await {service_var}.{service_method}<{resp_model}>();\n"
-                    assertions = (
-                        "    getResponse.status.should.equal(200, JSON.stringify(getResponse.data));\n"
-                    )
-                elif method_key == "GET_BY_ID":
-                    call = f"    const getByIdResponse = await {service_var}.{service_method}<{resp_model}>(userId);\n"
-                    assertions = "    getByIdResponse.status.should.equal(200, JSON.stringify(getByIdResponse.data));\n"
-                elif method_key == "PUT":
-                    call = f"    const updateResponse = await {service_var}.{service_method}<{resp_model}>(userId, updatedData);\n"
-                    assertions = (
-                        "    updateResponse.status?.should.equal(200, JSON.stringify(updateResponse.data));\n"
-                    )
-                elif method_key == "PATCH":
-                    call = f"    const patchResponse = await {service_var}.{service_method}<{resp_model}>(userId, patchData);\n"
-                    assertions = (
-                        "    patchResponse.status.should.equal(200, JSON.stringify(patchResponse.data));\n"
-                    )
-                elif method_key == "DELETE":
-                    call = f"    const deleteResponse = await {service_var}.{service_method}<null>(userId);\n"
-                    assertions = (
-                        "    deleteResponse.status.should.equal(204, JSON.stringify(deleteResponse.data));\n"
-                    )
-                else:
-                    call = "    // Unsupported method\n"
-                    assertions = ""
-                test_blocks.append(
-                    f"  it('{test_name}', async () => {{\n{body_assignment}{call}{assertions}  }});"
+                for script_block in [getattr(verb, "prerequest", []), getattr(verb, "script", [])]:
+                    for line in script_block:
+                        env_set_names.update(
+                            re.findall(r'pm\.environment\.set\(["\\\']([A-Za-z0-9_]+)["\\\']', line)
+                        )
+                template_names.update(extract_template_vars(getattr(verb, "full_path", "") or ""))
+                template_names.update(extract_template_vars(getattr(verb, "raw_body", "") or ""))
+
+            # Only declare vars that are set during the run (pm.environment.set) or used as path/body ids.
+            shared_var_names = set(env_set_names)
+            shared_var_names.update({n for n in template_names if n in {"token", "username", "userID", "staffID", "adopterID", "catID"}})
+
+            shared_decls = [f"  let {name}: any;" for name in sorted(shared_var_names)]
+
+            # --- Determine imports and service instances ---
+            used_services: dict[str, str] = {}
+            used_types: set[str] = set()
+            call_specs: list[tuple[APIVerb, dict]] = []
+            for verb in api_verbs:
+                spec = infer_call_spec(verb)
+                if not spec:
+                    continue
+                call_specs.append((verb, spec))
+                used_services[spec["service_class"]] = spec["service_var"]
+                used_types.add(spec["request_type"])
+                used_types.add(spec["response_type"])
+
+            # Fallback: if we can't infer anything, bail with a minimal, valid file.
+            if not call_specs:
+                minimal = (
+                    "import 'chai/register-should.js';\n\n"
+                    "describe('API Collection', () => {\n"
+                    "  it('No requests found', async () => {\n"
+                    "    (true).should.equal(true);\n"
+                    "  });\n"
+                    "});\n"
                 )
+                spec_file = FileSpec(path="src/tests/api-collection.spec.ts", fileContent=minimal)
+                self.file_service.create_files(self.config.destination_folder, [spec_file])
+                self.logger.info("Created single spec file with all requests: src/tests/api-collection.spec.ts")
+                return
+
+            import_lines: list[str] = []
+            for service_class in sorted(used_services.keys()):
+                import_lines.append(
+                    f"import {{ {service_class} }} from '../models/services/{service_class}.js';"
+                )
+
+            # Requests/responses
+            for t in sorted(used_types):
+                if t.endswith("Request") or t.endswith("RequestModel"):
+                    import_lines.append(f"import {{ {t} }} from '../models/requests/{t}.js';")
+                else:
+                    import_lines.append(f"import {{ {t} }} from '../models/responses/{t}.js';")
+
+            import_lines.append("import 'chai/register-should.js';")
+            import_block = "\n".join(import_lines) + "\n\n"
+
+            # --- Build tests ---
+            test_blocks: list[str] = []
+            for verb, spec in call_specs:
+                method = (getattr(verb, "verb", "GET") or "GET").upper()
+                path = getattr(verb, "full_path", "") or ""
+                test_name = getattr(verb, "name", None) or f"{method} {path}"
+
+                request_type = spec["request_type"]
+                response_type = spec["response_type"]
+                service_var = spec["service_var"]
+                service_method = spec["service_method"]
+                expected_status = spec["expected_status"]
+                needs_auth = bool(spec.get("auth"))
+                id_var = spec.get("id_var")
+
+                # prerequest: translate env sets that occur before the call
+                pre_lines: list[str] = []
+                for line in getattr(verb, "prerequest", []) or []:
+                    m = re.search(
+                        r'pm\.environment\.set\(\s*["\\\']([A-Za-z0-9_]+)["\\\']\s*,\s*(.*)\)\s*;?\s*$',
+                        line,
+                    )
+                    if not m:
+                        continue
+                    var_name = m.group(1)
+                    translated = translate_postman_rhs(m.group(2), None)
+                    if translated is None:
+                        continue
+                    pre_lines.append(f"    {var_name} = {translated};")
+
+                # request body
+                body_obj = body_object_for_verb(verb)
+                body_expr = ts_literal(body_obj)
+                req_var = f"{service_method}Data"
+
+                # Call
+                response_var = f"{service_method}Response"
+                call_line = ""
+                if id_var:
+                    call_line = f"    const {response_var} = await {service_var}.{service_method}<{response_type}>({id_var}, {req_var}{', authConfig' if needs_auth else ''});"
+                else:
+                    call_line = f"    const {response_var} = await {service_var}.{service_method}<{response_type}>({req_var}{', authConfig' if needs_auth else ''});"
+
+                auth_config_lines: list[str] = []
+                if needs_auth:
+                    auth_config_lines.append(
+                        "    const authConfig = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;"
+                    )
+
+                # postrequest: env sets from test scripts that depend on response
+                post_lines: list[str] = []
+                for line in getattr(verb, "script", []) or []:
+                    m = re.search(
+                        r'pm\.environment\.set\(\s*["\\\']([A-Za-z0-9_]+)["\\\']\s*,\s*(.*)\)\s*;?\s*$',
+                        line,
+                    )
+                    if not m:
+                        continue
+                    var_name = m.group(1)
+                    translated = translate_postman_rhs(m.group(2), response_var)
+                    if translated is None:
+                        continue
+                    post_lines.append(f"    {var_name} = {translated};")
+
+                assertions = [
+                    f"    {response_var}.status.should.equal({expected_status}, JSON.stringify({response_var}.data));"
+                ]
+
+                block = (
+                    f"  it('{test_name}', async () => {{\n"
+                    + ("\n".join(pre_lines) + "\n" if pre_lines else "")
+                    + f"    const {req_var}: {request_type} = {body_expr} as any;\n"
+                    + ("\n".join(auth_config_lines) + "\n" if auth_config_lines else "")
+                    + call_line
+                    + "\n"
+                    + ("\n".join(post_lines) + "\n" if post_lines else "")
+                    + "\n".join(assertions)
+                    + "\n  });"
+                )
+                test_blocks.append(block)
+
+            service_inits = [
+                f"  const {var} = new {cls}();" for cls, var in sorted(used_services.items(), key=lambda x: x[1])
+            ]
+
+            helpers = (
+                "  const randomCity = () => {\n"
+                "    const cities = [\"NewYork\", \"London\", \"Paris\", \"Tokyo\", \"Sydney\", \"Berlin\", \"Mumbai\", \"Toronto\", \"Dubai\", \"Singapore\"];\n"
+                "    return cities[Math.floor(Math.random() * cities.length)] + Math.floor(Math.random() * 10000);\n"
+                "  };\n\n"
+                "  const randomPhoneNumber = () => {\n"
+                "    const digit = () => Math.floor(Math.random() * 10).toString();\n"
+                "    let out = '';\n"
+                "    for (let i = 0; i < 10; i++) out += digit();\n"
+                "    return out;\n"
+                "  };\n"
+            )
+
             describe_block = (
                 import_block
                 + "describe('API Collection', () => {\n"
-                + "  let userId;\n"
-                + f"  const {service_var} = new UserService();\n"
-                + "\n".join(test_blocks)
+                + "\n".join(shared_decls)
+                + "\n"
+                + helpers
+                + "\n".join(service_inits)
+                + "\n\n"
+                + "\n\n".join(test_blocks)
                 + "\n});\n"
             )
+
             spec_file = FileSpec(path="src/tests/api-collection.spec.ts", fileContent=describe_block)
             self.file_service.create_files(self.config.destination_folder, [spec_file])
-            self.logger.info(f"Created single spec file with all requests: src/tests/api-collection.spec.ts")
-            log_message = f"\nGeneration complete. Only the spec file was created."
-            self.logger.info(log_message)
+            self.logger.info("Created single spec file with all requests: src/tests/api-collection.spec.ts")
+            self.logger.info("\nGeneration complete. Only the spec file was created.")
         except Exception as e:
             self._log_error("Error during generation", e)
             raise

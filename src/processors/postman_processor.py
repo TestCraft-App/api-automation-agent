@@ -39,11 +39,17 @@ class PostmanProcessor(APIProcessor):
             self.logger.warning("⚠️ No environment variables found in Postman collection")
             env_vars = [{"key": "BASEURL", "value": ""}]
 
-        env_content = "\n".join(f"{var['key'].upper()}={var['value']}" for var in env_vars) + "\n"
+        def to_env_key(key: str) -> str:
+            k = (key or "").strip()
+            if k.lower() in {"base_url", "baseurl", "base-url", "base url"}:
+                return "BASEURL"
+            return k.upper()
+
+        env_content = "\n".join(f"{to_env_key(var['key'])}={var['value']}" for var in env_vars) + "\n"
         file_spec = FileSpec(path=".env", fileContent=env_content)
         self.file_service.create_files(self.config.destination_folder, [file_spec])
         self.logger.info(
-            f"Generated .env file with variables: {', '.join(var['key'].upper() for var in env_vars)}"
+            f"Generated .env file with variables: {', '.join(to_env_key(var['key']) for var in env_vars)}"
         )
 
     def get_api_paths(self, api_definition: APIDefinition) -> List[APIPath]:
@@ -139,10 +145,10 @@ class PostmanProcessor(APIProcessor):
             self.logger.error(f"Failed to update package.json: {e}")
 
     def _create_run_order_file(self, destination_folder: str, api_definition: APIDefinition):
-        lines = ["// This file runs the tests in order"]
-        for definition in api_definition.definitions:
-            if isinstance(definition, APIVerb):
-                lines.append(f'import "./{definition.file_path}.spec.ts";')
+        # Postman generation currently emits a single collection spec at:
+        #   src/tests/api-collection.spec.ts
+        # Keep the runner stable by importing that file.
+        lines = ["// This file runs the tests in order", 'import "./src/tests/api-collection.spec.ts";']
         file_spec = FileSpec(path="runTestsInOrder.js", fileContent="\n".join(lines))
         self.file_service.create_files(destination_folder, [file_spec])
         self.logger.info(f"Created runTestsInOrder.js at {destination_folder}")

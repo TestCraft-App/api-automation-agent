@@ -105,6 +105,7 @@ class PostmanUtils:
             full_path=path,
             verb=verb,
             body=body,
+            raw_body=raw_body,
             prerequest=prereq,
             script=script,
             name=name,
