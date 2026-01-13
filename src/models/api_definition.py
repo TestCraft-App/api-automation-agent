@@ -11,6 +11,7 @@ class APIDefinition:
     """Container for API definitions and their endpoints"""
 
     definitions: List[APIDef] = field(default_factory=list)
+    name: Optional[str] = None
     endpoints: Optional[List[str]] = None
     variables: List[Dict[str, str]] = field(default_factory=list)
     base_yaml: Optional[str] = None

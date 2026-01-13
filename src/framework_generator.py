@@ -350,7 +350,8 @@ class FrameworkGenerator:
                         "service_var": "authService",
                         "service_method": "login",
                         "request_type": pick_existing(["LoginRequest"], available_requests) or "LoginRequest",
-                        "response_type": pick_existing(["LoginResponse"], available_responses) or "LoginResponse",
+                        "response_type": pick_existing(["LoginResponse"], available_responses)
+                        or "LoginResponse",
                         "expected_status": 200,
                     }
 
@@ -406,7 +407,9 @@ class FrameworkGenerator:
                     service_class = service_class or "CatService"
                     id_match = re.search(r"/api/cats/\{\{([A-Za-z0-9_]+)\}\}$", base_path)
                     id_var = id_match.group(1) if id_match else "id"
-                    service_method = "adoptCat" if service_has_method(service_class, "adoptCat") else "updateCat"
+                    service_method = (
+                        "adoptCat" if service_has_method(service_class, "adoptCat") else "updateCat"
+                    )
                     return {
                         "service_class": service_class,
                         "service_var": "catsService",
@@ -513,7 +516,13 @@ class FrameworkGenerator:
 
             # Only declare vars that are set during the run (pm.environment.set) or used as path/body ids.
             shared_var_names = set(env_set_names)
-            shared_var_names.update({n for n in template_names if n in {"token", "username", "userID", "staffID", "adopterID", "catID"}})
+            shared_var_names.update(
+                {
+                    n
+                    for n in template_names
+                    if n in {"token", "username", "userID", "staffID", "adopterID", "catID"}
+                }
+            )
 
             shared_decls = [f"  let {name}: any;" for name in sorted(shared_var_names)]
 
@@ -530,19 +539,32 @@ class FrameworkGenerator:
                 used_types.add(spec["request_type"])
                 used_types.add(spec["response_type"])
 
+            def _sanitize_collection_name(name: str) -> str:
+                n = (name or "").strip().lower()
+                n = re.sub(r"[^a-z0-9]+", "-", n)
+                n = re.sub(r"-+", "-", n).strip("-")
+                return n or "api-collection"
+
+            collection_name = getattr(api_definition, "name", None) or "api-collection"
+            spec_base = _sanitize_collection_name(collection_name)
+
             # Fallback: if we can't infer anything, bail with a minimal, valid file.
             if not call_specs:
                 minimal = (
                     "import 'chai/register-should.js';\n\n"
-                    "describe('API Collection', () => {\n"
+                    f"describe('{collection_name}', () => {{\n"
                     "  it('No requests found', async () => {\n"
                     "    (true).should.equal(true);\n"
                     "  });\n"
                     "});\n"
                 )
-                spec_file = FileSpec(path="src/tests/api-collection.spec.ts", fileContent=minimal)
+                spec_file = FileSpec(path=f"src/tests/{spec_base}.spec.ts", fileContent=minimal)
                 self.file_service.create_files(self.config.destination_folder, [spec_file])
-                self.logger.info("Created single spec file with all requests: src/tests/api-collection.spec.ts")
+                self.logger.info(f"Created single spec file with all requests: src/tests/{spec_base}.spec.ts")
+                try:
+                    self.command_service.format_files()
+                except Exception as e:
+                    self.logger.warning(f"Prettier formatting failed: {e}")
                 return
 
             import_lines: list[str] = []
@@ -643,12 +665,13 @@ class FrameworkGenerator:
                 test_blocks.append(block)
 
             service_inits = [
-                f"  const {var} = new {cls}();" for cls, var in sorted(used_services.items(), key=lambda x: x[1])
+                f"  const {var} = new {cls}();"
+                for cls, var in sorted(used_services.items(), key=lambda x: x[1])
             ]
 
             helpers = (
                 "  const randomCity = () => {\n"
-                "    const cities = [\"NewYork\", \"London\", \"Paris\", \"Tokyo\", \"Sydney\", \"Berlin\", \"Mumbai\", \"Toronto\", \"Dubai\", \"Singapore\"];\n"
+                '    const cities = ["NewYork", "London", "Paris", "Tokyo", "Sydney", "Berlin", "Mumbai", "Toronto", "Dubai", "Singapore"];\n'
                 "    return cities[Math.floor(Math.random() * cities.length)] + Math.floor(Math.random() * 10000);\n"
                 "  };\n\n"
                 "  const randomPhoneNumber = () => {\n"
@@ -661,7 +684,7 @@ class FrameworkGenerator:
 
             describe_block = (
                 import_block
-                + "describe('API Collection', () => {\n"
+                + f"describe('{(getattr(api_definition, 'name', None) or 'api-collection')}', () => {{\n"
                 + "\n".join(shared_decls)
                 + "\n"
                 + helpers
@@ -671,9 +694,13 @@ class FrameworkGenerator:
                 + "\n});\n"
             )
 
-            spec_file = FileSpec(path="src/tests/api-collection.spec.ts", fileContent=describe_block)
+            spec_file = FileSpec(path=f"src/tests/{spec_base}.spec.ts", fileContent=describe_block)
             self.file_service.create_files(self.config.destination_folder, [spec_file])
-            self.logger.info("Created single spec file with all requests: src/tests/api-collection.spec.ts")
+            self.logger.info(f"Created single spec file with all requests: src/tests/{spec_base}.spec.ts")
+            try:
+                self.command_service.format_files()
+            except Exception as e:
+                self.logger.warning(f"Prettier formatting failed: {e}")
             self.logger.info("\nGeneration complete. Only the spec file was created.")
         except Exception as e:
             self._log_error("Error during generation", e)

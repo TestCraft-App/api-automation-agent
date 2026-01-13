@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from typing import Dict, List
 
 from src.models.api_path import APIPath
@@ -29,7 +30,8 @@ class PostmanProcessor(APIProcessor):
         requests = PostmanUtils.extract_requests(data, prefixes=self.config.prefixes)
         variables = PostmanUtils.extract_variables(data)
 
-        return APIDefinition(definitions=requests, variables=variables)
+        collection_name = (data.get("info") or {}).get("name")
+        return APIDefinition(definitions=requests, variables=variables, name=collection_name)
 
     def create_dot_env(self, api_definition: APIDefinition) -> None:
         self.logger.info("\nGenerating .env file...")
@@ -145,10 +147,17 @@ class PostmanProcessor(APIProcessor):
             self.logger.error(f"Failed to update package.json: {e}")
 
     def _create_run_order_file(self, destination_folder: str, api_definition: APIDefinition):
-        # Postman generation currently emits a single collection spec at:
-        #   src/tests/api-collection.spec.ts
-        # Keep the runner stable by importing that file.
-        lines = ["// This file runs the tests in order", 'import "./src/tests/api-collection.spec.ts";']
+        def sanitize(name: str) -> str:
+            n = (name or "").strip().lower()
+            n = re.sub(r"[^a-z0-9]+", "-", n)
+            n = re.sub(r"-+", "-", n).strip("-")
+            return n or "api-collection"
+
+        # Postman generation emits a single collection spec under src/tests.
+        collection_name = getattr(api_definition, "name", None) or "api-collection"
+        spec_base = sanitize(collection_name)
+        spec_path = f"./src/tests/{spec_base}.spec.ts"
+        lines = ["// This file runs the tests in order", f'import "{spec_path}";']
         file_spec = FileSpec(path="runTestsInOrder.js", fileContent="\n".join(lines))
         self.file_service.create_files(destination_folder, [file_spec])
         self.logger.info(f"Created runTestsInOrder.js at {destination_folder}")

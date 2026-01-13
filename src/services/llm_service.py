@@ -6,8 +6,15 @@ from langchain_aws.chat_models.bedrock_converse import ChatBedrockConverse
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
+
+try:
+    try:
+        from langchain_google_genai import ChatGoogleGenerativeAI
+    except ImportError:  # Optional dependency
+        ChatGoogleGenerativeAI = None
+except ImportError:  # Optional dependency
+    ChatGoogleGenerativeAI = None
 
 from .file_service import FileService, get_resource_path
 from ..ai_tools.file_creation_tool import FileCreationTool
@@ -93,6 +100,11 @@ class LLMService:
                     max_tokens_to_sample=8192,
                 )
             if self.config.model.is_google():
+                if ChatGoogleGenerativeAI is None:
+                    raise ModuleNotFoundError(
+                        "Missing optional dependency 'langchain-google-genai'. "
+                        "Install it or switch MODEL to an OpenAI/Anthropic model."
+                    )
                 return ChatGoogleGenerativeAI(
                     model=self.config.model.value,
                     temperature=1,
