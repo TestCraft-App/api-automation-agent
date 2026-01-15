@@ -41,11 +41,31 @@ class PostmanProcessor(APIProcessor):
             self.logger.warning("⚠️ No environment variables found in Postman collection")
             env_vars = [{"key": "BASEURL", "value": ""}]
 
+        # Also include placeholders for any Postman template variables referenced in URLs/bodies,
+        # since those frequently come from a Postman Environment (not embedded in the collection).
+        template_var_names: set[str] = set()
+        try:
+            for verb in api_definition.definitions or []:
+                full_path = getattr(verb, "full_path", "") or ""
+                raw_body = getattr(verb, "raw_body", "") or ""
+                for text in (full_path, raw_body):
+                    for m in re.findall(r"{{\s*([A-Za-z0-9_]+)\s*}}", text):
+                        template_var_names.add(m)
+        except Exception as e:
+            self.logger.debug(f"Could not extract template vars for .env: {e}")
+
         def to_env_key(key: str) -> str:
             k = (key or "").strip()
             if k.lower() in {"base_url", "baseurl", "base-url", "base url"}:
                 return "BASEURL"
             return k.upper()
+
+        existing_keys = {to_env_key(var.get("key", "")) for var in env_vars if isinstance(var, dict)}
+        for name in sorted(template_var_names):
+            key = to_env_key(name)
+            if key and key not in existing_keys:
+                env_vars.append({"key": key, "value": ""})
+                existing_keys.add(key)
 
         env_content = "\n".join(f"{to_env_key(var['key'])}={var['value']}" for var in env_vars) + "\n"
         file_spec = FileSpec(path=".env", fileContent=env_content)

@@ -55,6 +55,10 @@ class PostmanUtils:
     ) -> APIVerb:
         req = data.get("request", {})
         verb = req.get("method", "")
+
+        auth_obj = req.get("auth")
+        auth_type = (auth_obj or {}).get("type") if isinstance(auth_obj, dict) else None
+        needs_auth = bool(auth_obj) and (auth_type or "").lower() not in {"", "noauth"}
         raw_url = req.get("url")
         if isinstance(raw_url, dict):
             # Prefer "raw" as it includes query parameters
@@ -109,6 +113,7 @@ class PostmanUtils:
             prerequest=prereq,
             script=script,
             name=name,
+            auth=needs_auth,
         )
 
     @staticmethod
@@ -127,7 +132,9 @@ class PostmanUtils:
             scripts: List[str] = []
 
             for match in matches:
-                PostmanUtils._accumulate_request_body_attributes(body_attrs, match.body)
+                PostmanUtils._accumulate_request_body_attributes(
+                    body_attrs, match.body, getattr(match, "raw_body", "") or ""
+                )
                 parts = match.full_path.split("?", 1)
                 if len(parts) == 2 and parts[1]:
                     PostmanUtils.accumulate_query_params(qp, parts[1])
@@ -214,13 +221,52 @@ class PostmanUtils:
         return re.sub(r"^\{\{[^}]+\}\}", "", path)
 
     @staticmethod
-    def _accumulate_request_body_attributes(all_attrs: Dict[str, Any], body: Dict[str, Any]) -> None:
+    def _accumulate_request_body_attributes(
+        all_attrs: Dict[str, Any], body: Dict[str, Any], raw_body: str = ""
+    ) -> None:
+        # If JSON parsing failed (common with unquoted {{vars}}), infer fields from raw text.
+        if (not body) and raw_body:
+            # Extract basic "key": value pairs from a JSON-ish object.
+            # Examples:
+            #   "adopterId": {{adopterID}}        -> number (unquoted template)
+            #   "username": "{{username}}"       -> string (quoted template)
+            #   "vaccinated": true               -> boolean
+            for key, token in re.findall(r'"([A-Za-z0-9_]+)"\s*:\s*([^,}\]]+)', raw_body):
+                if key in all_attrs:
+                    continue
+                value = (token or "").strip()
+                if not value:
+                    all_attrs[key] = "string"
+                    continue
+                if value.startswith('"'):
+                    all_attrs[key] = "string"
+                    continue
+                if value in {"true", "false"}:
+                    all_attrs[key] = "boolean"
+                    continue
+                if value.startswith("{{") and value.endswith("}}"):  # unquoted template
+                    all_attrs[key] = "number"
+                    continue
+                if re.fullmatch(PostmanUtils.numeric_only, value):
+                    all_attrs[key] = "number"
+                    continue
+                if value.startswith("["):
+                    all_attrs[f"{key}Object"] = "array"
+                    continue
+                if value.startswith("{"):
+                    all_attrs[f"{key}Object"] = "object"
+                    continue
+                all_attrs[key] = "string"
+            return
+
         for k, v in body.items():
             if k not in all_attrs:
                 if isinstance(v, str) and re.fullmatch(PostmanUtils.numeric_only, v):
                     all_attrs[k] = "number"
                 elif isinstance(v, str):
                     all_attrs[k] = "string"
+                elif isinstance(v, bool):
+                    all_attrs[k] = "boolean"
                 elif isinstance(v, dict):
                     all_attrs[f"{k}Object"] = PostmanUtils._map_object_attributes(v)
                 elif isinstance(v, list):

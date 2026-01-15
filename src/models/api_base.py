@@ -14,6 +14,8 @@ class APIBase:
     # Raw request body text (useful for Postman bodies that aren't valid JSON due to templates)
     raw_body: str = ""
     script: List[str] = field(default_factory=list)
+    # Whether the request requires auth (Postman-only today; safe default for Swagger).
+    auth: bool = False
 
     def __post_init__(self):
         """Derive root_path from full_path if not provided."""

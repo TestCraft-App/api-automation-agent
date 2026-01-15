@@ -9,10 +9,7 @@ from langchain_core.tools import BaseTool
 from langchain_openai import ChatOpenAI
 
 try:
-    try:
-        from langchain_google_genai import ChatGoogleGenerativeAI
-    except ImportError:  # Optional dependency
-        ChatGoogleGenerativeAI = None
+    from langchain_google_genai import ChatGoogleGenerativeAI
 except ImportError:  # Optional dependency
     ChatGoogleGenerativeAI = None
 

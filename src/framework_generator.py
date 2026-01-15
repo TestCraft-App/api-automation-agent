@@ -295,6 +295,200 @@ class FrameworkGenerator:
                 except Exception:
                     return False
 
+            def _lower_camel(name: str) -> str:
+                return name[:1].lower() + name[1:] if name else name
+
+            def _extract_balanced(
+                text: str, start_index: int, open_ch: str, close_ch: str
+            ) -> tuple[str, int]:
+                depth = 0
+                out: list[str] = []
+                i = start_index
+                while i < len(text):
+                    ch = text[i]
+                    if ch == open_ch:
+                        depth += 1
+                        if depth > 1:
+                            out.append(ch)
+                    elif ch == close_ch:
+                        depth -= 1
+                        if depth == 0:
+                            return "".join(out), i
+                        out.append(ch)
+                    else:
+                        if depth >= 1:
+                            out.append(ch)
+                    i += 1
+                return "".join(out), i
+
+            def _split_params(params_src: str) -> list[str]:
+                parts: list[str] = []
+                buf: list[str] = []
+                angle = paren = brace = bracket = 0
+                for ch in params_src:
+                    if ch == "<":
+                        angle += 1
+                    elif ch == ">" and angle > 0:
+                        angle -= 1
+                    elif ch == "(":
+                        paren += 1
+                    elif ch == ")" and paren > 0:
+                        paren -= 1
+                    elif ch == "{":
+                        brace += 1
+                    elif ch == "}" and brace > 0:
+                        brace -= 1
+                    elif ch == "[":
+                        bracket += 1
+                    elif ch == "]" and bracket > 0:
+                        bracket -= 1
+
+                    if ch == "," and angle == paren == brace == bracket == 0:
+                        part = "".join(buf).strip()
+                        if part:
+                            parts.append(part)
+                        buf = []
+                        continue
+                    buf.append(ch)
+                tail = "".join(buf).strip()
+                if tail:
+                    parts.append(tail)
+                return parts
+
+            def _parse_service_methods(service_class: str) -> dict:
+                """Parse basePath + methods from generated service class file."""
+                meta: dict = {"base_path": "", "methods": []}
+                try:
+                    service_path = os.path.join(services_dir, f"{service_class}.ts")
+                    with open(service_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+
+                    base_m = re.search(r"super\(\s*['\"]([^'\"]+)['\"]\s*\)", content)
+                    if base_m:
+                        meta["base_path"] = base_m.group(1)
+
+                    meth_pat = re.compile(r"\basync\s+([A-Za-z0-9_]+)\s*<[^>]*>\s*\(", re.M)
+                    matches = list(meth_pat.finditer(content))
+                    for idx, m in enumerate(matches):
+                        name = m.group(1)
+                        start = m.start()
+                        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(content)
+                        block = content[start:end]
+
+                        http_m = re.search(r"return\s+await\s+this\.(get|post|put|patch|delete)\b", block)
+                        http = http_m.group(1).upper() if http_m else None
+
+                        paren_idx = block.find("(", block.find(name))
+                        params_src = ""
+                        if paren_idx != -1:
+                            extracted, _ = _extract_balanced(block, paren_idx, "(", ")")
+                            params_src = extracted
+
+                        params: list[dict] = []
+                        for p in _split_params(params_src):
+                            p = p.strip()
+                            if not p:
+                                continue
+                            p = p.split("=", 1)[0].strip()
+                            if ":" not in p:
+                                continue
+                            n, t = p.split(":", 1)
+                            params.append({"name": n.strip(), "type": t.strip()})
+
+                        non_config = [p for p in params if p["name"] != "config"]
+
+                        id_param = None
+                        body_param_type = None
+                        if http in {"DELETE", "GET"}:
+                            if len(non_config) >= 1:
+                                id_param = non_config[0]["name"]
+                        elif http in {"PATCH", "PUT"}:
+                            if len(non_config) >= 2:
+                                id_param = non_config[0]["name"]
+                                body_param_type = non_config[1]["type"]
+                            elif len(non_config) == 1:
+                                body_param_type = non_config[0]["type"]
+                        elif http == "POST":
+                            if len(non_config) >= 1:
+                                body_param_type = non_config[0]["type"]
+
+                        meta["methods"].append(
+                            {
+                                "name": name,
+                                "http": http,
+                                "id_param": id_param,
+                                "body_type": body_param_type,
+                            }
+                        )
+                except Exception:
+                    return meta
+                return meta
+
+            service_index: dict[str, dict] = {
+                svc: _parse_service_methods(svc) for svc in sorted(available_services)
+            }
+
+            def _generic_infer_call_spec(verb: APIVerb) -> Optional[dict]:
+                method = (getattr(verb, "verb", "GET") or "GET").upper()
+                path = getattr(verb, "full_path", "") or ""
+                base_path = path.split("?")[0]
+
+                desired_http = {
+                    "GET": "GET",
+                    "POST": "POST",
+                    "PUT": "PUT",
+                    "PATCH": "PATCH",
+                    "DELETE": "DELETE",
+                }.get(method)
+                if not desired_http:
+                    return None
+
+                candidates: list[tuple[int, str, dict]] = []
+                for svc, meta in service_index.items():
+                    base = (meta.get("base_path") or "").rstrip("/")
+                    if base and base_path.startswith(base):
+                        candidates.append((len(base), svc, meta))
+                if not candidates:
+                    return None
+                _, service_class, meta = max(candidates, key=lambda x: x[0])
+
+                id_match = re.search(r"/\{\{([A-Za-z0-9_]+)\}\}$", base_path)
+                id_var = id_match.group(1) if id_match else None
+                wants_id = bool(id_var)
+
+                method_candidates = [m for m in meta.get("methods", []) if m.get("http") == desired_http]
+                if wants_id:
+                    method_candidates = [m for m in method_candidates if m.get("id_param")]
+                else:
+                    method_candidates = [m for m in method_candidates if not m.get("id_param")]
+
+                if not method_candidates:
+                    method_candidates = [m for m in meta.get("methods", []) if m.get("http") == desired_http]
+                if not method_candidates:
+                    return None
+
+                chosen = method_candidates[0]
+                has_body = bool(chosen.get("body_type"))
+                req_type = chosen.get("body_type") if has_body else None
+
+                expected_status = 200
+                if desired_http == "POST":
+                    expected_status = 201
+                elif desired_http == "DELETE":
+                    expected_status = 204
+
+                return {
+                    "service_class": service_class,
+                    "service_var": _lower_camel(service_class),
+                    "service_method": chosen.get("name"),
+                    "request_type": req_type,
+                    "response_type": "any",
+                    "expected_status": expected_status,
+                    "id_var": id_var,
+                    "has_body": has_body,
+                    "auth": bool(getattr(verb, "auth", False)),
+                }
+
             def extract_template_vars(text: str) -> set[str]:
                 return set(re.findall(r"\{\{([A-Za-z0-9_]+)\}\}", text or ""))
 
@@ -372,10 +566,17 @@ class FrameworkGenerator:
 
                 # Adopters
                 if re.search(r"/api/adopters/?$", base_path) and method == "POST":
+                    adopter_service_class = (
+                        pick_existing(["AdoptersService", "AdopterService"], available_services)
+                        or "AdopterService"
+                    )
                     return {
-                        "service_class": pick_existing(["AdoptersService"], available_services)
-                        or "AdoptersService",
-                        "service_var": "adoptersService",
+                        "service_class": adopter_service_class,
+                        "service_var": (
+                            "adoptersService"
+                            if adopter_service_class == "AdoptersService"
+                            else "adopterService"
+                        ),
                         "service_method": "createAdopter",
                         "request_type": pick_existing(
                             ["CreateAdopterRequest", "AdopterRequestModel"], available_requests
@@ -422,6 +623,76 @@ class FrameworkGenerator:
                         "expected_status": 200,
                         "id_var": id_var,
                     }
+
+                # Clean-up: DELETEs
+                # DELETE /api/cats/{{catID}}
+                if re.search(r"/api/cats/[^/]+$", base_path) and method == "DELETE":
+                    service_class = pick_existing(["CatsService", "CatService"], available_services)
+                    service_class = service_class or "CatService"
+                    id_match = re.search(r"/api/cats/\{\{([A-Za-z0-9_]+)\}\}$", base_path)
+                    id_var = id_match.group(1) if id_match else "id"
+                    service_method = (
+                        "deleteCat" if service_has_method(service_class, "deleteCat") else "delete"
+                    )
+                    return {
+                        "service_class": service_class,
+                        "service_var": "catsService",
+                        "service_method": service_method,
+                        "response_type": "any",
+                        "expected_status": 204,
+                        "id_var": id_var,
+                        "has_body": False,
+                    }
+
+                # DELETE /api/adopters/{{adopterID}}
+                if re.search(r"/api/adopters/[^/]+$", base_path) and method == "DELETE":
+                    adopter_service_class = (
+                        pick_existing(["AdoptersService", "AdopterService"], available_services)
+                        or "AdopterService"
+                    )
+                    id_match = re.search(r"/api/adopters/\{\{([A-Za-z0-9_]+)\}\}$", base_path)
+                    id_var = id_match.group(1) if id_match else "id"
+                    service_method = (
+                        "deleteAdopter"
+                        if service_has_method(adopter_service_class, "deleteAdopter")
+                        else "delete"
+                    )
+                    return {
+                        "service_class": adopter_service_class,
+                        "service_var": (
+                            "adoptersService"
+                            if adopter_service_class == "AdoptersService"
+                            else "adopterService"
+                        ),
+                        "service_method": service_method,
+                        "response_type": "any",
+                        "expected_status": 204,
+                        "id_var": id_var,
+                        "has_body": False,
+                    }
+
+                # DELETE /api/staff/{{staffID}} (auth)
+                if re.search(r"/api/staff/[^/]+$", base_path) and method == "DELETE":
+                    service_class = pick_existing(["StaffService"], available_services) or "StaffService"
+                    id_match = re.search(r"/api/staff/\{\{([A-Za-z0-9_]+)\}\}$", base_path)
+                    id_var = id_match.group(1) if id_match else "id"
+                    service_method = (
+                        "deleteStaff" if service_has_method(service_class, "deleteStaff") else "delete"
+                    )
+                    return {
+                        "service_class": service_class,
+                        "service_var": "staffService",
+                        "service_method": service_method,
+                        "response_type": "any",
+                        "expected_status": 204,
+                        "id_var": id_var,
+                        "auth": True,
+                        "has_body": False,
+                    }
+
+                generic = _generic_infer_call_spec(verb)
+                if generic:
+                    return generic
 
                 return None
 
@@ -536,8 +807,58 @@ class FrameworkGenerator:
                     continue
                 call_specs.append((verb, spec))
                 used_services[spec["service_class"]] = spec["service_var"]
-                used_types.add(spec["request_type"])
-                used_types.add(spec["response_type"])
+                if spec.get("has_body", True):
+                    req_t = spec.get("request_type")
+                    if req_t and req_t not in {"any", "unknown", "null", "undefined", "void"}:
+                        used_types.add(req_t)
+                resp_t = spec.get("response_type")
+                if resp_t and resp_t not in {"any", "unknown", "null", "undefined", "void"}:
+                    used_types.add(resp_t)
+
+            def _norm_segment(seg: str) -> str:
+                return re.sub(r"[^a-z0-9]", "", (seg or "").lower())
+
+            def _path_segments_for_verb(verb: APIVerb) -> list[str]:
+                fp = (getattr(verb, "file_path", "") or "").replace("\\", "/")
+                parts = [p for p in fp.split("/") if p]
+                # Drop leading src/tests if present
+                if len(parts) >= 2 and _norm_segment(parts[0]) == "src" and _norm_segment(parts[1]) == "tests":
+                    parts = parts[2:]
+                return parts
+
+            def _is_under_hook_folder(verb: APIVerb, hook_name: str) -> bool:
+                # Convention: Postman folder path contains __hooks/beforeAll or __hooks/afterAll.
+                # Note: PostmanUtils.to_camel_case strips non-alphanumerics, so "__hooks" becomes "hooks".
+                segments = [_norm_segment(s) for s in _path_segments_for_verb(verb)]
+                if len(segments) < 3:
+                    return False
+                hook_token = _norm_segment(hook_name)
+                # Look for .../hooks/<hook_name>/... before the request name.
+                for i in range(0, max(0, len(segments) - 2)):
+                    if segments[i] == "hooks" and segments[i + 1] == hook_token:
+                        return True
+                return False
+
+            before_all_specs: list[tuple[APIVerb, dict]] = [
+                (v, s) for (v, s) in call_specs if _is_under_hook_folder(v, "beforeAll")
+            ]
+            after_all_specs: list[tuple[APIVerb, dict]] = [
+                (v, s) for (v, s) in call_specs if _is_under_hook_folder(v, "afterAll")
+            ]
+            before_each_specs: list[tuple[APIVerb, dict]] = [
+                (v, s) for (v, s) in call_specs if _is_under_hook_folder(v, "beforeEach")
+            ]
+            after_each_specs: list[tuple[APIVerb, dict]] = [
+                (v, s) for (v, s) in call_specs if _is_under_hook_folder(v, "afterEach")
+            ]
+            test_specs: list[tuple[APIVerb, dict]] = [
+                (v, s)
+                for (v, s) in call_specs
+                if not _is_under_hook_folder(v, "beforeAll")
+                and not _is_under_hook_folder(v, "afterAll")
+                and not _is_under_hook_folder(v, "beforeEach")
+                and not _is_under_hook_folder(v, "afterEach")
+            ]
 
             def _sanitize_collection_name(name: str) -> str:
                 n = (name or "").strip().lower()
@@ -583,15 +904,149 @@ class FrameworkGenerator:
             import_lines.append("import 'chai/register-should.js';")
             import_block = "\n".join(import_lines) + "\n\n"
 
-            # --- Build tests ---
-            test_blocks: list[str] = []
-            for verb, spec in call_specs:
+            def _translate_pm_environment_get(expr: str) -> str:
+                m = re.search(
+                    r'pm\.environment\.get\(\s*["\"]([A-Za-z0-9_]+)["\"]\s*\)',
+                    expr or "",
+                )
+                if not m:
+                    return expr
+                key = m.group(1)
+                if key in shared_var_names:
+                    return re.sub(
+                        r'pm\.environment\.get\(\s*["\"][A-Za-z0-9_]+["\"]\s*\)',
+                        key,
+                        expr,
+                    )
+                return re.sub(
+                    r'pm\.environment\.get\(\s*["\"][A-Za-z0-9_]+["\"]\s*\)',
+                    f'process.env["{key.upper()}"] ?? ""',
+                    expr,
+                )
+
+            def translate_postman_assertions(
+                script_lines: list[str], response_var: str, fallback_status: int
+            ) -> tuple[list[str], Optional[int], bool, bool]:
+                """Return (assertions, status_override, needs_timing, has_status_assertion)."""
+                assertions: list[str] = []
+                status_override: Optional[int] = None
+                needs_timing = False
+                has_status_assertion = False
+
+                for raw_line in script_lines or []:
+                    line = (raw_line or "").strip().rstrip(";")
+                    if not line:
+                        continue
+
+                    # Status override
+                    m = re.search(r"pm\.response\.to\.have\.status\((\d+)\)", line)
+                    if m:
+                        try:
+                            status_override = int(m.group(1))
+                        except Exception:
+                            status_override = fallback_status
+                        has_status_assertion = True
+                        continue
+
+                    # Response time (Postman: pm.response.responseTime)
+                    m = re.search(r"pm\.expect\(pm\.response\.responseTime\)\.to\.be\.below\((\d+)\)", line)
+                    if m:
+                        needs_timing = True
+                        assertions.append(f"    responseTime.should.be.lessThan({m.group(1)});")
+                        continue
+
+                    # Body includes string
+                    m = re.search(r"pm\.expect\(pm\.response\.text\(\)\)\.to\.include\((.+)\)", line)
+                    if m:
+                        arg = m.group(1).strip()
+                        if arg in {'""', "''"}:
+                            continue
+                        assertions.append(
+                            f"    JSON.stringify({response_var}.data).should.include({arg});"
+                        )
+                        continue
+
+                    # Empty body
+                    m = re.search(r"pm\.response\.to\.have\.body\(\s*([\"\'])(.*?)\1\s*\)", line)
+                    if m and (m.group(2) == ""):
+                        assertions.append(
+                            f"    String({response_var}.data ?? '').should.equal('');"
+                        )
+                        continue
+
+                    # pm.response.json().prop is true/false
+                    m = re.search(
+                        r"pm\.expect\(pm\.response\.json\(\)\.([A-Za-z0-9_]+)\)\.to\.be\.(true|false)",
+                        line,
+                    )
+                    if m:
+                        prop = m.group(1)
+                        tf = m.group(2)
+                        assertions.append(
+                            f"    ((({response_var}.data as any)?.{prop}) === {tf}).should.equal(true);"
+                        )
+                        continue
+
+                    # jsonData.prop not empty
+                    m = re.search(
+                        r"pm\.expect\(jsonData\.([A-Za-z0-9_]+)\)\.to\.not\.be\.empty",
+                        line,
+                    )
+                    if m:
+                        prop = m.group(1)
+                        assertions.append(
+                            f"    String(({response_var}.data as any)?.{prop} ?? '').length.should.be.greaterThan(0);"
+                        )
+                        continue
+
+                    # jsonData.prop not undefined
+                    m = re.search(
+                        r"pm\.expect\(jsonData\.([A-Za-z0-9_]+)\)\.to\.not\.be\.undefined",
+                        line,
+                    )
+                    if m:
+                        prop = m.group(1)
+                        assertions.append(
+                            f"    ((({response_var}.data as any)?.{prop}) !== undefined).should.equal(true);"
+                        )
+                        continue
+
+                    # jsonData.prop eql(<rhs>)
+                    m = re.search(
+                        r"pm\.expect\(jsonData\.([A-Za-z0-9_]+)\)\.to\.eql\((.+)\)",
+                        line,
+                    )
+                    if m:
+                        prop = m.group(1)
+                        rhs = _translate_pm_environment_get(m.group(2).strip())
+                        assertions.append(
+                            f"    ((({response_var}.data as any)?.{prop}) === ({rhs})).should.equal(true);"
+                        )
+                        continue
+
+                    # Array.isArray(jsonData.prop) eql(true/false)
+                    m = re.search(
+                        r"pm\.expect\(Array\.isArray\(jsonData\.([A-Za-z0-9_]+)\)\)\.to\.eql\((true|false)\)",
+                        line,
+                    )
+                    if m:
+                        prop = m.group(1)
+                        tf = m.group(2)
+                        assertions.append(
+                            f"    Array.isArray(({response_var}.data as any)?.{prop}).should.equal({tf});"
+                        )
+                        continue
+
+                return assertions, status_override, needs_timing, has_status_assertion
+
+            def _render_steps(verb: APIVerb, spec: dict, indent: str) -> str:
                 method = (getattr(verb, "verb", "GET") or "GET").upper()
                 path = getattr(verb, "full_path", "") or ""
                 test_name = getattr(verb, "name", None) or f"{method} {path}"
 
-                request_type = spec["request_type"]
-                response_type = spec["response_type"]
+                has_body = bool(spec.get("has_body", True))
+                request_type = spec.get("request_type")
+                response_type = spec.get("response_type") or "any"
                 service_var = spec["service_var"]
                 service_method = spec["service_method"]
                 expected_status = spec["expected_status"]
@@ -613,18 +1068,26 @@ class FrameworkGenerator:
                         continue
                     pre_lines.append(f"    {var_name} = {translated};")
 
-                # request body
-                body_obj = body_object_for_verb(verb)
-                body_expr = ts_literal(body_obj)
+                # request body (if applicable)
                 req_var = f"{service_method}Data"
+                body_expr = "{}"
+                if has_body:
+                    body_obj = body_object_for_verb(verb)
+                    body_expr = ts_literal(body_obj)
 
                 # Call
                 response_var = f"{service_method}Response"
                 call_line = ""
-                if id_var:
-                    call_line = f"    const {response_var} = await {service_var}.{service_method}<{response_type}>({id_var}, {req_var}{', authConfig' if needs_auth else ''});"
+                if has_body:
+                    if id_var:
+                        call_line = f"    const {response_var} = await {service_var}.{service_method}<{response_type}>({id_var}, {req_var}{', authConfig' if needs_auth else ''});"
+                    else:
+                        call_line = f"    const {response_var} = await {service_var}.{service_method}<{response_type}>({req_var}{', authConfig' if needs_auth else ''});"
                 else:
-                    call_line = f"    const {response_var} = await {service_var}.{service_method}<{response_type}>({req_var}{', authConfig' if needs_auth else ''});"
+                    if id_var:
+                        call_line = f"    const {response_var} = await {service_var}.{service_method}<{response_type}>({id_var}{', authConfig' if needs_auth else ''});"
+                    else:
+                        call_line = f"    const {response_var} = await {service_var}.{service_method}<{response_type}>({ 'authConfig' if needs_auth else ''});"
 
                 auth_config_lines: list[str] = []
                 if needs_auth:
@@ -647,22 +1110,72 @@ class FrameworkGenerator:
                         continue
                     post_lines.append(f"    {var_name} = {translated};")
 
-                assertions = [
-                    f"    {response_var}.status.should.equal({expected_status}, JSON.stringify({response_var}.data));"
-                ]
+                postman_assertions, status_override, needs_timing, has_status_assertion = (
+                    translate_postman_assertions(
+                    getattr(verb, "script", []) or [],
+                    response_var,
+                    expected_status,
+                )
+                )
 
-                block = (
-                    f"  it('{test_name}', async () => {{\n"
-                    + ("\n".join(pre_lines) + "\n" if pre_lines else "")
-                    + f"    const {req_var}: {request_type} = {body_expr} as any;\n"
+                assertions: list[str] = []
+                if has_status_assertion:
+                    resolved_status = status_override if status_override is not None else expected_status
+                    assertions.append(
+                        f"    {response_var}.status.should.equal({resolved_status}, JSON.stringify({response_var}.data));"
+                    )
+                assertions.extend(postman_assertions)
+
+                # Re-indent the generated lines (they are built with 4-space intent).
+                raw = (
+                    ("\n".join(pre_lines) + "\n" if pre_lines else "")
+                    + (
+                        f"    const {req_var}: {request_type} = {body_expr} as any;\n"
+                        if has_body and request_type
+                        else ""
+                    )
                     + ("\n".join(auth_config_lines) + "\n" if auth_config_lines else "")
+                    + ("    const startTime = Date.now();\n" if needs_timing else "")
                     + call_line
                     + "\n"
+                    + ("    const responseTime = Date.now() - startTime;\n" if needs_timing else "")
                     + ("\n".join(post_lines) + "\n" if post_lines else "")
                     + "\n".join(assertions)
-                    + "\n  });"
-                )
-                test_blocks.append(block)
+                ).rstrip()
+
+                # Adjust indentation
+                lines = raw.splitlines() if raw else []
+                return "\n".join((indent + l[4:]) if l.startswith("    ") else (indent + l) for l in lines)
+
+            def _render_it_block(verb: APIVerb, spec: dict) -> str:
+                method = (getattr(verb, "verb", "GET") or "GET").upper()
+                path = getattr(verb, "full_path", "") or ""
+                test_name = getattr(verb, "name", None) or f"{method} {path}"
+                steps = _render_steps(verb, spec, indent="    ")
+                return f"  it('{test_name}', async () => {{\n{steps}\n  }});"
+
+            def _render_hook_block(hook_keyword: str, specs: list[tuple[APIVerb, dict]]) -> str:
+                if not specs:
+                    return ""
+                inner_blocks: list[str] = []
+                for verb, spec in specs:
+                    method = (getattr(verb, "verb", "GET") or "GET").upper()
+                    path = getattr(verb, "full_path", "") or ""
+                    name = getattr(verb, "name", None) or f"{method} {path}"
+                    steps = _render_steps(verb, spec, indent="      ")
+                    inner_blocks.append(f"    // {name}\n    {{\n{steps}\n    }}")
+                body = "\n\n".join(inner_blocks)
+                return f"  {hook_keyword}(async () => {{\n{body}\n  }});"
+
+            # --- Build tests + hooks ---
+            before_all_block = _render_hook_block("before", before_all_specs)
+            after_all_block = _render_hook_block("after", after_all_specs)
+            before_each_block = _render_hook_block("beforeEach", before_each_specs)
+            after_each_block = _render_hook_block("afterEach", after_each_specs)
+
+            test_blocks: list[str] = []
+            for verb, spec in test_specs:
+                test_blocks.append(_render_it_block(verb, spec))
 
             service_inits = [
                 f"  const {var} = new {cls}();"
@@ -690,7 +1203,11 @@ class FrameworkGenerator:
                 + helpers
                 + "\n".join(service_inits)
                 + "\n\n"
+                + (before_all_block + "\n\n" if before_all_block else "")
+                + (before_each_block + "\n\n" if before_each_block else "")
                 + "\n\n".join(test_blocks)
+                + ("\n\n" + after_each_block if after_each_block else "")
+                + ("\n\n" + after_all_block if after_all_block else "")
                 + "\n});\n"
             )
 
