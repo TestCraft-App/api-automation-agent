@@ -556,6 +556,59 @@
       border-radius: 3px;
     }
 
+    .generated-files a.file-link {
+      color: #0984e3;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .generated-files a.file-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Code viewer modal */
+    .code-modal {
+      width: 90%;
+      max-width: 960px;
+    }
+
+    .code-modal .modal-header {
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .code-modal .modal-header .code-filename {
+      font-size: .82rem;
+      color: #636e72;
+      font-weight: 400;
+      margin-left: 8px;
+    }
+
+    .code-modal .modal-body {
+      padding: 0;
+      overflow: auto;
+    }
+
+    .code-modal pre {
+      margin: 0;
+      padding: 20px 24px;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: .8rem;
+      line-height: 1.5;
+      background: #2d3436;
+      color: #dfe6e9;
+      overflow-x: auto;
+      tab-size: 2;
+    }
+
+    .code-modal pre .line-num {
+      display: inline-block;
+      width: 3em;
+      text-align: right;
+      margin-right: 1.5em;
+      color: #636e72;
+      user-select: none;
+    }
+
     .hidden {
       display: none !important;
     }
@@ -620,7 +673,20 @@
     </div>
   </div>
 
-  <!-- Dashboard (hidden until files loaded) -->
+  <!-- Code viewer modal -->
+<div class="modal-backdrop" id="codeModal">
+  <div class="modal code-modal">
+    <div class="modal-header">
+      <h3>File Viewer <span class="code-filename" id="codeFilename"></span></h3>
+      <button class="modal-close" id="codeModalClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <pre id="codeContent"></pre>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard (hidden until files loaded) -->
   <div id="dashboard" class="hidden">
 
     <!-- Leaderboard -->
@@ -698,6 +764,7 @@
       // ── State ──
       let summaryFiles = [];
       let resultFiles = [];
+      let sourceFiles = {};  // path-tail → file content (for generated .ts/.js files)
       let selectedRun = null;
       let sortCol = 'test_id', sortAsc = true;
       let lbSortCol = '__global__', lbSortAsc = false;
@@ -712,6 +779,26 @@
       const runModalClose = document.getElementById('runModalClose');
       const runTableBody = document.getElementById('runTableBody');
       const dashboard = document.getElementById('dashboard');
+      const codeModal = document.getElementById('codeModal');
+      const codeModalClose = document.getElementById('codeModalClose');
+      const codeFilename = document.getElementById('codeFilename');
+      const codeContent = document.getElementById('codeContent');
+
+      // ── Code viewer modal ──
+      codeModalClose.addEventListener('click', function () { codeModal.classList.remove('open'); });
+      codeModal.addEventListener('click', function (e) { if (e.target === codeModal) codeModal.classList.remove('open'); });
+
+      function showCodeViewer(filepath, content) {
+        var name = filepath.split(/[/\\]/).slice(-3).join('/');
+        codeFilename.textContent = name;
+        // Add line numbers
+        var lines = content.split('\n');
+        var numbered = lines.map(function (line, i) {
+          return '<span class="line-num">' + (i + 1) + '</span>' + esc(line);
+        }).join('\n');
+        codeContent.innerHTML = numbered;
+        codeModal.classList.add('open');
+      }
 
       // ── Short model names ──
       // Maps raw model identifiers to friendly short names.
@@ -831,20 +918,31 @@
       function handleFiles(files) {
         summaryFiles = [];
         resultFiles = [];
+        sourceFiles = {};
         selectedRun = null;
         expandedId = null;
 
         var readers = [];
         Array.from(files).forEach(function (file) {
-          if (!file.name.endsWith('.json')) return;
+          var isJson = file.name.endsWith('.json');
+          var isSource = /\.(ts|js|tsx|jsx)$/.test(file.name);
+          if (!isJson && !isSource) return;
+
           readers.push(new Promise(function (resolve) {
             var reader = new FileReader();
             reader.onload = function (ev) {
-              try {
-                var data = JSON.parse(ev.target.result);
-                classifyFile(file.name, data);
-              } catch (err) {
-                console.warn('Skip ' + file.name + ': ' + err.message);
+              if (isJson) {
+                try {
+                  var data = JSON.parse(ev.target.result);
+                  classifyFile(file.name, data);
+                } catch (err) {
+                  console.warn('Skip ' + file.name + ': ' + err.message);
+                }
+              } else if (isSource) {
+                // Index by last 4 path segments for matching against absolute paths
+                var relPath = (file.webkitRelativePath || file.name).replace(/\\/g, '/');
+                var tail = relPath.split('/').slice(-4).join('/');
+                sourceFiles[tail] = ev.target.result;
               }
               resolve();
             };
@@ -1002,6 +1100,16 @@
 
       function fileBasename(filepath) {
         return filepath.replace(/\\/g, '/').split('/').pop();
+      }
+
+      function findSourceContent(absPath) {
+        // Match by last 4 path segments (same key used when indexing)
+        var tail = absPath.replace(/\\/g, '/').split('/').slice(-4).join('/');
+        return sourceFiles[tail] || null;
+      }
+
+      function hasAnySourceFiles() {
+        return Object.keys(sourceFiles).length > 0;
       }
 
       // ── Leaderboard ──
@@ -1299,14 +1407,32 @@
 
         if (r.generated_files.length > 0) {
           html += '<div class="generated-files"><strong>Generated files:</strong><br>';
-          r.generated_files.forEach(function (f) {
-            html += '<code>' + esc(f.split(/[/\\]/).slice(-3).join('/')) + '</code><br>';
+          r.generated_files.forEach(function (f, idx) {
+            var short = f.split(/[/\\]/).slice(-3).join('/');
+            var content = findSourceContent(f);
+            if (content) {
+              html += '<a class="file-link" data-file-idx="' + idx + '"><code>' + esc(short) + '</code></a><br>';
+            } else {
+              html += '<code>' + esc(short) + '</code><br>';
+            }
           });
           html += '</div>';
         }
 
         html += '</div>';
         td.innerHTML = html;
+
+        // Wire file link clicks
+        td.querySelectorAll('.file-link').forEach(function (link) {
+          link.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var idx = parseInt(link.dataset.fileIdx);
+            var filepath = r.generated_files[idx];
+            var content = findSourceContent(filepath);
+            if (content) showCodeViewer(filepath, content);
+          });
+        });
+
         dtr.appendChild(td);
         return dtr;
       }
