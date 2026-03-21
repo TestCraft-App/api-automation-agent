@@ -587,8 +587,8 @@
 
   <!-- Top bar -->
   <div class="top-bar" id="topBar">
-    <label class="folder-btn" for="folderInput">Select Reports Folder</label>
-    <input type="file" id="folderInput" webkitdirectory multiple>
+    <label class="folder-btn hidden" id="folderBtn" for="folderInput">Select Reports Folder</label>
+    <input type="file" id="folderInput" class="hidden" webkitdirectory multiple>
     <span class="chip hidden" id="fileCountChip"></span>
     <button class="run-picker-btn hidden" id="runPickerBtn">
       <span class="run-label">Run:</span>
@@ -779,10 +779,6 @@
             return res.json();
           })
           .then(function (summaryPaths) {
-            // Hide the folder picker — we're in live mode
-            document.getElementById('topBar').querySelector('.folder-btn').classList.add('hidden');
-            document.getElementById('folderInput').classList.add('hidden');
-
             // 1. Fetch all summary files, tracking their run folder
             var summaryFetches = summaryPaths.map(function (relPath) {
               var runFolder = relPath.substring(0, relPath.lastIndexOf('/'));
@@ -823,8 +819,9 @@
             onFilesReady();
           })
           .catch(function () {
-            // Manifest not available (file:// or no server) — folder picker stays visible
-            console.log('Manifest not found, using folder picker mode.');
+            // Manifest not available (file:// or no server) — show folder picker
+            document.getElementById('folderBtn').classList.remove('hidden');
+            document.getElementById('folderInput').classList.remove('hidden');
           });
       }
 
