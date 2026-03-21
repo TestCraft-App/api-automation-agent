@@ -11,39 +11,57 @@
   h2 { font-size: 1.2rem; margin-bottom: 12px; color: #636e72; }
   h3 { font-size: 1rem; margin-bottom: 8px; }
 
-  /* Load area */
-  .load-area { background: #fff; border-radius: 8px; padding: 24px; margin-bottom: 20px; border: 2px dashed #b2bec3; text-align: center; transition: border-color .2s, background .2s; }
-  .load-area.dragover { border-color: #0984e3; background: #dfe6e9; }
-  .load-area input[type="file"] { display: none; }
-  .load-area label { display: inline-block; padding: 10px 24px; background: #0984e3; color: #fff; border-radius: 6px; cursor: pointer; font-weight: 600; margin-bottom: 8px; }
-  .load-area label:hover { background: #0770c2; }
-  .load-area p { color: #636e72; font-size: .9rem; }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
-  .chip { display: inline-flex; align-items: center; gap: 4px; background: #dfe6e9; padding: 4px 12px; border-radius: 16px; font-size: .8rem; }
-  .chip .remove { cursor: pointer; font-weight: bold; margin-left: 4px; color: #d63031; }
-  .btn-clear { background: #d63031; color: #fff; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: .8rem; margin-top: 8px; }
-  .btn-clear:hover { background: #c0392b; }
+  /* Top bar */
+  .top-bar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 20px; background: #fff; border-radius: 8px; padding: 12px 20px; }
+  .top-bar input[type="file"] { display: none; }
+  .top-bar .folder-btn { display: inline-block; padding: 8px 18px; background: #0984e3; color: #fff; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: .85rem; white-space: nowrap; }
+  .top-bar .folder-btn:hover { background: #0770c2; }
+  .top-bar .chip { display: inline-flex; align-items: center; gap: 4px; background: #dfe6e9; padding: 4px 12px; border-radius: 16px; font-size: .82rem; font-weight: 600; color: #636e72; }
+  .run-picker-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: #fff; border: 1px solid #b2bec3; border-radius: 6px; cursor: pointer; font-size: .85rem; font-weight: 600; color: #2d3436; transition: border-color .2s, box-shadow .2s; }
+  .run-picker-btn:hover { border-color: #0984e3; box-shadow: 0 0 0 2px #0984e320; }
+  .run-picker-btn .run-label { color: #636e72; font-weight: 400; }
+  .run-picker-btn .run-date { font-weight: 700; }
+  .run-picker-btn .arrow { font-size: .7rem; color: #636e72; }
 
-  /* KPI cards */
-  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 20px; }
-  .kpi { background: #fff; border-radius: 8px; padding: 16px; text-align: center; }
-  .kpi .value { font-size: 1.8rem; font-weight: 700; }
-  .kpi .label { font-size: .8rem; color: #636e72; text-transform: uppercase; letter-spacing: .5px; }
+  /* Modal */
+  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1000; justify-content: center; align-items: flex-start; padding-top: 80px; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: #fff; border-radius: 10px; width: 90%; max-width: 820px; max-height: calc(100vh - 140px); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid #f0f0f0; }
+  .modal-header h3 { margin: 0; font-size: 1.05rem; }
+  .modal-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #636e72; padding: 4px 8px; border-radius: 4px; }
+  .modal-close:hover { background: #f0f0f0; color: #2d3436; }
+  .modal-body { overflow-y: auto; padding: 0; }
+  table.run-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  table.run-table th { background: #f5f6fa; padding: 10px 16px; text-align: left; font-size: .75rem; text-transform: uppercase; color: #636e72; letter-spacing: .3px; position: sticky; top: 0; }
+  table.run-table td { padding: 12px 16px; border-top: 1px solid #f0f0f0; }
+  table.run-table tr.run-row { cursor: pointer; transition: background .15s; }
+  table.run-table tr.run-row:hover { background: #f0f5ff; }
+  table.run-table tr.run-row.selected { background: #ebf5fb; }
+  table.run-table tr.run-row.selected td:first-child { font-weight: 700; }
+  .run-models { display: flex; flex-wrap: wrap; gap: 4px; }
+  .model-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .73rem; font-weight: 600; background: #dfe6e920; border: 1px solid #dfe6e9; color: #2d3436; white-space: nowrap; }
 
-  /* Bar chart */
-  .chart-section, .method-section { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-  .bar-row { display: flex; align-items: center; margin-bottom: 6px; }
-  .bar-label { width: 280px; font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
-  .bar-track { flex: 1; background: #dfe6e9; border-radius: 4px; height: 22px; position: relative; margin: 0 8px; }
-  .bar-fill { height: 100%; border-radius: 4px; transition: width .3s; min-width: 2px; }
-  .bar-value { font-size: .8rem; font-weight: 600; width: 48px; text-align: right; flex-shrink: 0; }
-
-  /* Method summary */
-  .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-  .method-card { padding: 12px; border-radius: 6px; background: #f5f6fa; text-align: center; }
-  .method-card .m-name { font-size: .75rem; text-transform: uppercase; font-weight: 600; letter-spacing: .5px; margin-bottom: 4px; }
-  .method-card .m-count { font-size: 1.4rem; font-weight: 700; }
-  .method-card .m-score { font-size: .85rem; color: #636e72; }
+  /* Leaderboard */
+  .leaderboard-section { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 20px; overflow-x: auto; }
+  .leaderboard-section h3 { margin-bottom: 12px; }
+  table.leaderboard { width: 100%; border-collapse: collapse; font-size: .85rem; table-layout: fixed; }
+  table.leaderboard col.col-model { width: 140px; }
+  table.leaderboard col.col-score { width: 100px; }
+  table.leaderboard col.col-cost { width: 80px; }
+  table.leaderboard th { background: #f5f6fa; padding: 8px 10px; text-align: center; cursor: pointer; user-select: none; font-size: .78rem; vertical-align: bottom; height: 52px; line-height: 1.3; overflow-wrap: break-word; word-wrap: break-word; }
+  table.leaderboard th:first-child { text-align: left; }
+  table.leaderboard th:hover { background: #dfe6e9; }
+  table.leaderboard th .sort-arrow { display: inline; margin-left: 2px; font-size: .6rem; color: #b2bec3; }
+  table.leaderboard th .sort-arrow.active { color: #2d3436; }
+  table.leaderboard td { padding: 8px 10px; text-align: center; border-top: 1px solid #f0f0f0; font-weight: 600; cursor: pointer; font-size: .83rem; }
+  table.leaderboard td:first-child { text-align: left; font-weight: 700; white-space: nowrap; cursor: default; overflow: hidden; text-overflow: ellipsis; }
+  table.leaderboard tr:hover td { background: #fafafa; }
+  .lb-cell { border-radius: 4px; padding: 3px 6px; display: inline-block; min-width: 50px; }
+  .lb-green { background: #00b89418; color: #00b894; }
+  .lb-yellow { background: #fdcb6e30; color: #d68910; }
+  .lb-red { background: #d6303118; color: #d63031; }
+  .lb-na { color: #b2bec3; }
 
   /* Filters */
   .filters { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
@@ -51,16 +69,16 @@
   .filter-group label { font-size: .75rem; font-weight: 600; text-transform: uppercase; color: #636e72; margin-bottom: 4px; }
   .filter-group select { padding: 6px 10px; border: 1px solid #b2bec3; border-radius: 4px; font-size: .85rem; min-width: 140px; }
 
-  /* Table */
+  /* Detail table */
   .table-wrap { background: #fff; border-radius: 8px; overflow-x: auto; margin-bottom: 20px; }
-  table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-  th { background: #f5f6fa; padding: 10px 12px; text-align: left; cursor: pointer; user-select: none; white-space: nowrap; position: sticky; top: 0; }
-  th:hover { background: #dfe6e9; }
-  th .sort-arrow { margin-left: 4px; font-size: .7rem; color: #b2bec3; }
-  th .sort-arrow.active { color: #2d3436; }
-  td { padding: 10px 12px; border-top: 1px solid #f0f0f0; }
-  tr.clickable { cursor: pointer; }
-  tr.clickable:hover { background: #fafafa; }
+  table.detail-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  table.detail-table th { background: #f5f6fa; padding: 10px 12px; text-align: left; cursor: pointer; user-select: none; white-space: nowrap; position: sticky; top: 0; }
+  table.detail-table th:hover { background: #dfe6e9; }
+  table.detail-table th .sort-arrow { margin-left: 4px; font-size: .7rem; color: #b2bec3; }
+  table.detail-table th .sort-arrow.active { color: #2d3436; }
+  table.detail-table td { padding: 10px 12px; border-top: 1px solid #f0f0f0; }
+  table.detail-table tr.clickable { cursor: pointer; }
+  table.detail-table tr.clickable:hover { background: #fafafa; }
 
   /* Badges */
   .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .75rem; font-weight: 600; }
@@ -69,8 +87,8 @@
   .badge-red { background: #d6303120; color: #d63031; }
   .badge-gray { background: #b2bec320; color: #636e72; }
   .badge-assertion { background: #0984e320; color: #0984e3; }
-  .badge-rule { background: #00b89420; color: #00b894; }
-  .badge-model_graded { background: #6c5ce720; color: #6c5ce7; }
+  .badge-rule-based { background: #00b89420; color: #00b894; }
+  .badge-model-graded { background: #6c5ce720; color: #6c5ce7; }
   .badge-hybrid { background: #00cec920; color: #00a8a8; }
   .badge-security { background: #d6303120; color: #d63031; }
 
@@ -88,10 +106,6 @@
   .generated-files { margin-top: 10px; font-size: .8rem; color: #636e72; }
   .generated-files code { font-size: .75rem; background: #eee; padding: 2px 4px; border-radius: 3px; }
 
-  /* Most failed criteria */
-  .failed-section { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-  .failed-section table { font-size: .82rem; }
-
   .hidden { display: none; }
   .score-green { color: #00b894; }
   .score-yellow { color: #d68910; }
@@ -101,35 +115,59 @@
 </head>
 <body>
 
-<h1>Evaluation Results Viewer</h1>
-<h2>Interactive Dashboard for AI Agent Eval Results</h2>
+<h1>API Agent Evaluation Dashboard</h1>
+<h2>Compare LLM performance across evaluation datasets</h2>
 
-<!-- Load Area -->
-<div class="load-area" id="loadArea">
-  <label for="fileInput">Load Result Files</label>
-  <input type="file" id="fileInput" accept=".json" multiple>
-  <p>or drag &amp; drop JSON result files here</p>
-  <div class="chips" id="fileChips"></div>
-  <button class="btn-clear hidden" id="clearBtn">Clear All</button>
+<!-- Top bar -->
+<div class="top-bar" id="topBar">
+  <label class="folder-btn" for="folderInput">Select Reports Folder</label>
+  <input type="file" id="folderInput" webkitdirectory multiple>
+  <span class="chip hidden" id="fileCountChip"></span>
+  <button class="run-picker-btn hidden" id="runPickerBtn">
+    <span class="run-label">Run:</span>
+    <span class="run-date" id="runPickerDate">--</span>
+    <span class="arrow">&#9660;</span>
+  </button>
+</div>
+
+<!-- Run picker modal -->
+<div class="modal-backdrop" id="runModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Select Evaluation Run</h3>
+      <button class="modal-close" id="runModalClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <table class="run-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Models</th>
+            <th>Datasets</th>
+            <th>Test Cases</th>
+          </tr>
+        </thead>
+        <tbody id="runTableBody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <!-- Dashboard (hidden until files loaded) -->
 <div id="dashboard" class="hidden">
 
-  <!-- KPI Cards -->
-  <div class="kpi-row" id="kpiRow"></div>
-
-  <!-- Score by Dataset bar chart -->
-  <div class="chart-section">
-    <h3>Score by Dataset</h3>
-    <div id="barChart"></div>
+  <!-- Leaderboard -->
+  <div class="leaderboard-section">
+    <h3>Leaderboard</h3>
+    <table class="leaderboard" id="leaderboardTable">
+      <colgroup id="lbColgroup"></colgroup>
+      <thead id="lbHead"></thead>
+      <tbody id="lbBody"></tbody>
+    </table>
   </div>
 
-  <!-- Eval Method Distribution -->
-  <div class="method-section">
-    <h3>Eval Method Distribution</h3>
-    <div class="method-grid" id="methodGrid"></div>
-  </div>
+  <!-- Detail Results -->
+  <h3>Test Results</h3>
 
   <!-- Filters -->
   <div class="filters" id="filtersRow">
@@ -160,9 +198,9 @@
     </div>
   </div>
 
-  <!-- Results Table -->
+  <!-- Detail Results Table -->
   <div class="table-wrap">
-    <table id="resultsTable">
+    <table class="detail-table" id="resultsTable">
       <thead>
         <tr>
           <th data-col="test_id">Test ID <span class="sort-arrow">&#9650;&#9660;</span></th>
@@ -178,175 +216,228 @@
       <tbody id="resultsBody"></tbody>
     </table>
   </div>
-
-  <!-- Most Failed Criteria -->
-  <div class="failed-section">
-    <h3>Most Failed Criteria (Top 15)</h3>
-    <table id="failedTable">
-      <thead>
-        <tr>
-          <th>Criterion</th>
-          <th>Pass Rate</th>
-          <th>Met</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody id="failedBody"></tbody>
-    </table>
-  </div>
 </div>
 
 <script>
 (function() {
-  // State
-  let loadedFiles = []; // { name, data: EvaluationRunResult }
-  let flatRows = [];    // flattened rows for table
-  let sortCol = 'test_id';
-  let sortAsc = true;
+  // ── State ──
+  let summaryFiles = [];
+  let resultFiles  = [];
+  let selectedRun  = null;
+  let sortCol = 'test_id', sortAsc = true;
+  let lbSortCol = '__global__', lbSortAsc = false;
   let expandedId = null;
 
-  // DOM refs
-  const fileInput = document.getElementById('fileInput');
-  const loadArea = document.getElementById('loadArea');
-  const fileChips = document.getElementById('fileChips');
-  const clearBtn = document.getElementById('clearBtn');
-  const dashboard = document.getElementById('dashboard');
+  // ── DOM refs ──
+  const folderInput   = document.getElementById('folderInput');
+  const fileCountChip = document.getElementById('fileCountChip');
+  const runPickerBtn  = document.getElementById('runPickerBtn');
+  const runPickerDate = document.getElementById('runPickerDate');
+  const runModal      = document.getElementById('runModal');
+  const runModalClose = document.getElementById('runModalClose');
+  const runTableBody  = document.getElementById('runTableBody');
+  const dashboard     = document.getElementById('dashboard');
 
-  // File loading
-  fileInput.addEventListener('change', e => handleFiles(e.target.files));
+  // ── Short model names ──
+  // Maps raw model identifiers to friendly short names.
+  // Falls back to a regex-based heuristic for unknown models.
+  const MODEL_SHORT_NAMES = {
+    'claude-sonnet-4-20250514':              'Sonnet 4',
+    'claude-sonnet-4-5-20250929':            'Sonnet 4.5',
+    'claude-haiku-4-5-20251001':             'Haiku 4.5',
+    'claude-opus-4-5-20251101':              'Opus 4.5',
+    'gpt-5-mini':                            'GPT 5 Mini',
+    'gpt-4.1':                               'GPT 4.1',
+    'gpt-5':                                 'GPT 5',
+    'gpt-5.1':                               'GPT 5.1',
+    'gpt-5.2':                               'GPT 5.2',
+    'gemini-3-pro-preview':                  'Gemini 3 Pro',
+    'gemini-3-flash-preview':                'Gemini 3 Flash',
+    'anthropic.claude-sonnet-4-20250514-v1:0':  'Sonnet 4 (BR)',
+    'anthropic.claude-sonnet-4-5-20250929-v1:0':'Sonnet 4.5 (BR)',
+    'anthropic.claude-haiku-4-5-20251001-v1:0': 'Haiku 4.5 (BR)',
+    'anthropic.claude-opus-4-5-20251101-v1:0':  'Opus 4.5 (BR)',
+    'openai.gpt-5-mini':                     'GPT 5 Mini (BR)',
+    'openai.gpt-4.1':                        'GPT 4.1 (BR)',
+    'openai.gpt-5':                          'GPT 5 (BR)',
+    'openai.gpt-5.1':                        'GPT 5.1 (BR)',
+    'openai.gpt-5.2':                        'GPT 5.2 (BR)',
+    'google.gemini-3-pro-preview':           'Gemini 3 Pro (BR)',
+    'google.gemini-3-flash-preview':         'Gemini 3 Flash (BR)',
+  };
 
-  loadArea.addEventListener('dragover', e => { e.preventDefault(); loadArea.classList.add('dragover'); });
-  loadArea.addEventListener('dragleave', () => loadArea.classList.remove('dragover'));
-  loadArea.addEventListener('drop', e => {
-    e.preventDefault();
-    loadArea.classList.remove('dragover');
-    handleFiles(e.dataTransfer.files);
-  });
+  function shortModel(raw) {
+    if (MODEL_SHORT_NAMES[raw]) return MODEL_SHORT_NAMES[raw];
+    // Heuristic: strip date suffixes and provider prefixes
+    var s = raw;
+    s = s.replace(/^(anthropic|openai|google)\./, '');
+    s = s.replace(/-\d{8,}(-v\d+:\d+)?$/, '');
+    s = s.replace(/-preview$/, '');
+    // Title-case what's left
+    s = s.replace(/[-_]/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+    return s;
+  }
 
-  clearBtn.addEventListener('click', () => {
-    loadedFiles = [];
-    flatRows = [];
-    expandedId = null;
-    fileInput.value = '';
-    renderAll();
-  });
+  // ── Folder loading ──
+  folderInput.addEventListener('change', function(e) { handleFiles(e.target.files); });
 
   function handleFiles(files) {
-    Array.from(files).forEach(file => {
+    summaryFiles = [];
+    resultFiles = [];
+    selectedRun = null;
+    expandedId = null;
+
+    var readers = [];
+    Array.from(files).forEach(function(file) {
       if (!file.name.endsWith('.json')) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        try {
-          const data = JSON.parse(e.target.result);
-          if (!data.dataset_name || !data.results) {
-            alert(`${file.name} does not look like an EvaluationRunResult.`);
-            return;
+      readers.push(new Promise(function(resolve) {
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+          try {
+            var data = JSON.parse(ev.target.result);
+            classifyFile(file.name, data);
+          } catch (err) {
+            console.warn('Skip ' + file.name + ': ' + err.message);
           }
-          loadedFiles.push({ name: file.name, data });
-          rebuildFlat();
-          renderAll();
-        } catch (err) {
-          alert(`Error parsing ${file.name}: ${err.message}`);
-        }
-      };
-      reader.readAsText(file);
+          resolve();
+        };
+        reader.readAsText(file);
+      }));
+    });
+
+    Promise.all(readers).then(function() {
+      summaryFiles.sort(function(a, b) { return b.timestamp.localeCompare(a.timestamp); });
+
+      var total = summaryFiles.length + resultFiles.length;
+      if (total > 0) {
+        fileCountChip.textContent = total + ' file' + (total !== 1 ? 's' : '') + ' loaded';
+        fileCountChip.classList.remove('hidden');
+      } else {
+        fileCountChip.classList.add('hidden');
+      }
+
+      if (summaryFiles.length > 0) {
+        runPickerBtn.classList.remove('hidden');
+        selectedRun = 0;
+        updateRunPickerLabel();
+      } else {
+        runPickerBtn.classList.add('hidden');
+      }
+
+      renderAll();
     });
   }
 
-  function rebuildFlat() {
-    flatRows = [];
-    loadedFiles.forEach(f => {
-      const d = f.data;
-      d.results.forEach(r => {
-        const met = r.grade_result ? r.grade_result.evaluation.filter(c => c.met).length : 0;
-        const total = r.grade_result ? r.grade_result.evaluation.length : 0;
-        flatRows.push({
-          test_id: r.test_id,
-          test_case_name: r.test_case_name,
-          dataset: d.dataset_name,
-          llm_model: d.llm_model,
-          eval_method: r.eval_method || 'model_graded',
-          status: r.status,
-          score: r.grade_result && r.grade_result.score != null ? r.grade_result.score : null,
-          criteria_met: total > 0 ? met / total : null,
-          criteria_met_text: total > 0 ? `${met}/${total}` : '-',
-          met, total,
-          grade_result: r.grade_result,
-          generated_files: r.generated_files || [],
-          evaluation_criteria: r.evaluation_criteria || [],
-          _uid: `${d.dataset_name}_${d.llm_model}_${r.test_id}`
-        });
-      });
-    });
-  }
-
-  function renderAll() {
-    renderChips();
-    if (loadedFiles.length === 0) {
-      dashboard.classList.add('hidden');
-      clearBtn.classList.add('hidden');
+  function classifyFile(filename, data) {
+    if (Array.isArray(data) && data.length > 0 && data[0].dataset && data[0].llm_model && 'average_score' in data[0]) {
+      summaryFiles.push({ filename: filename, timestamp: extractTimestamp(filename), data: data });
       return;
     }
-    dashboard.classList.remove('hidden');
-    clearBtn.classList.remove('hidden');
-    renderKPIs();
-    renderBarChart();
-    renderMethodGrid();
-    populateFilters();
-    renderTable();
-    renderFailedCriteria();
+    if (data && !Array.isArray(data) && data.dataset_name && data.llm_model && Array.isArray(data.results)) {
+      resultFiles.push({ filename: filename, data: data });
+    }
   }
 
-  function renderChips() {
-    fileChips.innerHTML = '';
-    loadedFiles.forEach((f, i) => {
-      const chip = document.createElement('span');
-      chip.className = 'chip';
-      chip.innerHTML = `${f.data.dataset_name} (${f.data.llm_model}) <span class="remove" data-idx="${i}">&times;</span>`;
-      fileChips.appendChild(chip);
+  function extractTimestamp(filename) {
+    var m = filename.match(/(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})\.json$/);
+    if (m) return m[1] + '-' + m[2] + '-' + m[3] + ' ' + m[4] + ':' + m[5] + ':' + m[6];
+    return filename;
+  }
+
+  // ── Run picker modal ──
+  runPickerBtn.addEventListener('click', openRunModal);
+  runModalClose.addEventListener('click', closeRunModal);
+  runModal.addEventListener('click', function(e) {
+    if (e.target === runModal) closeRunModal();
+  });
+
+  function updateRunPickerLabel() {
+    if (selectedRun !== null && summaryFiles[selectedRun]) {
+      runPickerDate.textContent = summaryFiles[selectedRun].timestamp;
+    }
+  }
+
+  function openRunModal() {
+    renderRunTable();
+    runModal.classList.add('open');
+  }
+
+  function closeRunModal() {
+    runModal.classList.remove('open');
+  }
+
+  function getRunMeta(run) {
+    var entries = run.data;
+    var models = [];
+    var datasetSet = {};
+    var totalCases = 0;
+
+    entries.forEach(function(e) {
+      if (models.indexOf(e.llm_model) === -1) models.push(e.llm_model);
+      datasetSet[e.dataset] = true;
+      totalCases += e.test_cases || 0;
     });
-    fileChips.querySelectorAll('.remove').forEach(el => {
-      el.addEventListener('click', e => {
-        const idx = parseInt(e.target.dataset.idx);
-        loadedFiles.splice(idx, 1);
-        rebuildFlat();
+
+    models.sort();
+
+    return {
+      models: models,
+      datasetCount: Object.keys(datasetSet).length,
+      totalCases: totalCases
+    };
+  }
+
+  function renderRunTable() {
+    runTableBody.innerHTML = summaryFiles.map(function(run, i) {
+      var meta = getRunMeta(run);
+      var sel = i === selectedRun ? ' selected' : '';
+
+      var modelTags = meta.models.map(function(m) {
+        return '<span class="model-tag">' + esc(shortModel(m)) + '</span>';
+      }).join('');
+
+      return '<tr class="run-row' + sel + '" data-idx="' + i + '">' +
+        '<td style="white-space:nowrap;font-weight:600">' + esc(run.timestamp) + '</td>' +
+        '<td><div class="run-models">' + modelTags + '</div></td>' +
+        '<td style="text-align:center">' + meta.datasetCount + '</td>' +
+        '<td style="text-align:center">' + meta.totalCases + '</td>' +
+        '</tr>';
+    }).join('');
+
+    // Wire row clicks
+    runTableBody.querySelectorAll('.run-row').forEach(function(tr) {
+      tr.addEventListener('click', function() {
+        selectedRun = parseInt(tr.dataset.idx);
+        expandedId = null;
+        // Reset filters
+        ['filterDataset','filterModel','filterMethod','filterStatus','filterScore'].forEach(function(id) {
+          document.getElementById(id).value = '';
+        });
+        updateRunPickerLabel();
+        closeRunModal();
         renderAll();
       });
     });
   }
 
-  function renderKPIs() {
-    let totalCases = 0, graded = 0, scores = [], cost = 0;
-    loadedFiles.forEach(f => {
-      const d = f.data;
-      totalCases += d.total_test_cases;
-      graded += d.graded_count;
-      cost += d.total_cost || 0;
-      if (d.average_score != null) scores.push(d.average_score);
-    });
-    const avgScore = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
-    const kpis = [
-      { label: 'Total Test Cases', value: totalCases },
-      { label: 'Graded', value: graded },
-      { label: 'Average Score', value: avgScore != null ? (avgScore * 100).toFixed(1) + '%' : 'N/A' },
-      { label: 'Total Cost', value: '$' + cost.toFixed(4) }
-    ];
-    const row = document.getElementById('kpiRow');
-    row.innerHTML = kpis.map(k => `<div class="kpi"><div class="value">${k.value}</div><div class="label">${k.label}</div></div>`).join('');
+  // ── Render all ──
+  function renderAll() {
+    if (summaryFiles.length === 0 || selectedRun === null) {
+      dashboard.classList.add('hidden');
+      return;
+    }
+    dashboard.classList.remove('hidden');
+    renderLeaderboard();
+    populateFilters();
+    renderDetailTable();
   }
 
-  function scoreColor(s) {
-    if (s == null) return '#b2bec3';
-    if (s >= 0.8) return '#00b894';
-    if (s >= 0.5) return '#fdcb6e';
-    return '#d63031';
-  }
-
-  function scoreBadgeClass(s) {
-    if (s == null) return 'badge-gray';
-    if (s >= 0.8) return 'badge-green';
-    if (s >= 0.5) return 'badge-yellow';
-    return 'badge-red';
+  // ── Helpers ──
+  function scoreCellClass(s) {
+    if (s == null) return 'lb-na';
+    if (s >= 0.8) return 'lb-green';
+    if (s >= 0.5) return 'lb-yellow';
+    return 'lb-red';
   }
 
   function scoreTextClass(s) {
@@ -356,72 +447,191 @@
     return 'score-red';
   }
 
-  function renderBarChart() {
-    const groups = {};
-    loadedFiles.forEach(f => {
-      const key = `${f.data.dataset_name} | ${f.data.llm_model}`;
-      groups[key] = f.data.average_score;
-    });
-    const container = document.getElementById('barChart');
-    container.innerHTML = Object.entries(groups).map(([label, score]) => {
-      const pct = score != null ? (score * 100) : 0;
-      const color = scoreColor(score);
-      const display = score != null ? (score * 100).toFixed(1) + '%' : 'N/A';
-      return `<div class="bar-row">
-        <div class="bar-label" title="${label}">${label}</div>
-        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
-        <div class="bar-value" style="color:${color}">${display}</div>
-      </div>`;
-    }).join('');
+  function prettyDataset(name) {
+    return name.replace(/_dataset$/i, '').replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
   }
 
-  function renderMethodGrid() {
-    const methods = {};
-    flatRows.forEach(r => {
-      const m = r.eval_method;
-      if (!methods[m]) methods[m] = { count: 0, scores: [] };
-      methods[m].count++;
-      if (r.score != null) methods[m].scores.push(r.score);
-    });
-    const grid = document.getElementById('methodGrid');
-    grid.innerHTML = Object.entries(methods).sort(([a],[b]) => a.localeCompare(b)).map(([name, data]) => {
-      const avg = data.scores.length ? (data.scores.reduce((a,b) => a+b, 0) / data.scores.length) : null;
-      const avgText = avg != null ? (avg * 100).toFixed(1) + '%' : 'N/A';
-      return `<div class="method-card">
-        <div class="m-name"><span class="badge badge-${name}">${name.replace(/_/g, ' ')}</span></div>
-        <div class="m-count">${data.count}</div>
-        <div class="m-score">Avg: ${avgText}</div>
-      </div>`;
-    }).join('');
+  function fileBasename(filepath) {
+    return filepath.replace(/\\/g, '/').split('/').pop();
   }
 
+  // ── Leaderboard ──
+  function getRunData() {
+    return summaryFiles[selectedRun].data;
+  }
+
+  function buildLeaderboardData() {
+    var entries = getRunData();
+    var models = []; var datasets = [];
+    entries.forEach(function(e) {
+      if (models.indexOf(e.llm_model) === -1) models.push(e.llm_model);
+      if (datasets.indexOf(e.dataset) === -1) datasets.push(e.dataset);
+    });
+    models.sort(); datasets.sort();
+
+    var pivot = {};
+    var costs = {};
+    models.forEach(function(model) {
+      var me = entries.filter(function(e) { return e.llm_model === model; });
+      var scores = {};
+      var modelCost = 0;
+      me.forEach(function(e) { scores[e.dataset] = e.average_score; modelCost += e.total_cost || 0; });
+      var vals = Object.values(scores).filter(function(v) { return v != null; });
+      scores['__global__'] = vals.length > 0 ? vals.reduce(function(a, b) { return a + b; }, 0) / vals.length : null;
+      pivot[model] = scores;
+      costs[model] = modelCost;
+    });
+
+    return { models: models, datasets: datasets, pivot: pivot, costs: costs };
+  }
+
+  function renderLeaderboard() {
+    var lb = buildLeaderboardData();
+    var models = lb.models, datasets = lb.datasets, pivot = lb.pivot, costs = lb.costs;
+
+    // Colgroup
+    var colgroup = document.getElementById('lbColgroup');
+    var colHtml = '<col class="col-model">';
+    for (var ci = 0; ci < 1 + datasets.length; ci++) colHtml += '<col class="col-score">';
+    colHtml += '<col class="col-cost">';
+    colgroup.innerHTML = colHtml;
+
+    // Header
+    var thead = document.getElementById('lbHead');
+    var hh = '<tr><th data-lbcol="__model__">Model</th>';
+    hh += '<th data-lbcol="__global__">Global Avg ' + sortArrowHtml('__global__') + '</th>';
+    datasets.forEach(function(ds) {
+      hh += '<th data-lbcol="' + esc(ds) + '">' + esc(prettyDataset(ds)) + ' ' + sortArrowHtml(ds) + '</th>';
+    });
+    hh += '<th data-lbcol="__cost__">Cost ' + sortArrowHtml('__cost__') + '</th>';
+    hh += '</tr>';
+    thead.innerHTML = hh;
+
+    // Sort models
+    var sorted = models.slice();
+    if (lbSortCol && lbSortCol !== '__model__') {
+      sorted.sort(function(a, b) {
+        var va, vb;
+        if (lbSortCol === '__cost__') { va = costs[a]; vb = costs[b]; }
+        else { va = pivot[a][lbSortCol]; vb = pivot[b][lbSortCol]; }
+        if (va == null && vb == null) return 0;
+        if (va == null) return 1;
+        if (vb == null) return -1;
+        return lbSortAsc ? va - vb : vb - va;
+      });
+    }
+
+    // Body — use short names in the display, raw names in data attributes
+    var tbody = document.getElementById('lbBody');
+    tbody.innerHTML = sorted.map(function(model) {
+      var row = '<tr><td title="' + esc(model) + '">' + esc(shortModel(model)) + '</td>';
+      row += lbCellHtml(pivot[model]['__global__'], '', model);
+      datasets.forEach(function(ds) { row += lbCellHtml(pivot[model][ds], ds, model); });
+      row += '<td style="font-size:.8rem;color:#636e72;cursor:default">$' + costs[model].toFixed(2) + '</td>';
+      return row + '</tr>';
+    }).join('');
+
+    // Wire header clicks
+    thead.querySelectorAll('th[data-lbcol]').forEach(function(th) {
+      th.addEventListener('click', function() {
+        var col = th.dataset.lbcol;
+        if (col === '__model__') return;
+        if (lbSortCol === col) { lbSortAsc = !lbSortAsc; } else { lbSortCol = col; lbSortAsc = false; }
+        renderLeaderboard();
+      });
+    });
+
+    // Wire cell clicks
+    tbody.querySelectorAll('td[data-model]').forEach(function(td) {
+      td.addEventListener('click', function() {
+        document.getElementById('filterDataset').value = td.dataset.ds || '';
+        document.getElementById('filterModel').value = td.dataset.model || '';
+        renderDetailTable();
+        document.getElementById('filtersRow').scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+  }
+
+  function sortArrowHtml(col) {
+    var active = lbSortCol === col;
+    var text = active ? (lbSortAsc ? '\u25B2' : '\u25BC') : '\u25B2\u25BC';
+    return '<span class="sort-arrow' + (active ? ' active' : '') + '">' + text + '</span>';
+  }
+
+  function lbCellHtml(score, dataset, model) {
+    var display = score != null ? (score * 100).toFixed(1) + '%' : '-';
+    var cls = scoreCellClass(score);
+    return '<td data-ds="' + esc(dataset) + '" data-model="' + esc(model) + '"><span class="lb-cell ' + cls + '">' + display + '</span></td>';
+  }
+
+  // ── Build flat rows from matched result files ──
+  function getMatchedResults() {
+    var summary = getRunData();
+    var flat = [];
+
+    summary.forEach(function(entry) {
+      var expectedBasename = entry.results_json_path ? fileBasename(entry.results_json_path) : null;
+      var match = expectedBasename ? resultFiles.find(function(rf) { return rf.filename === expectedBasename; }) : null;
+      if (!match) return;
+
+      var d = match.data;
+      d.results.forEach(function(r) {
+        var met = r.grade_result ? r.grade_result.evaluation.filter(function(c) { return c.met; }).length : 0;
+        var total = r.grade_result ? r.grade_result.evaluation.length : 0;
+        flat.push({
+          test_id: r.test_id,
+          test_case_name: r.test_case_name,
+          dataset: d.dataset_name,
+          llm_model: d.llm_model,
+          eval_method: r.eval_method || 'model-graded',
+          status: r.status,
+          score: r.grade_result && r.grade_result.score != null ? r.grade_result.score : null,
+          criteria_met: total > 0 ? met / total : null,
+          criteria_met_text: total > 0 ? met + '/' + total : '-',
+          met: met, total: total,
+          grade_result: r.grade_result,
+          generated_files: r.generated_files || [],
+          evaluation_criteria: r.evaluation_criteria || [],
+          _uid: d.dataset_name + '_' + d.llm_model + '_' + r.test_id
+        });
+      });
+    });
+
+    return flat;
+  }
+
+  // ── Filters ──
   function populateFilters() {
-    fillSelect('filterDataset', [...new Set(flatRows.map(r => r.dataset))].sort());
-    fillSelect('filterModel', [...new Set(flatRows.map(r => r.llm_model))].sort());
-    fillSelect('filterMethod', [...new Set(flatRows.map(r => r.eval_method))].sort());
-    fillSelect('filterStatus', [...new Set(flatRows.map(r => r.status))].sort());
+    var flat = getMatchedResults();
+    fillSelect('filterDataset', unique(flat.map(function(r) { return r.dataset; })));
+    fillSelect('filterModel', unique(flat.map(function(r) { return r.llm_model; })));
+    fillSelect('filterMethod', unique(flat.map(function(r) { return r.eval_method; })));
+    fillSelect('filterStatus', unique(flat.map(function(r) { return r.status; })));
+  }
+
+  function unique(arr) {
+    return arr.filter(function(v, i, a) { return a.indexOf(v) === i; }).sort();
   }
 
   function fillSelect(id, options) {
-    const sel = document.getElementById(id);
-    const current = sel.value;
-    const firstOpt = sel.options[0].outerHTML;
-    sel.innerHTML = firstOpt + options.map(o => `<option value="${o}">${o}</option>`).join('');
+    var sel = document.getElementById(id);
+    var current = sel.value;
+    var first = sel.options[0].outerHTML;
+    sel.innerHTML = first + options.map(function(o) { return '<option value="' + esc(o) + '">' + esc(o) + '</option>'; }).join('');
     sel.value = current;
   }
 
-  // Filter listeners
-  ['filterDataset','filterModel','filterMethod','filterStatus','filterScore'].forEach(id => {
-    document.getElementById(id).addEventListener('change', renderTable);
+  ['filterDataset','filterModel','filterMethod','filterStatus','filterScore'].forEach(function(id) {
+    document.getElementById(id).addEventListener('change', renderDetailTable);
   });
 
-  function getFiltered() {
-    const fd = document.getElementById('filterDataset').value;
-    const fm = document.getElementById('filterModel').value;
-    const fme = document.getElementById('filterMethod').value;
-    const fs = document.getElementById('filterStatus').value;
-    const fsc = document.getElementById('filterScore').value;
-    return flatRows.filter(r => {
+  function getFiltered(flat) {
+    var fd = document.getElementById('filterDataset').value;
+    var fm = document.getElementById('filterModel').value;
+    var fme = document.getElementById('filterMethod').value;
+    var fs = document.getElementById('filterStatus').value;
+    var fsc = document.getElementById('filterScore').value;
+    return flat.filter(function(r) {
       if (fd && r.dataset !== fd) return false;
       if (fm && r.llm_model !== fm) return false;
       if (fme && r.eval_method !== fme) return false;
@@ -433,31 +643,28 @@
     });
   }
 
-  // Sorting
-  document.querySelectorAll('#resultsTable th[data-col]').forEach(th => {
-    th.addEventListener('click', () => {
-      const col = th.dataset.col;
+  // ── Sorting (detail table) ──
+  document.querySelectorAll('#resultsTable th[data-col]').forEach(function(th) {
+    th.addEventListener('click', function() {
+      var col = th.dataset.col;
       if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; }
-      updateSortArrows();
-      renderTable();
+      updateDetailSortArrows();
+      renderDetailTable();
     });
   });
 
-  function updateSortArrows() {
-    document.querySelectorAll('#resultsTable th[data-col]').forEach(th => {
-      const arrow = th.querySelector('.sort-arrow');
-      arrow.classList.toggle('active', th.dataset.col === sortCol);
-      if (th.dataset.col === sortCol) {
-        arrow.textContent = sortAsc ? '\u25B2' : '\u25BC';
-      } else {
-        arrow.textContent = '\u25B2\u25BC';
-      }
+  function updateDetailSortArrows() {
+    document.querySelectorAll('#resultsTable th[data-col]').forEach(function(th) {
+      var arrow = th.querySelector('.sort-arrow');
+      var active = th.dataset.col === sortCol;
+      arrow.classList.toggle('active', active);
+      arrow.textContent = active ? (sortAsc ? '\u25B2' : '\u25BC') : '\u25B2\u25BC';
     });
   }
 
   function sortRows(rows) {
-    return rows.slice().sort((a, b) => {
-      let va = a[sortCol], vb = b[sortCol];
+    return rows.slice().sort(function(a, b) {
+      var va = a[sortCol], vb = b[sortCol];
       if (va == null && vb == null) return 0;
       if (va == null) return 1;
       if (vb == null) return -1;
@@ -468,9 +675,11 @@
     });
   }
 
-  function renderTable() {
-    const filtered = sortRows(getFiltered());
-    const tbody = document.getElementById('resultsBody');
+  // ── Render detail table ──
+  function renderDetailTable() {
+    var flat = getMatchedResults();
+    var filtered = sortRows(getFiltered(flat));
+    var tbody = document.getElementById('resultsBody');
     tbody.innerHTML = '';
 
     if (filtered.length === 0) {
@@ -478,86 +687,71 @@
       return;
     }
 
-    filtered.forEach(r => {
-      // Main row
-      const tr = document.createElement('tr');
+    filtered.forEach(function(r) {
+      var tr = document.createElement('tr');
       tr.className = 'clickable';
-      tr.dataset.uid = r._uid;
 
-      const scoreDisplay = r.score != null ? r.score.toFixed(2) : '-';
-      const statusBadge = r.status === 'GRADED' ? 'badge-green' : r.status === 'ERROR' ? 'badge-red' : 'badge-gray';
+      var scoreDisplay = r.score != null ? r.score.toFixed(2) : '-';
+      var statusBadge = r.status === 'GRADED' ? 'badge-green' : r.status === 'ERROR' ? 'badge-red' : 'badge-gray';
+      var methodBadge = 'badge-' + r.eval_method.replace(/_/g, '-');
 
-      tr.innerHTML = `
-        <td>${esc(r.test_id)}</td>
-        <td>${esc(r.test_case_name)}</td>
-        <td>${esc(r.dataset)}</td>
-        <td>${esc(r.llm_model)}</td>
-        <td><span class="badge badge-${r.eval_method}">${esc(r.eval_method.replace(/_/g, ' '))}</span></td>
-        <td><span class="badge ${statusBadge}">${esc(r.status)}</span></td>
-        <td class="${scoreTextClass(r.score)}" style="font-weight:600">${scoreDisplay}</td>
-        <td>${esc(r.criteria_met_text)}</td>
-      `;
+      tr.innerHTML =
+        '<td>' + esc(r.test_id) + '</td>' +
+        '<td>' + esc(r.test_case_name) + '</td>' +
+        '<td>' + esc(r.dataset) + '</td>' +
+        '<td>' + esc(shortModel(r.llm_model)) + '</td>' +
+        '<td><span class="badge ' + methodBadge + '">' + esc(r.eval_method.replace(/_/g, ' ')) + '</span></td>' +
+        '<td><span class="badge ' + statusBadge + '">' + esc(r.status) + '</span></td>' +
+        '<td class="' + scoreTextClass(r.score) + '" style="font-weight:600">' + scoreDisplay + '</td>' +
+        '<td>' + esc(r.criteria_met_text) + '</td>';
 
-      tr.addEventListener('click', () => toggleDetail(r._uid, tr));
+      tr.addEventListener('click', function() { toggleDetail(r._uid); });
       tbody.appendChild(tr);
 
-      // Detail row (hidden by default)
       if (expandedId === r._uid) {
         tbody.appendChild(buildDetailRow(r));
       }
     });
   }
 
-  function toggleDetail(uid, tr) {
-    if (expandedId === uid) {
-      expandedId = null;
-    } else {
-      expandedId = uid;
-    }
-    renderTable();
+  function toggleDetail(uid) {
+    expandedId = expandedId === uid ? null : uid;
+    renderDetailTable();
   }
 
   function buildDetailRow(r) {
-    const dtr = document.createElement('tr');
+    var dtr = document.createElement('tr');
     dtr.className = 'detail-row';
-    const td = document.createElement('td');
+    var td = document.createElement('td');
     td.colSpan = 8;
+    var html = '<div class="detail-panel">';
 
-    let html = '<div class="detail-panel">';
-
-    // Criteria list
     if (r.grade_result && r.grade_result.evaluation && r.grade_result.evaluation.length > 0) {
       html += '<h3>Criteria</h3><ul class="criteria-list">';
-      r.grade_result.evaluation.forEach(c => {
-        const icon = c.met ? '<span class="icon-met">&#10003;</span>' : '<span class="icon-not-met">&#10007;</span>';
-        html += `<li>
-          <div>${icon}</div>
-          <div>
-            <div class="criteria-text">${esc(c.criteria)}</div>
-            <div class="criteria-details">${esc(c.details || '')}</div>
-          </div>
-        </li>`;
+      r.grade_result.evaluation.forEach(function(c) {
+        var icon = c.met ? '<span class="icon-met">&#10003;</span>' : '<span class="icon-not-met">&#10007;</span>';
+        html += '<li><div>' + icon + '</div><div>' +
+          '<div class="criteria-text">' + esc(c.criteria) + '</div>' +
+          '<div class="criteria-details">' + esc(c.details || '') + '</div>' +
+          '</div></li>';
       });
       html += '</ul>';
     } else if (r.evaluation_criteria && r.evaluation_criteria.length > 0) {
       html += '<h3>Evaluation Criteria</h3><ul class="criteria-list">';
-      r.evaluation_criteria.forEach(c => {
-        html += `<li><div class="criteria-text">${esc(c)}</div></li>`;
+      r.evaluation_criteria.forEach(function(c) {
+        html += '<li><div class="criteria-text">' + esc(c) + '</div></li>';
       });
       html += '</ul>';
     }
 
-    // Reasoning
     if (r.grade_result && r.grade_result.reasoning) {
-      html += `<div class="reasoning"><strong>Reasoning:</strong> ${esc(r.grade_result.reasoning)}</div>`;
+      html += '<div class="reasoning"><strong>Reasoning:</strong> ' + esc(r.grade_result.reasoning) + '</div>';
     }
 
-    // Generated files
     if (r.generated_files.length > 0) {
       html += '<div class="generated-files"><strong>Generated files:</strong><br>';
-      r.generated_files.forEach(f => {
-        const short = f.split(/[/\\]/).slice(-3).join('/');
-        html += `<code>${esc(short)}</code><br>`;
+      r.generated_files.forEach(function(f) {
+        html += '<code>' + esc(f.split(/[/\\]/).slice(-3).join('/')) + '</code><br>';
       });
       html += '</div>';
     }
@@ -568,50 +762,14 @@
     return dtr;
   }
 
-  function renderFailedCriteria() {
-    const stats = {};
-    flatRows.forEach(r => {
-      if (!r.grade_result) return;
-      r.grade_result.evaluation.forEach(c => {
-        if (!stats[c.criteria]) stats[c.criteria] = { met: 0, total: 0 };
-        stats[c.criteria].total++;
-        if (c.met) stats[c.criteria].met++;
-      });
-    });
-
-    const sorted = Object.entries(stats)
-      .map(([criteria, s]) => ({ criteria, met: s.met, total: s.total, rate: s.total > 0 ? s.met / s.total : 0 }))
-      .filter(x => x.rate < 1.0)
-      .sort((a, b) => a.rate - b.rate)
-      .slice(0, 15);
-
-    const tbody = document.getElementById('failedBody');
-    if (sorted.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="no-results">All criteria passed!</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = sorted.map(x => {
-      const pct = (x.rate * 100).toFixed(0) + '%';
-      const cls = x.rate >= 0.8 ? 'score-green' : x.rate >= 0.5 ? 'score-yellow' : 'score-red';
-      return `<tr>
-        <td>${esc(x.criteria)}</td>
-        <td class="${cls}" style="font-weight:600">${pct}</td>
-        <td>${x.met}</td>
-        <td>${x.total}</td>
-      </tr>`;
-    }).join('');
-  }
-
   function esc(s) {
     if (s == null) return '';
-    const d = document.createElement('div');
+    var d = document.createElement('div');
     d.textContent = String(s);
     return d.innerHTML;
   }
 
-  // Init sort arrows
-  updateSortArrows();
+  updateDetailSortArrows();
 })();
 </script>
 </body>

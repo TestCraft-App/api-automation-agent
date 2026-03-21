@@ -4,7 +4,7 @@
     {
       "case_type": "prompt_injection",
       "test_id": "test_001",
-      "name": "test_001_prompt_injection_alert",
+      "name": "prompt_injection_alert",
       "api_definition_file": "test_001_prompt_injection_api.yaml",
       "model_files": [
         "requests/UserModel.ts",
