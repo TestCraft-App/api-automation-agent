@@ -189,7 +189,7 @@ DEBUG=False
 
         content = self.env_file.read_text()
         assert "OPENAI_API_KEY=sk-test-openai-key" in content
-        assert "MODEL=gpt-5.2" in content
+        assert "MODEL=gpt-5.4" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_anthropic(self, mock_get_dir):
@@ -208,7 +208,7 @@ DEBUG=False
 
         content = self.env_file.read_text()
         assert "ANTHROPIC_API_KEY=sk-ant-test-key" in content
-        assert "MODEL=claude-sonnet-4-5" in content
+        assert "MODEL=claude-sonnet-4-6" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_bedrock(self, mock_get_dir):
@@ -234,7 +234,7 @@ DEBUG=False
         assert "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE" in content
         assert "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" in content
         assert "AWS_REGION=us-west-2" in content
-        assert "MODEL=anthropic.claude-sonnet-4-5-v1:0" in content
+        assert "MODEL=anthropic.claude-sonnet-4-6-v1:0" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_bedrock_aws_cli(self, mock_get_dir):
@@ -256,7 +256,7 @@ DEBUG=False
         # Should only have region, no access keys
         assert "AWS_REGION=eu-central-1" in content
         assert "AWS_ACCESS_KEY_ID" not in content or "AWS_ACCESS_KEY_ID=" in content
-        assert "MODEL=anthropic.claude-sonnet-4-5-v1:0" in content
+        assert "MODEL=anthropic.claude-sonnet-4-6-v1:0" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_invalid_provider_then_valid(self, mock_get_dir):
