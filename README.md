@@ -369,6 +369,8 @@ The evaluations use LLM-based grading to assess whether generated files meet spe
 
 The evaluation suite includes security evaluations, such as the prompt injection dataset, which evaluates the agent's resistance to prompt injection attacks embedded in API specifications.
 
+View the latest results on the [Evaluation Dashboard](https://testcraft-app.github.io/api-automation-agent/evaluations/dashboard.html).
+
 For detailed instructions on how to set up, run, and interpret the evaluation results, please refer to [Evaluations](./evaluations/README.md).
 
 ## Benchmarks

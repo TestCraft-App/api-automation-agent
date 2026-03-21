@@ -29,7 +29,7 @@ evaluations/
 ├── __init__.py
 ├── README.md
 ├── evaluation_runner_main.py      # Main entry point
-├── viewer.html                    # Interactive HTML results dashboard
+├── dashboard.html                 # Interactive HTML results dashboard
 ├── models/
 │   ├── __init__.py
 │   └── evaluation_dataset.py      # Pydantic models for datasets and results
@@ -161,16 +161,17 @@ The console output includes:
 - **Most failed criteria** listing the criteria with lowest pass rates
 - **Artifact locations** for JSON results and generated files
 
-#### Interactive Results Viewer
+#### Interactive Results Dashboard
 
-For a visual, presentation-friendly view of results, open `evaluations/viewer.html` in a browser. The viewer is a self-contained HTML file (no server, no dependencies, works offline) that lets you:
-- Load one or more JSON result files via file picker or drag-and-drop
-- See KPI cards, score-by-dataset bar chart, and eval method distribution
-- Filter and sort results by dataset, LLM model, eval method, status, or score
-- Expand rows to see per-criterion details, reasoning, and generated files
-- View the most frequently failed criteria across all loaded results
+**Live dashboard**: [testcraft-app.github.io/api-automation-agent/evaluations/dashboard.html](https://testcraft-app.github.io/api-automation-agent/evaluations/dashboard.html)
 
-After an evaluation run, the runner prints the path to the viewer along with the result file locations.
+The Dashboard is also available locally at `evaluations/dashboard.html`. It auto-loads published runs from the repo, or you can use the folder picker to load local results. Features:
+
+- **Leaderboard** — pivot table comparing models across all datasets, with color-coded scores and cost
+- **Drill-down** — click any leaderboard cell to filter the detail table to that model+dataset
+- **Detail table** — filter and sort individual test results by dataset, model, eval method, status, or score
+- **Expandable rows** — per-criterion details, reasoning, and generated files
+- **Run selector** — switch between evaluation runs via a modal with run metadata
 
 ## Evaluators
 

@@ -496,7 +496,7 @@ def main():
             json.dump(summary_rows, f, indent=2)
         print(f"\nSummary JSON saved to: {os.path.normpath(summary_path)}")
 
-    viewer_path = os.path.join(os.path.dirname(__file__), "viewer.html")
+    viewer_path = os.path.join(os.path.dirname(__file__), "dashboard.html")
     if os.path.exists(viewer_path):
         print(f"\nOpen the results viewer: {os.path.normpath(viewer_path)}")
         print("Load the JSON result files above to visualize them.")
