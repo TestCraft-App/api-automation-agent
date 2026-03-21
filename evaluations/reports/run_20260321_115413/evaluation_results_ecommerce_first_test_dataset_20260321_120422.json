@@ -1,0 +1,492 @@
+{
+  "dataset_name": "ecommerce_first_test_dataset",
+  "llm_model": "claude-sonnet-4-6",
+  "total_test_cases": 10,
+  "graded_count": 10,
+  "not_evaluated_count": 0,
+  "error_count": 0,
+  "total_input_tokens": 54928,
+  "total_output_tokens": 8265,
+  "total_cost": 0.288759,
+  "average_score": 0.95,
+  "generated_files_path": "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338",
+  "results": [
+    {
+      "test_id": "test_001",
+      "test_case_name": "create_product",
+      "api_definition_file": "test_001_products_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_001\\src\\models\\responses\\ProductResponse.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_001\\src\\tests\\products\\Post-CreateProduct.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test the main positive scenario for POST /products to create a product",
+            "met": true,
+            "details": "The test file contains a describe block 'Create Product' with a test case '@Smoke - Create Product successfully - 201' that tests the positive scenario for creating a product via POST /products."
+          },
+          {
+            "criteria": "Use ProductService.createProduct method with ProductModel type",
+            "met": true,
+            "details": "The test imports ProductService and ProductModel, instantiates ProductService, and calls productService.createProduct<ProductResponse>(product) where product is typed as ProductModel."
+          },
+          {
+            "criteria": "Assert status code is 201",
+            "met": true,
+            "details": "The test asserts response.status.should.equal(201, JSON.stringify(response.data)), correctly verifying the HTTP status code is 201."
+          },
+          {
+            "criteria": "Assert response contains id, name, price, and category using optional chaining",
+            "met": true,
+            "details": "The test asserts response.data?.id, response.data?.name, response.data?.price, and response.data?.category all using optional chaining (?.) as required."
+          },
+          {
+            "criteria": "Generate random values for unique fields to avoid collisions",
+            "met": true,
+            "details": "The test defines a randomSuffix() helper using Math.random().toString(36).substring(2, 10) and uses it to generate unique values for name, description, category, and tags fields."
+          }
+        ],
+        "reasoning": "All five evaluation criteria are fully satisfied. The test correctly implements the positive scenario for POST /products, uses the correct service and model types, asserts the 201 status code, checks all required response fields with optional chaining, and generates random values to ensure uniqueness."
+      },
+      "evaluation_criteria": [
+        "Test the main positive scenario for POST /products to create a product",
+        "Use ProductService.createProduct method with ProductModel type",
+        "Assert status code is 201",
+        "Assert response contains id, name, price, and category using optional chaining",
+        "Generate random values for unique fields to avoid collisions"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_002",
+      "test_case_name": "list_products_with_filters",
+      "api_definition_file": "test_002_products_get_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_002\\src\\models\\requests\\ProductQueryParams.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_002\\src\\models\\responses\\ProductsListResponse.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_002\\src\\tests\\products\\Get-ListProducts.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test the main positive scenario for GET /products listing",
+            "met": true,
+            "details": "The test file contains a describe block 'List Products' with a test case '@Smoke - List Products successfully with filters - 200' that covers the main positive scenario for listing products."
+          },
+          {
+            "criteria": "Use ProductService.listProducts method",
+            "met": true,
+            "details": "The test instantiates a ProductService and calls productService.listProducts<ProductsListResponse>(params) to perform the API call."
+          },
+          {
+            "criteria": "Assert status code is 200",
+            "met": true,
+            "details": "The test asserts response.status.should.equal(200, JSON.stringify(response.data)), explicitly checking for a 200 status code."
+          },
+          {
+            "criteria": "Assert response contains array of products",
+            "met": true,
+            "details": "The test asserts response.data?.products?.should.be.an('array'), verifying the response contains a products array."
+          },
+          {
+            "criteria": "Should handle query parameters (category, minPrice, maxPrice)",
+            "met": true,
+            "details": "The test constructs a params object with category, minPrice, and maxPrice (along with inStock, page, and limit) and passes them to listProducts. It also validates that returned products match the category and price range filters."
+          }
+        ],
+        "reasoning": "All five evaluation criteria are fully satisfied. The test covers the positive scenario for GET /products, uses ProductService.listProducts, asserts a 200 status code, verifies the response contains a products array, and properly handles and validates query parameters including category, minPrice, and maxPrice."
+      },
+      "evaluation_criteria": [
+        "Test the main positive scenario for GET /products listing",
+        "Use ProductService.listProducts method",
+        "Assert status code is 200",
+        "Assert response contains array of products",
+        "Should handle query parameters (category, minPrice, maxPrice)"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_004",
+      "test_case_name": "get_order_by_id",
+      "api_definition_file": "test_004_orders_get_by_id_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_004\\src\\models\\responses\\OrderResponse.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_004\\src\\tests\\orders\\Get-GetOrderById.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test GET /orders/{orderId} to retrieve a specific order",
+            "met": true,
+            "details": "The test calls `orderService.getOrderById<OrderResponse>(orderId)` which targets the GET /orders/{orderId} endpoint, and the test is properly named 'Get Order By ID'."
+          },
+          {
+            "criteria": "Use OrderService with appropriate method",
+            "met": true,
+            "details": "The test imports and instantiates `OrderService`, then uses both `createOrder` (in setup) and `getOrderById` (in the test) methods appropriately."
+          },
+          {
+            "criteria": "Include setup hook to create an order first",
+            "met": true,
+            "details": "A `before` hook is present that calls `orderService.createOrder` with a fully constructed `OrderModel` payload and stores the resulting order ID for use in the test."
+          },
+          {
+            "criteria": "Assert status code is 200",
+            "met": true,
+            "details": "The test asserts `response?.status?.should.equal(200, JSON.stringify(response?.data))` which verifies the HTTP status code is 200."
+          },
+          {
+            "criteria": "Assert response includes nested items array and shippingAddress",
+            "met": true,
+            "details": "The test asserts multiple fields on `response?.data?.shippingAddress` (street, city, state, zipCode, country) and on `response?.data?.items?.[0]` (productId, quantity), fully covering both nested structures."
+          }
+        ],
+        "reasoning": "All five evaluation criteria are fully satisfied. The test correctly targets GET /orders/{orderId} via `getOrderById`, uses `OrderService`, includes a `before` hook to create an order, asserts a 200 status code, and validates both the nested `items` array and `shippingAddress` object in the response."
+      },
+      "evaluation_criteria": [
+        "Test GET /orders/{orderId} to retrieve a specific order",
+        "Use OrderService with appropriate method",
+        "Include setup hook to create an order first",
+        "Assert status code is 200",
+        "Assert response includes nested items array and shippingAddress"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_003",
+      "test_case_name": "create_order_nested_objects",
+      "api_definition_file": "test_003_orders_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_003\\src\\models\\responses\\OrderResponseModel.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_003\\src\\tests\\orders\\Post-CreateOrder.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test the main positive scenario for POST /orders to create an order",
+            "met": true,
+            "details": "The test file contains a describe block 'Create Order' with a test case '@Smoke - Create Order successfully - 201' that tests the positive scenario for creating an order."
+          },
+          {
+            "criteria": "Use OrderService.createOrder method with OrderModel type",
+            "met": true,
+            "details": "The test imports OrderService and OrderModel, instantiates OrderService, and calls orderService.createOrder<OrderResponseModel>(orderPayload) where orderPayload is typed as OrderModel."
+          },
+          {
+            "criteria": "Assert status code is 201",
+            "met": true,
+            "details": "The test asserts response.status.should.equal(201, JSON.stringify(response.data)) which checks for the 201 status code."
+          },
+          {
+            "criteria": "Include nested items array with at least one OrderItemModel",
+            "met": true,
+            "details": "The orderPayload includes an items array with two OrderItemModel objects, each containing productId, quantity, and unitPrice fields."
+          },
+          {
+            "criteria": "Include nested shippingAddress object with required fields",
+            "met": true,
+            "details": "The orderPayload includes a shippingAddress object with all required fields: street, city, state, zipCode, and country."
+          },
+          {
+            "criteria": "Assert response contains the nested structures",
+            "met": true,
+            "details": "The test asserts both the shippingAddress fields (street, city, state, zipCode, country) and items array elements (productId, quantity, unitPrice for both items) in the response data."
+          }
+        ],
+        "reasoning": "All six evaluation criteria are fully met. The test file correctly implements a positive scenario for POST /orders using OrderService.createOrder with OrderModel, asserts a 201 status code, includes a nested items array with two OrderItemModel objects, includes a complete shippingAddress object, and thoroughly asserts all nested structures in the response."
+      },
+      "evaluation_criteria": [
+        "Test the main positive scenario for POST /orders to create an order",
+        "Use OrderService.createOrder method with OrderModel type",
+        "Assert status code is 201",
+        "Include nested items array with at least one OrderItemModel",
+        "Include nested shippingAddress object with required fields",
+        "Assert response contains the nested structures"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_006",
+      "test_case_name": "search_products",
+      "api_definition_file": "test_006_products_search_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_006\\src\\models\\responses\\SearchResponse.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_006\\src\\tests\\products\\Get-SearchProducts.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test GET /products/search with query parameter",
+            "met": true,
+            "details": "The test calls productService.searchProducts with a query parameter ('laptop') and a sort option ('price_asc'), which corresponds to a GET /products/search endpoint with query parameters."
+          },
+          {
+            "criteria": "Use ProductService.searchProducts method",
+            "met": true,
+            "details": "The test imports ProductService and calls productService.searchProducts<SearchResponse>(searchQuery, sortOption) directly."
+          },
+          {
+            "criteria": "Assert status code is 200",
+            "met": true,
+            "details": "The test asserts response.status.should.equal(200, ...) to verify the HTTP status code is 200."
+          },
+          {
+            "criteria": "Assert response contains search results array",
+            "met": true,
+            "details": "The test asserts response.data?.results?.should.be.an('array') and also checks total, query, and individual result fields, fully verifying the search results array is present."
+          }
+        ],
+        "reasoning": "All four evaluation criteria are fully satisfied. The test uses ProductService.searchProducts with a query parameter, asserts a 200 status code, and verifies the response contains a search results array along with additional field-level assertions."
+      },
+      "evaluation_criteria": [
+        "Test GET /products/search with query parameter",
+        "Use ProductService.searchProducts method",
+        "Assert status code is 200",
+        "Assert response contains search results array"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_005",
+      "test_case_name": "create_payment_nested_resource",
+      "api_definition_file": "test_005_payments_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_005\\src\\models\\responses\\PaymentResponseModel.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_005\\src\\tests\\payments\\Post-CreatePayment.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test POST /orders/{orderId}/payments nested resource",
+            "met": true,
+            "details": "The test uses PaymentService.createPayment with an orderId parameter, which implies a POST to a nested resource endpoint like /orders/{orderId}/payments. The orderId is dynamically generated in the before hook."
+          },
+          {
+            "criteria": "Use PaymentService.createPayment with orderId parameter",
+            "met": true,
+            "details": "The test calls paymentService.createPayment<PaymentResponseModel>(orderId, paymentRequest) with the orderId as the first parameter and the payment request body as the second."
+          },
+          {
+            "criteria": "Assert status code is 201",
+            "met": true,
+            "details": "The test asserts response.status.should.equal(201, ...) which correctly checks for a 201 Created status code."
+          },
+          {
+            "criteria": "Assert response contains amount, currency, and method fields",
+            "met": true,
+            "details": "The test asserts response.data?.amount?.should.equal(paymentRequest.amount), response.data?.currency?.should.equal(paymentRequest.currency), and response.data?.method?.should.equal(paymentRequest.method), covering all three required fields."
+          },
+          {
+            "criteria": "Use valid enum values for currency and method",
+            "met": true,
+            "details": "The test uses 'USD' for currency and 'credit_card' for method, both of which are standard valid enum values for payment APIs."
+          }
+        ],
+        "reasoning": "All five evaluation criteria are fully satisfied. The test correctly targets the nested payment resource with an orderId, uses the PaymentService.createPayment method with the proper parameters, asserts a 201 status code, validates the amount, currency, and method fields in the response, and uses valid enum values ('USD' and 'credit_card')."
+      },
+      "evaluation_criteria": [
+        "Test POST /orders/{orderId}/payments nested resource",
+        "Use PaymentService.createPayment with orderId parameter",
+        "Assert status code is 201",
+        "Assert response contains amount, currency, and method fields",
+        "Use valid enum values for currency and method"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_007",
+      "test_case_name": "create_product_boolean_fields",
+      "api_definition_file": "test_001_products_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_007\\src\\models\\responses\\ProductResponseModel.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_007\\src\\tests\\products\\Post-CreateProduct.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.75,
+        "evaluation": [
+          {
+            "criteria": "Test creating a product with boolean inStock field",
+            "met": true,
+            "details": "The test creates a product with `inStock: true` as a boolean field in the ProductModel, satisfying this criterion."
+          },
+          {
+            "criteria": "Assert response inStock field is a boolean",
+            "met": false,
+            "details": "The test asserts `response.data?.inStock?.should.be.true` which checks the value is truthy/true but does not explicitly assert the type is boolean (e.g., `.should.be.a('boolean')`). A proper type assertion is missing."
+          },
+          {
+            "criteria": "Assert response tags field is an array",
+            "met": true,
+            "details": "The test asserts `response.data?.tags?.should.deep.equal(product.tags)` which verifies the tags match the input array, implicitly confirming it is an array. However, a more explicit `.should.be.an('array')` assertion is not present, though the deep.equal check is sufficient to confirm array nature."
+          },
+          {
+            "criteria": "Use proper TypeScript types",
+            "met": true,
+            "details": "The code uses proper TypeScript interfaces (ProductModel, ProductResponseModel), typed variables, and generic type parameters in the service call `createProduct<ProductResponseModel>`, demonstrating proper TypeScript typing throughout."
+          }
+        ],
+        "reasoning": "Three out of four criteria are fully met. The main gap is the missing explicit boolean type assertion for the inStock field \u2014 the test checks the value is true but doesn't assert it is of type 'boolean'. All other criteria including product creation with boolean inStock, tags array verification via deep.equal, and proper TypeScript typing are satisfied, resulting in a score of 0.85."
+      },
+      "evaluation_criteria": [
+        "Test creating a product with boolean inStock field",
+        "Assert response inStock field is a boolean",
+        "Assert response tags field is an array",
+        "Use proper TypeScript types"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_008",
+      "test_case_name": "create_order_datetime_handling",
+      "api_definition_file": "test_003_orders_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_008\\src\\models\\responses\\OrderResponseModel.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_008\\src\\tests\\orders\\Post-CreateOrder.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.75,
+        "evaluation": [
+          {
+            "criteria": "Test that createdAt datetime field is properly handled",
+            "met": true,
+            "details": "The test accesses response.data?.createdAt and asserts it is a string, and the OrderResponseModel defines createdAt as a string type, showing proper handling of the datetime field."
+          },
+          {
+            "criteria": "Assert response createdAt is a valid datetime string",
+            "met": false,
+            "details": "The test only asserts that createdAt is a 'string' type using .should.be.a('string'), but does not validate that it is a valid datetime string (e.g., using Date.parse(), regex, or ISO 8601 format check)."
+          },
+          {
+            "criteria": "Assert totalAmount is a number",
+            "met": true,
+            "details": "The test explicitly asserts response.data?.totalAmount?.should.be.a('number'), which correctly validates that totalAmount is a number type."
+          },
+          {
+            "criteria": "Assert status is one of the defined enum values",
+            "met": true,
+            "details": "The test asserts response.data?.status?.should.be.oneOf(['pending', 'confirmed', 'shipped', 'delivered', 'cancelled']), which matches the enum values defined in OrderResponseModel."
+          }
+        ],
+        "reasoning": "Three out of four criteria are fully met. The only shortcoming is that the createdAt assertion only checks for string type rather than validating it as a proper datetime string (e.g., ISO 8601 format validation), which is a meaningful gap given the criterion specifically asks for datetime string validation. The other three criteria (totalAmount as number, status enum validation, and general createdAt handling) are properly implemented."
+      },
+      "evaluation_criteria": [
+        "Test that createdAt datetime field is properly handled",
+        "Assert response createdAt is a valid datetime string",
+        "Assert totalAmount is a number",
+        "Assert status is one of the defined enum values"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_009",
+      "test_case_name": "create_order_with_precondition",
+      "api_definition_file": "test_003_orders_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_009\\src\\models\\responses\\OrderResponseModel.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_009\\src\\tests\\orders\\Post-CreateOrder.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test POST /orders with a before hook to set up dependencies",
+            "met": true,
+            "details": "The test file tests POST /orders via orderService.createOrder() and uses a before() hook to set up the orderRequest with randomized customerId, productId, and a full shipping address."
+          },
+          {
+            "criteria": "Include proper test setup using before() or beforeEach()",
+            "met": true,
+            "details": "A before() hook is used at the describe block level to initialize the orderRequest object before the test runs, which is the appropriate pattern for shared setup data."
+          },
+          {
+            "criteria": "Assert status code is 201",
+            "met": true,
+            "details": "The test explicitly asserts response.status.should.equal(201, JSON.stringify(response.data)), directly checking for the 201 Created status code."
+          },
+          {
+            "criteria": "Use proper test isolation patterns",
+            "met": true,
+            "details": "The test uses randomized IDs (customerId and productId) to ensure test isolation, and the orderService is instantiated at the describe level with setup deferred to before(), preventing cross-test contamination."
+          }
+        ],
+        "reasoning": "All four evaluation criteria are fully satisfied. The test correctly targets POST /orders, uses a before() hook for setup, asserts a 201 status code, and employs randomized data generation for proper test isolation. The response model and assertions are comprehensive and well-structured."
+      },
+      "evaluation_criteria": [
+        "Test POST /orders with a before hook to set up dependencies",
+        "Include proper test setup using before() or beforeEach()",
+        "Assert status code is 201",
+        "Use proper test isolation patterns"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_010",
+      "test_case_name": "create_payment_enum_validation",
+      "api_definition_file": "test_005_payments_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_010\\src\\models\\responses\\PaymentResponseModel.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\ecommerce_first_test_dataset_20260321_120338\\test_010\\src\\tests\\payments\\Post-CreatePayment.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test payment creation with valid enum values for currency and method",
+            "met": true,
+            "details": "The test creates a payment with 'USD' for currency and 'credit_card' for method, both of which are valid enum values according to the criteria."
+          },
+          {
+            "criteria": "Use valid currency enum values (USD, EUR, GBP)",
+            "met": true,
+            "details": "The test uses 'USD' which is a valid currency enum value from the allowed set (USD, EUR, GBP)."
+          },
+          {
+            "criteria": "Use valid method enum values (credit_card, debit_card, bank_transfer, wallet)",
+            "met": true,
+            "details": "The test uses 'credit_card' which is a valid method enum value from the allowed set (credit_card, debit_card, bank_transfer, wallet)."
+          },
+          {
+            "criteria": "Assert response reflects the submitted enum values",
+            "met": true,
+            "details": "The test asserts that response.data?.currency equals paymentRequest.currency ('USD') and response.data?.method equals paymentRequest.method ('credit_card'), confirming the response reflects the submitted enum values."
+          }
+        ],
+        "reasoning": "All four criteria are met: the test uses valid currency ('USD') and method ('credit_card') enum values, and asserts that the response reflects those submitted values. A small deduction is applied because the test only covers one currency and one method variant rather than testing multiple enum values to provide broader coverage, but the core requirements are satisfied."
+      },
+      "evaluation_criteria": [
+        "Test payment creation with valid enum values for currency and method",
+        "Use valid currency enum values (USD, EUR, GBP)",
+        "Use valid method enum values (credit_card, debit_card, bank_transfer, wallet)",
+        "Assert response reflects the submitted enum values"
+      ],
+      "eval_method": null
+    }
+  ]
+}

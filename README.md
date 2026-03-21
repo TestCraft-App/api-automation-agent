@@ -85,14 +85,20 @@ This project supports Anthropic, OpenAI, Google Generative AI, and AWS Bedrock l
 
 **Anthropic**
 
-- Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) - **Default: Best balance of quality and cost**
-- Claude Haiku 4.5 (claude-haiku-4-5-20251001) - **Fast + low cost**
-- Claude Opus 4.5 (claude-opus-4-5-20251101) - **Highest quality for complex tasks**
-- Claude Sonnet 4 (claude-sonnet-4-20250514)
+- Claude Sonnet 4.6 (claude-sonnet-4-6) - **Default: Best balance of quality and cost**
+- Claude Opus 4.6 (claude-opus-4-6) - **Highest quality for complex tasks**
+- Claude Sonnet 4.5 (claude-sonnet-4-5)
+- Claude Haiku 4.5 (claude-haiku-4-5) - **Fast + low cost**
+- Claude Opus 4.5 (claude-opus-4-5)
+- Claude Sonnet 4 (claude-sonnet-4)
 
 **OpenAI**
 
-- GPT-5.2 (gpt-5.2) - **Recommended**
+- GPT-5.4 (gpt-5.4) - **Recommended**
+- GPT-5.3 Codex (gpt-5.3-codex) - **Optimized for code**
+- GPT-5.4 Mini (gpt-5.4-mini) - **Fast + low cost**
+- GPT-5.4 Nano (gpt-5.4-nano) - **Cheapest**
+- GPT-5.2 (gpt-5.2)
 - GPT-5.1 (gpt-5.1)
 - GPT-5 (gpt-5)
 - GPT-4.1 (gpt-4.1)
@@ -100,16 +106,17 @@ This project supports Anthropic, OpenAI, Google Generative AI, and AWS Bedrock l
 
 **Google**
 
-- Gemini 3 Flash Preview (gemini-3-flash-preview) - **Recommended: Fast + low cost**
-- Gemini 3 Pro Preview (gemini-3-pro-preview)
+- Gemini 3.1 Pro Preview (gemini-3.1-pro-preview) - **Recommended: Most capable**
+- Gemini 3 Flash (gemini-3-flash) - **Fast + low cost**
+- Gemini 3 Pro Preview (gemini-3-pro-preview) - *Deprecated: shut down March 9, 2026*
 
 **AWS Bedrock**
 
 AWS Bedrock provides access to multiple model families through a unified API. Use the actual Bedrock model IDs:
 
-- Claude models: anthropic.claude-sonnet-4-5-20250929-v1:0, anthropic.claude-haiku-4-5-20251001-v1:0, anthropic.claude-opus-4-5-20251101-v1:0, anthropic.claude-sonnet-4-20250514-v1:0
-- OpenAI models: openai.gpt-5.2, openai.gpt-5.1, openai.gpt-5, openai.gpt-4.1, openai.gpt-5-mini
-- Google models: google.gemini-3-flash-preview, google.gemini-3-pro-preview
+- Claude models: anthropic.claude-sonnet-4-6-v1:0, anthropic.claude-opus-4-6-v1:0, anthropic.claude-sonnet-4-5-v1:0, anthropic.claude-haiku-4-5-v1:0, anthropic.claude-opus-4-5-v1:0, anthropic.claude-sonnet-4-v1:0
+- OpenAI models: openai.gpt-5.4, openai.gpt-5.3-codex, openai.gpt-5.4-mini, openai.gpt-5.4-nano, openai.gpt-5.2, openai.gpt-5.1, openai.gpt-5, openai.gpt-4.1, openai.gpt-5-mini
+- Google models: google.gemini-3.1-pro-preview, google.gemini-3-flash, google.gemini-3-pro-preview
 
 **Authentication Options:**
 
@@ -120,13 +127,13 @@ aws configure
 # Enter your AWS Access Key, Secret Key, Region, and Output format
 
 # Then in your .env file:
-MODEL=anthropic.claude-sonnet-4-5-20250929-v1:0
+MODEL=anthropic.claude-sonnet-4-5-v1:0
 AWS_REGION=us-east-1
 ```
 
 *Option 2: Environment Variables*
 ```env
-MODEL=anthropic.claude-sonnet-4-5-20250929-v1:0
+MODEL=anthropic.claude-sonnet-4-5-v1:0
 AWS_ACCESS_KEY_ID=your_access_key_id
 AWS_SECRET_ACCESS_KEY=your_secret_access_key
 AWS_REGION=us-east-1

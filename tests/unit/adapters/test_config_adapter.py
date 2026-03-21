@@ -17,7 +17,7 @@ class TestBaseConfigAdapter:
     @patch.dict(
         os.environ,
         {
-            "MODEL": "claude-sonnet-4-20250514",
+            "MODEL": "claude-sonnet-4",
             "DEBUG": "True",
             "LANGCHAIN_DEBUG": "True",
             "ANTHROPIC_API_KEY": "sk-ant-test-key",
@@ -124,7 +124,7 @@ class TestBaseConfigAdapter:
     @patch.dict(
         os.environ,
         {
-            "MODEL": "claude-haiku-4-5-20251001",
+            "MODEL": "claude-haiku-4-5",
             "ANTHROPIC_API_KEY": "sk-ant-haiku-key",
         },
         clear=True,
@@ -198,7 +198,7 @@ class TestDevConfigAdapter:
 
     @patch("src.adapters.config_adapter.set_debug")
     @patch("src.adapters.config_adapter.load_dotenv")
-    @patch.dict(os.environ, {"MODEL": "claude-sonnet-4-5-20250929"}, clear=True)
+    @patch.dict(os.environ, {"MODEL": "claude-sonnet-4-5"}, clear=True)
     def test_dev_config_adapter_singleton(self, mock_load_dotenv, mock_set_debug):
         """Test that DevConfigAdapter uses singleton provider."""
         adapter = DevConfigAdapter()
@@ -289,7 +289,7 @@ class TestConfigAdapterEdgeCases:
     @patch.dict(
         os.environ,
         {
-            "MODEL": "anthropic.claude-sonnet-4-5-20250929-v1:0",
+            "MODEL": "anthropic.claude-sonnet-4-5-v1:0",
             "AWS_ACCESS_KEY_ID": "test-access-key-id",
             "AWS_SECRET_ACCESS_KEY": "test-secret-access-key",
             "AWS_REGION": "us-west-2",

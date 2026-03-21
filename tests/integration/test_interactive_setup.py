@@ -17,7 +17,7 @@ class TestInteractiveSetupIntegration:
 
         self.example_env.write_text(
             """# Example environment configuration
-MODEL=claude-sonnet-4-20250514
+MODEL=claude-sonnet-4
 OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
 GOOGLE_API_KEY=
@@ -142,13 +142,13 @@ DEBUG=False
 
         with patch("builtins.print"):
             result = InteractiveSetup.update_env_file(
-                provider, "claude-sonnet-4-20250514", {"ANTHROPIC_API_KEY": "sk-ant-key"}
+                provider, "claude-sonnet-4", {"ANTHROPIC_API_KEY": "sk-ant-key"}
             )
 
         assert result is True
         content = self.env_file.read_text()
         assert "ANTHROPIC_API_KEY=sk-ant-key" in content
-        assert "MODEL=claude-sonnet-4-20250514" in content
+        assert "MODEL=claude-sonnet-4" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_update_env_file_bedrock_provider(self, mock_get_dir):
@@ -208,7 +208,7 @@ DEBUG=False
 
         content = self.env_file.read_text()
         assert "ANTHROPIC_API_KEY=sk-ant-test-key" in content
-        assert "MODEL=claude-sonnet-4-5-20250929" in content
+        assert "MODEL=claude-sonnet-4-5" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_bedrock(self, mock_get_dir):
@@ -234,7 +234,7 @@ DEBUG=False
         assert "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE" in content
         assert "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" in content
         assert "AWS_REGION=us-west-2" in content
-        assert "MODEL=anthropic.claude-sonnet-4-5-20250929-v1:0" in content
+        assert "MODEL=anthropic.claude-sonnet-4-5-v1:0" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_bedrock_aws_cli(self, mock_get_dir):
@@ -256,7 +256,7 @@ DEBUG=False
         # Should only have region, no access keys
         assert "AWS_REGION=eu-central-1" in content
         assert "AWS_ACCESS_KEY_ID" not in content or "AWS_ACCESS_KEY_ID=" in content
-        assert "MODEL=anthropic.claude-sonnet-4-5-20250929-v1:0" in content
+        assert "MODEL=anthropic.claude-sonnet-4-5-v1:0" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_invalid_provider_then_valid(self, mock_get_dir):
@@ -321,7 +321,7 @@ class TestInteractiveSetupConfiguration:
         assert anthropic_config["env_key"] == "ANTHROPIC_API_KEY"
         assert len(anthropic_config["models"]) > 0
         assert anthropic_config["default_model"] in anthropic_config["models"]
-        assert "claude-sonnet-4-20250514" in anthropic_config["models"]
+        assert "claude-sonnet-4" in anthropic_config["models"]
 
     def test_bedrock_provider_configuration(self):
         """Test AWS Bedrock provider configuration."""
@@ -334,9 +334,9 @@ class TestInteractiveSetupConfiguration:
         assert "AWS_REGION" in bedrock_config["additional_keys"]
         assert len(bedrock_config["models"]) > 0
         assert bedrock_config["default_model"] in bedrock_config["models"]
-        assert "anthropic.claude-sonnet-4-5-20250929-v1:0" in bedrock_config["models"]
+        assert "anthropic.claude-sonnet-4-5-v1:0" in bedrock_config["models"]
         assert "openai.gpt-5.2" in bedrock_config["models"]
-        assert "google.gemini-3-flash-preview" in bedrock_config["models"]
+        assert "google.gemini-3-flash" in bedrock_config["models"]
 
     def test_get_executable_directory_returns_path(self):
         """Test that get_executable_directory returns a valid path."""

@@ -9,7 +9,7 @@ This workflow guides you through adding support for a new LLM model to the API A
 
 ## Prerequisites
 
-- Model name and identifier (e.g., `gpt-5.2`, `claude-sonnet-4-5-20250929`)
+- Model name and identifier (e.g., `gpt-5.2`, `claude-sonnet-4-5`)
 - Model pricing information (input and output cost per million tokens)
 - Provider information (OpenAI, Anthropic, Google, or AWS Bedrock)
 - GitHub CLI (`gh`) must be installed and authenticated

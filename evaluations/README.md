@@ -117,7 +117,7 @@ Before running evaluations:
 ```bash
 # All datasets
 python evaluations/evaluation_runner_main.py \
-  --all --llms CLAUDE_SONNET_4_5 --grader CLAUDE_SONNET_4_5
+  --all --llms CLAUDE_SONNET_4_6 --grader CLAUDE_SONNET_4_6
 
 # Single dataset
 python evaluations/evaluation_runner_main.py \
@@ -135,13 +135,13 @@ python evaluations/evaluation_runner_main.py \
 
 # Smoke test: run test_001 from every dataset
 python evaluations/evaluation_runner_main.py \
-  --all --test-ids test_001 --llms CLAUDE_SONNET_4_5
+  --all --test-ids test_001 --llms CLAUDE_SONNET_4_6
 
 # Multiple LLMs with specific grader
 python evaluations/evaluation_runner_main.py \
   --test-data-folder evaluations/data/generate_first_test_dataset \
-  --llms GPT_5_1,CLAUDE_SONNET_4_5 \
-  --grader CLAUDE_SONNET_4_5
+  --llms GPT_5_1,CLAUDE_SONNET_4_6 \
+  --grader CLAUDE_SONNET_4_6
 ```
 
 ### Arguments
@@ -299,6 +299,6 @@ The grader uses `temperature=0` for deterministic evaluation. Scores are compute
 ### Configuring the Grader Model
 
 The grader model can be configured via (in order of precedence):
-1. `--grader CLAUDE_SONNET_4_5` (CLI argument)
-2. `GRADER_MODEL=claude-sonnet-4-5-20250929` (environment variable)
+1. `--grader CLAUDE_SONNET_4_6` (CLI argument)
+2. `GRADER_MODEL=claude-sonnet-4-5` (environment variable)
 3. `MODEL` from `.env` (fallback)

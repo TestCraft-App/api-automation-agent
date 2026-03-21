@@ -1,0 +1,101 @@
+{
+  "dataset_name": "get_additional_models_dataset",
+  "llm_model": "gpt-5.4-mini",
+  "total_test_cases": 3,
+  "graded_count": 3,
+  "not_evaluated_count": 0,
+  "error_count": 0,
+  "total_input_tokens": 2340,
+  "total_output_tokens": 260,
+  "total_cost": 0.002925,
+  "average_score": 0.3333333333333333,
+  "generated_files_path": "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260321_115413\\generated-files\\get_additional_models_dataset_20260321_123527",
+  "results": [
+    {
+      "test_id": "test_002",
+      "test_case_name": "category_service_no_dependencies",
+      "api_definition_file": null,
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "All expected files are returned",
+            "met": true,
+            "details": "All expected files were correctly identified"
+          },
+          {
+            "criteria": "No unnecessary files are returned",
+            "met": true,
+            "details": "No unnecessary files were read"
+          }
+        ],
+        "reasoning": "Expected 0 file(s), got 0. Missing: 0, Extra: 0."
+      },
+      "evaluation_criteria": [],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_001",
+      "test_case_name": "order_service_depends_on_user_and_product",
+      "api_definition_file": null,
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "src/models/requests/UserModel.ts - UserModel model. Properties: id, name, email",
+        "src/models/services/UserService.ts - UserService service: createUser, getUserById"
+      ],
+      "grade_result": {
+        "score": 0.0,
+        "evaluation": [
+          {
+            "criteria": "All expected files are returned",
+            "met": false,
+            "details": "Missing files: ['src/models/requests/ProductModel.ts', 'src/models/services/ProductService.ts', 'src/models/requests/UserModel.ts', 'src/models/services/UserService.ts']"
+          },
+          {
+            "criteria": "No unnecessary files are returned",
+            "met": false,
+            "details": "Extra files returned: ['src/models/requests/UserModel.ts - UserModel model. Properties: id, name, email', 'src/models/services/UserService.ts - UserService service: createUser, getUserById']"
+          }
+        ],
+        "reasoning": "Expected 4 file(s), got 2. Missing: 4, Extra: 2."
+      },
+      "evaluation_criteria": [],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_003",
+      "test_case_name": "invoice_service_depends_on_order_and_user",
+      "api_definition_file": null,
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "src/models/requests/OrderModel.ts - OrderModel model. Properties: id, userId, productId, quantity, totalPrice",
+        "src/models/requests/UserModel.ts - UserModel model. Properties: id, name, email",
+        "src/models/services/OrderService.ts - OrderService service: createOrder, getOrderById",
+        "src/models/services/UserService.ts - UserService service: createUser, getUserById"
+      ],
+      "grade_result": {
+        "score": 0.0,
+        "evaluation": [
+          {
+            "criteria": "All expected files are returned",
+            "met": false,
+            "details": "Missing files: ['src/models/requests/OrderModel.ts', 'src/models/requests/UserModel.ts', 'src/models/services/UserService.ts', 'src/models/services/OrderService.ts']"
+          },
+          {
+            "criteria": "No unnecessary files are returned",
+            "met": false,
+            "details": "Extra files returned: ['src/models/requests/UserModel.ts - UserModel model. Properties: id, name, email', 'src/models/services/OrderService.ts - OrderService service: createOrder, getOrderById', 'src/models/services/UserService.ts - UserService service: createUser, getUserById', 'src/models/requests/OrderModel.ts - OrderModel model. Properties: id, userId, productId, quantity, totalPrice']"
+          }
+        ],
+        "reasoning": "Expected 4 file(s), got 4. Missing: 4, Extra: 4."
+      },
+      "evaluation_criteria": [],
+      "eval_method": null
+    }
+  ]
+}

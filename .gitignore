@@ -2,7 +2,7 @@
 .env
 /generated-framework_*/
 /benchmarks/reports/*
-/evaluations/reports/*
+/evaluations/reports/**/generated-files/
 # Distribution folders
 /api-agent-windows/
 /api-agent-macos/

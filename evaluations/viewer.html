@@ -242,28 +242,42 @@
   // Maps raw model identifiers to friendly short names.
   // Falls back to a regex-based heuristic for unknown models.
   const MODEL_SHORT_NAMES = {
-    'claude-sonnet-4-20250514':              'Sonnet 4',
-    'claude-sonnet-4-5-20250929':            'Sonnet 4.5',
-    'claude-haiku-4-5-20251001':             'Haiku 4.5',
-    'claude-opus-4-5-20251101':              'Opus 4.5',
+    'claude-sonnet-4':              'Sonnet 4',
+    'claude-sonnet-4-5':            'Sonnet 4.5',
+    'claude-haiku-4-5':             'Haiku 4.5',
+    'claude-opus-4-5':              'Opus 4.5',
     'gpt-5-mini':                            'GPT 5 Mini',
     'gpt-4.1':                               'GPT 4.1',
     'gpt-5':                                 'GPT 5',
     'gpt-5.1':                               'GPT 5.1',
     'gpt-5.2':                               'GPT 5.2',
+    'gpt-5.3-codex':                         'GPT 5.3 Codex',
+    'gpt-5.4':                               'GPT 5.4',
+    'gpt-5.4-mini':                          'GPT 5.4 Mini',
+    'gpt-5.4-nano':                          'GPT 5.4 Nano',
     'gemini-3-pro-preview':                  'Gemini 3 Pro',
-    'gemini-3-flash-preview':                'Gemini 3 Flash',
-    'anthropic.claude-sonnet-4-20250514-v1:0':  'Sonnet 4 (BR)',
-    'anthropic.claude-sonnet-4-5-20250929-v1:0':'Sonnet 4.5 (BR)',
-    'anthropic.claude-haiku-4-5-20251001-v1:0': 'Haiku 4.5 (BR)',
-    'anthropic.claude-opus-4-5-20251101-v1:0':  'Opus 4.5 (BR)',
+    'gemini-3.1-pro-preview':                'Gemini 3.1 Pro',
+    'gemini-3-flash':                        'Gemini 3 Flash',
+    'claude-sonnet-4-6':            'Sonnet 4.6',
+    'claude-opus-4-6':              'Opus 4.6',
+    'anthropic.claude-sonnet-4-v1:0':  'Sonnet 4 (BR)',
+    'anthropic.claude-sonnet-4-5-v1:0':'Sonnet 4.5 (BR)',
+    'anthropic.claude-haiku-4-5-v1:0': 'Haiku 4.5 (BR)',
+    'anthropic.claude-opus-4-5-v1:0':  'Opus 4.5 (BR)',
+    'anthropic.claude-sonnet-4-6-v1:0':'Sonnet 4.6 (BR)',
+    'anthropic.claude-opus-4-6-v1:0':  'Opus 4.6 (BR)',
     'openai.gpt-5-mini':                     'GPT 5 Mini (BR)',
     'openai.gpt-4.1':                        'GPT 4.1 (BR)',
     'openai.gpt-5':                          'GPT 5 (BR)',
     'openai.gpt-5.1':                        'GPT 5.1 (BR)',
     'openai.gpt-5.2':                        'GPT 5.2 (BR)',
+    'openai.gpt-5.3-codex':                  'GPT 5.3 Codex (BR)',
+    'openai.gpt-5.4':                        'GPT 5.4 (BR)',
+    'openai.gpt-5.4-mini':                   'GPT 5.4 Mini (BR)',
+    'openai.gpt-5.4-nano':                   'GPT 5.4 Nano (BR)',
     'google.gemini-3-pro-preview':           'Gemini 3 Pro (BR)',
-    'google.gemini-3-flash-preview':         'Gemini 3 Flash (BR)',
+    'google.gemini-3.1-pro-preview':         'Gemini 3.1 Pro (BR)',
+    'google.gemini-3-flash':                 'Gemini 3 Flash (BR)',
   };
 
   function shortModel(raw) {
@@ -278,7 +292,68 @@
     return s;
   }
 
-  // ── Folder loading ──
+  // ── Auto-load from manifest (live / HTTP mode) ──
+  // manifest.json lists summary paths relative to reports/, e.g.:
+  //   "run_20260316_001213/evaluation_results_summary_20260316_001213.json"
+  // Individual result files are discovered from each summary's results_json_path
+  // and fetched from the same run folder.
+  function tryLoadManifest() {
+    fetch('reports/manifest.json')
+      .then(function(res) {
+        if (!res.ok) throw new Error(res.status);
+        return res.json();
+      })
+      .then(function(summaryPaths) {
+        // Hide the folder picker — we're in live mode
+        document.getElementById('topBar').querySelector('.folder-btn').classList.add('hidden');
+        document.getElementById('folderInput').classList.add('hidden');
+
+        // 1. Fetch all summary files, tracking their run folder
+        var summaryFetches = summaryPaths.map(function(relPath) {
+          var runFolder = relPath.substring(0, relPath.lastIndexOf('/'));
+          var summaryName = fileBasename(relPath);
+          return fetch('reports/' + relPath)
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(data) {
+              if (data) classifyFile(summaryName, data);
+              return { data: data, runFolder: runFolder };
+            })
+            .catch(function() { console.warn('Skip summary ' + relPath); return null; });
+        });
+
+        return Promise.all(summaryFetches);
+      })
+      .then(function(summaryResults) {
+        // 2. Collect individual result files with their run folder
+        var resultFetches = [];
+        summaryResults.forEach(function(sr) {
+          if (!sr || !sr.data) return;
+          sr.data.forEach(function(entry) {
+            if (entry.results_json_path) {
+              var bn = fileBasename(entry.results_json_path);
+              var url = 'reports/' + sr.runFolder + '/' + bn;
+              resultFetches.push(
+                fetch(url)
+                  .then(function(r) { return r.ok ? r.json() : null; })
+                  .then(function(data) { if (data) classifyFile(bn, data); })
+                  .catch(function() { console.warn('Skip result ' + bn); })
+              );
+            }
+          });
+        });
+
+        return Promise.all(resultFetches);
+      })
+      .then(function() {
+        onFilesReady();
+      })
+      .catch(function() {
+        // Manifest not available (file:// or no server) — folder picker stays visible
+        console.log('Manifest not found, using folder picker mode.');
+      });
+  }
+
+  // ── Folder loading (local fallback) ──
   folderInput.addEventListener('change', function(e) { handleFiles(e.target.files); });
 
   function handleFiles(files) {
@@ -305,27 +380,29 @@
       }));
     });
 
-    Promise.all(readers).then(function() {
-      summaryFiles.sort(function(a, b) { return b.timestamp.localeCompare(a.timestamp); });
+    Promise.all(readers).then(onFilesReady);
+  }
 
-      var total = summaryFiles.length + resultFiles.length;
-      if (total > 0) {
-        fileCountChip.textContent = total + ' file' + (total !== 1 ? 's' : '') + ' loaded';
-        fileCountChip.classList.remove('hidden');
-      } else {
-        fileCountChip.classList.add('hidden');
-      }
+  function onFilesReady() {
+    summaryFiles.sort(function(a, b) { return b.timestamp.localeCompare(a.timestamp); });
 
-      if (summaryFiles.length > 0) {
-        runPickerBtn.classList.remove('hidden');
-        selectedRun = 0;
-        updateRunPickerLabel();
-      } else {
-        runPickerBtn.classList.add('hidden');
-      }
+    var total = summaryFiles.length + resultFiles.length;
+    if (total > 0) {
+      fileCountChip.textContent = total + ' file' + (total !== 1 ? 's' : '') + ' loaded';
+      fileCountChip.classList.remove('hidden');
+    } else {
+      fileCountChip.classList.add('hidden');
+    }
 
-      renderAll();
-    });
+    if (summaryFiles.length > 0) {
+      runPickerBtn.classList.remove('hidden');
+      selectedRun = 0;
+      updateRunPickerLabel();
+    } else {
+      runPickerBtn.classList.add('hidden');
+    }
+
+    renderAll();
   }
 
   function classifyFile(filename, data) {
@@ -770,6 +847,7 @@
   }
 
   updateDetailSortArrows();
+  tryLoadManifest();
 })();
 </script>
 </body>

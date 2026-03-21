@@ -153,7 +153,10 @@ class EvaluationRunner:
         return result
 
     def run_evaluation(
-        self, dataset: EvaluationDataset, test_ids_filter: Optional[List[str]] = None
+        self,
+        dataset: EvaluationDataset,
+        test_ids_filter: Optional[List[str]] = None,
+        output_dir: Optional[str] = None,
     ) -> EvaluationRunResult:
         """
         Run evaluation on all test cases in a dataset.
@@ -191,10 +194,13 @@ class EvaluationRunner:
         scores: List[float] = []
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        generated_files_root = (
+            os.path.join(output_dir, "generated-files")
+            if output_dir
+            else os.path.join("evaluations", "reports", "generated-files")
+        )
         base_output_dir = os.path.join(
-            "evaluations",
-            "reports",
-            "generated-files",
+            generated_files_root,
             f"{dataset.dataset_name}_{timestamp}",
         )
         os.makedirs(base_output_dir, exist_ok=True)

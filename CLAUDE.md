@@ -38,13 +38,13 @@ flake8 .
 python ./main.py <path_or_url_to_openapi_or_postman>
 
 # Run benchmarks
-python benchmarks/benchmark_runner.py --openapi-spec <spec> --llms GPT_5_1,CLAUDE_SONNET_4_5 --endpoints /users --output-dir ./benchmark_results
+python benchmarks/benchmark_runner.py --openapi-spec <spec> --llms GPT_5_1,CLAUDE_SONNET_4_6 --endpoints /users --output-dir ./benchmark_results
 
 # Run all evaluations
-python evaluations/evaluation_runner_main.py --all --llms CLAUDE_SONNET_4_5 --grader CLAUDE_SONNET_4_5 --output-dir ./eval_results
+python evaluations/evaluation_runner_main.py --all --llms CLAUDE_SONNET_4_6 --grader CLAUDE_SONNET_4_6 --output-dir ./eval_results
 
 # Run a single evaluation dataset
-python evaluations/evaluation_runner_main.py --test-data-folder evaluations/data/prompt_injection_dataset --llms CLAUDE_SONNET_4_5 --grader CLAUDE_SONNET_4_5
+python evaluations/evaluation_runner_main.py --test-data-folder evaluations/data/prompt_injection_dataset --llms CLAUDE_SONNET_4_6 --grader CLAUDE_SONNET_4_6
 ```
 
 ## Architecture

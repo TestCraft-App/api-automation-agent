@@ -414,6 +414,11 @@ def main():
 
     os.makedirs(args.output_dir, exist_ok=True)
 
+    run_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_dir = os.path.join(args.output_dir, f"run_{run_timestamp}")
+    os.makedirs(run_dir, exist_ok=True)
+    print(f"Run directory: {os.path.normpath(run_dir)}\n")
+
     llm_overrides: Optional[List[Model]] = args.llms if getattr(args, "llms", None) else None
 
     run_results: List[Tuple[EvaluationRunResult, str]] = []
@@ -467,10 +472,12 @@ def main():
                 grader_config=grader_config,
             )
 
-            results = evaluation_runner.run_evaluation(dataset, test_ids_filter=test_ids_filter)
+            results = evaluation_runner.run_evaluation(
+                dataset, test_ids_filter=test_ids_filter, output_dir=run_dir
+            )
 
-            print(f"\nSaving results to: {args.output_dir}")
-            results_path = save_evaluation_results(results, args.output_dir, dataset.dataset_name)
+            print(f"\nSaving results to: {run_dir}")
+            results_path = save_evaluation_results(results, run_dir, dataset.dataset_name)
             print(f"Results saved to: {results_path}\n")
 
             run_results.append((results, results_path))
@@ -483,9 +490,8 @@ def main():
     _print_result_paths(run_results)
 
     if summary_rows:
-        summary_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        summary_filename = f"evaluation_results_summary_{summary_timestamp}.json"
-        summary_path = os.path.join(args.output_dir, summary_filename)
+        summary_filename = f"evaluation_results_summary_{run_timestamp}.json"
+        summary_path = os.path.join(run_dir, summary_filename)
         with open(summary_path, "w", encoding="utf-8") as f:
             json.dump(summary_rows, f, indent=2)
         print(f"\nSummary JSON saved to: {os.path.normpath(summary_path)}")
