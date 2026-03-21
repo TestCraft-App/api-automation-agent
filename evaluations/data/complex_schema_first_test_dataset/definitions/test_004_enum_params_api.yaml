@@ -1,0 +1,66 @@
+openapi: "3.0.0"
+info:
+  title: Reports API
+  version: "1.0.0"
+  description: Reports API with all-enum query parameters
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /reports:
+    get:
+      operationId: getReports
+      summary: Get reports with filters
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - sales
+              - inventory
+              - financial
+              - performance
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - json
+              - csv
+              - pdf
+        - name: period
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - daily
+              - weekly
+              - monthly
+              - quarterly
+              - yearly
+      responses:
+        "200":
+          description: Report data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reportId:
+                    type: string
+                  type:
+                    type: string
+                  format:
+                    type: string
+                  period:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  generatedAt:
+                    type: string
+                    format: date-time

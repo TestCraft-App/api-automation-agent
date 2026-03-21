@@ -1,0 +1,56 @@
+openapi: "3.0.0"
+info:
+  title: Tenant Config API
+  version: "1.0.0"
+  description: Multi-tenant API with required header parameters
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /tenants/config:
+    get:
+      operationId: getTenantConfig
+      summary: Get tenant configuration
+      parameters:
+        - name: X-API-Version
+          in: header
+          required: true
+          schema:
+            type: string
+            enum:
+              - "v1"
+              - "v2"
+        - name: X-Tenant-ID
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: Accept-Language
+          in: header
+          required: true
+          schema:
+            type: string
+            enum:
+              - en
+              - es
+              - fr
+              - de
+      responses:
+        "200":
+          description: Tenant configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tenantId:
+                    type: string
+                  name:
+                    type: string
+                  features:
+                    type: array
+                    items:
+                      type: string
+                  locale:
+                    type: string
+                  apiVersion:
+                    type: string

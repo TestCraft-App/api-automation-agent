@@ -1,0 +1,32 @@
+openapi: "3.0.0"
+info:
+  title: Records API
+  version: "1.0.0"
+  description: Read-only records API
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /records:
+    get:
+      operationId: getRecords
+      summary: Get all records
+      responses:
+        "200":
+          description: List of records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  records:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        value:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time

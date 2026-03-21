@@ -1,0 +1,125 @@
+{
+  "dataset_name": "prompt_adherence_dataset",
+  "test_cases": [
+    {
+      "case_type": "prompt_adherence",
+      "test_id": "test_001",
+      "name": "single_test_only",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "model_files": [
+        "requests/test_001_UserModel.ts",
+        "services/test_001_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test covers the main positive scenario (creating a user successfully)"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_match",
+          "pattern": "it\\(",
+          "description": "Should contain at least one it() block"
+        }
+      ]
+    },
+    {
+      "case_type": "prompt_adherence",
+      "test_id": "test_002",
+      "name": "js_import_extensions",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "model_files": [
+        "requests/test_001_UserModel.ts",
+        "services/test_001_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "All import paths reference the correct service and model files"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_not_match",
+          "pattern": "from\\s+['\"][^'\"]+(?<!\\.js)['\"]",
+          "description": "All import paths should end with .js extension"
+        }
+      ]
+    },
+    {
+      "case_type": "prompt_adherence",
+      "test_id": "test_003",
+      "name": "no_response_file",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "model_files": [
+        "requests/test_001_UserModel.ts",
+        "services/test_001_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "The test should work without relying on a separate Response.ts model"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_not_match",
+          "pattern": "Response\\.ts",
+          "description": "Should not create or reference a Response.ts file"
+        }
+      ]
+    },
+    {
+      "case_type": "prompt_adherence",
+      "test_id": "test_004",
+      "name": "proper_hooks_usage",
+      "api_definition_file": "test_004_users_delete_api.yaml",
+      "model_files": [
+        "requests/test_001_UserModel.ts",
+        "services/test_004_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Setup hook creates a resource needed for the DELETE test"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_match",
+          "pattern": "before\\(|beforeEach\\(",
+          "description": "Should contain before() or beforeEach() hook for test setup"
+        }
+      ]
+    },
+    {
+      "case_type": "prompt_adherence",
+      "test_id": "test_005",
+      "name": "file_name_verb_prefix",
+      "api_definition_file": "test_005_users_patch_api.yaml",
+      "model_files": [
+        "requests/test_005_PatchUserModel.ts",
+        "services/test_005_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "The generated test file tests the PATCH operation correctly"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_match",
+          "pattern": "(Patch|Update)-",
+          "description": "File name should start with appropriate verb prefix (Patch- or Update-)"
+        }
+      ]
+    },
+    {
+      "case_type": "prompt_adherence",
+      "test_id": "test_006",
+      "name": "random_unique_values",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "model_files": [
+        "requests/test_001_UserModel.ts",
+        "services/test_001_UserService.ts"
+      ],
+      "evaluation_criteria": [
+        "Random values are used for fields that require uniqueness, and generated values make sense for the field type"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_match",
+          "pattern": "Math\\.random|faker|Date\\.now|uuid|crypto\\.random|`[^`]*\\$\\{",
+          "description": "Should use randomization for unique values (Math.random, faker, Date.now, template literals, etc.)"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+openapi: "3.0.0"
+info:
+  title: Orders API
+  version: "1.0.0"
+  description: Get order by ID
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /orders/{orderId}:
+    get:
+      operationId: getOrderById
+      summary: Get a specific order
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        productId:
+                          type: string
+                        quantity:
+                          type: integer
+                        unitPrice:
+                          type: number
+                  customerId:
+                    type: string
+                  shippingAddress:
+                    type: object
+                    properties:
+                      street:
+                        type: string
+                      city:
+                        type: string
+                      state:
+                        type: string
+                      zipCode:
+                        type: string
+                      country:
+                        type: string
+                  status:
+                    type: string
+                  totalAmount:
+                    type: number
+                  createdAt:
+                    type: string
+                    format: date-time

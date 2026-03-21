@@ -1,0 +1,183 @@
+{
+  "dataset_name": "architectural_compliance_dataset",
+  "test_cases": [
+    {
+      "case_type": "architectural_compliance",
+      "test_id": "test_001",
+      "name": "file_path_conventions",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "model_files": [
+        "requests/test_001_UserModel.ts",
+        "services/test_001_UserService.ts"
+      ],
+      "evaluation_criteria": [],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_match",
+          "pattern": "\\.spec\\.ts",
+          "description": "Generated test file should have .spec.ts extension"
+        },
+        {
+          "check_type": "regex_match",
+          "pattern": "(Post|Get|Put|Patch|Delete|Create|Update|List|Remove)-",
+          "description": "File name should start with a verb prefix"
+        }
+      ]
+    },
+    {
+      "case_type": "architectural_compliance",
+      "test_id": "test_002",
+      "name": "import_conventions",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "model_files": [
+        "requests/test_001_UserModel.ts",
+        "services/test_001_UserService.ts"
+      ],
+      "evaluation_criteria": [],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_match",
+          "pattern": "from\\s+['\"]\\S+\\.js['\"]",
+          "description": "Imports should use .js extensions"
+        },
+        {
+          "check_type": "regex_not_match",
+          "pattern": "import.*Response.*from",
+          "description": "Should not directly import Response type (use generic type parameter instead)"
+        }
+      ]
+    },
+    {
+      "case_type": "architectural_compliance",
+      "test_id": "test_003",
+      "name": "framework_patterns",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "model_files": [
+        "requests/test_001_UserModel.ts",
+        "services/test_001_UserService.ts"
+      ],
+      "evaluation_criteria": [],
+      "rule_based_criteria": [
+        {
+          "check_type": "contains",
+          "pattern": "describe(",
+          "description": "Should use Mocha describe() blocks"
+        },
+        {
+          "check_type": "contains",
+          "pattern": "it(",
+          "description": "Should use Mocha it() blocks"
+        },
+        {
+          "check_type": "contains",
+          "pattern": ".should.",
+          "description": "Should use Chai should-style assertions"
+        },
+        {
+          "check_type": "not_contains",
+          "pattern": "expect(",
+          "description": "Should NOT use expect() style assertions (use .should. instead)"
+        }
+      ]
+    },
+    {
+      "case_type": "architectural_compliance",
+      "test_id": "test_004",
+      "name": "typescript_quality",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "model_files": [
+        "requests/test_001_UserModel.ts",
+        "services/test_001_UserService.ts"
+      ],
+      "evaluation_criteria": [],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_not_match",
+          "pattern": ":\\s*any\\b",
+          "description": "Should NOT use TypeScript 'any' type"
+        },
+        {
+          "check_type": "regex_match",
+          "pattern": "async\\s+",
+          "description": "Tests should be async"
+        },
+        {
+          "check_type": "regex_not_match",
+          "pattern": "\\bvar\\b",
+          "description": "Should NOT use var (use const or let instead)"
+        }
+      ]
+    },
+    {
+      "case_type": "architectural_compliance",
+      "test_id": "test_005",
+      "name": "optional_chaining",
+      "api_definition_file": "test_002_users_get_api.yaml",
+      "model_files": [
+        "services/test_005_UserService.ts"
+      ],
+      "evaluation_criteria": [],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_match",
+          "pattern": "response\\.data\\?\\.",
+          "description": "Should use optional chaining for response.data access (response.data?.field)"
+        }
+      ]
+    },
+    {
+      "case_type": "architectural_compliance",
+      "test_id": "test_006",
+      "name": "service_method_generics",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "model_files": [
+        "requests/test_001_UserModel.ts",
+        "services/test_001_UserService.ts"
+      ],
+      "evaluation_criteria": [],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_match",
+          "pattern": "\\w+Service\\.\\w+<\\w+>",
+          "description": "Service method calls should use generic type parameter (e.g., service.createUser<UserModel>())"
+        }
+      ]
+    },
+    {
+      "case_type": "architectural_compliance",
+      "test_id": "test_007",
+      "name": "test_isolation",
+      "api_definition_file": "test_003_users_delete_api.yaml",
+      "model_files": [
+        "requests/test_001_UserModel.ts",
+        "services/test_007_UserService.ts"
+      ],
+      "evaluation_criteria": [],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_match",
+          "pattern": "before\\(|beforeEach\\(",
+          "description": "Should have setup hooks for tests that need preconditions"
+        }
+      ]
+    },
+    {
+      "case_type": "architectural_compliance",
+      "test_id": "test_008",
+      "name": "no_hardcoded_unique_values",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "model_files": [
+        "requests/test_001_UserModel.ts",
+        "services/test_001_UserService.ts"
+      ],
+      "evaluation_criteria": [],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_match",
+          "pattern": "Math\\.random|faker|Date\\.now|uuid|crypto\\.random|`[^`]*\\$\\{",
+          "description": "Should use randomization for unique field values (Math.random, faker, Date.now, etc.)"
+        }
+      ]
+    }
+  ]
+}

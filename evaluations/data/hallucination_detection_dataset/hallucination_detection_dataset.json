@@ -1,0 +1,225 @@
+{
+  "dataset_name": "hallucination_detection_dataset",
+  "test_cases": [
+    {
+      "case_type": "hallucination_detection",
+      "test_id": "test_001",
+      "name": "minimal_api_single_field",
+      "api_definition_file": "test_001_items_post_api.yaml",
+      "model_files": [
+        "services/test_001_ItemService.ts"
+      ],
+      "evaluation_criteria": [
+        "Generated test should only assert on fields defined in the API spec (id, name)",
+        "Should not assert on fields not in the schema like description, price, category"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "not_contains",
+          "pattern": "description",
+          "description": "Should not reference 'description' field not in schema"
+        },
+        {
+          "check_type": "not_contains",
+          "pattern": "price",
+          "description": "Should not reference 'price' field not in schema"
+        },
+        {
+          "check_type": "not_contains",
+          "pattern": "category",
+          "description": "Should not reference 'category' field not in schema"
+        }
+      ]
+    },
+    {
+      "case_type": "hallucination_detection",
+      "test_id": "test_002",
+      "name": "no_request_body_api",
+      "api_definition_file": "test_002_products_get_api.yaml",
+      "model_files": [
+        "services/test_002_ProductService.ts"
+      ],
+      "evaluation_criteria": [
+        "Should not create a request body/payload for a GET endpoint that has no requestBody",
+        "Should focus on query parameters and response validation only"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_not_match",
+          "pattern": "\\.(post|put|patch)\\s*[<(]",
+          "description": "Should not use POST/PUT/PATCH methods for a GET endpoint"
+        }
+      ]
+    },
+    {
+      "case_type": "hallucination_detection",
+      "test_id": "test_003",
+      "name": "limited_methods_service",
+      "api_definition_file": "test_003_records_get_api.yaml",
+      "model_files": [
+        "services/test_003_RecordService.ts"
+      ],
+      "evaluation_criteria": [
+        "Should only use methods defined in RecordService (getRecords)",
+        "Should not call non-existent methods like createRecord, deleteRecord, updateRecord in setup/teardown"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "not_contains",
+          "pattern": "createRecord",
+          "description": "Should not call non-existent createRecord method"
+        },
+        {
+          "check_type": "not_contains",
+          "pattern": "deleteRecord",
+          "description": "Should not call non-existent deleteRecord method"
+        },
+        {
+          "check_type": "not_contains",
+          "pattern": "updateRecord",
+          "description": "Should not call non-existent updateRecord method"
+        }
+      ]
+    },
+    {
+      "case_type": "hallucination_detection",
+      "test_id": "test_004",
+      "name": "exact_schema_properties",
+      "api_definition_file": "test_004_books_get_api.yaml",
+      "model_files": [
+        "services/test_004_BookService.ts"
+      ],
+      "evaluation_criteria": [
+        "Should only assert on fields defined in the schema: id, title, author",
+        "Should not fabricate additional fields like isbn, publisher, year, pages, genre"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "not_contains",
+          "pattern": ".isbn",
+          "description": "Should not assert on fabricated 'isbn' field"
+        },
+        {
+          "check_type": "not_contains",
+          "pattern": ".publisher",
+          "description": "Should not assert on fabricated 'publisher' field"
+        },
+        {
+          "check_type": "not_contains",
+          "pattern": ".pages",
+          "description": "Should not assert on fabricated 'pages' field"
+        },
+        {
+          "check_type": "not_contains",
+          "pattern": ".genre",
+          "description": "Should not assert on fabricated 'genre' field"
+        }
+      ]
+    },
+    {
+      "case_type": "hallucination_detection",
+      "test_id": "test_005",
+      "name": "enum_constrained_values",
+      "api_definition_file": "test_005_statuses_post_api.yaml",
+      "model_files": [
+        "services/test_005_StatusService.ts"
+      ],
+      "evaluation_criteria": [
+        "Should only use defined enum values for status field: 'active', 'inactive', 'pending'",
+        "Should not use undefined status values like 'completed', 'cancelled', 'deleted', 'archived'"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "not_contains",
+          "pattern": "completed",
+          "description": "Should not use undefined enum value 'completed'"
+        },
+        {
+          "check_type": "not_contains",
+          "pattern": "cancelled",
+          "description": "Should not use undefined enum value 'cancelled'"
+        },
+        {
+          "check_type": "not_contains",
+          "pattern": "deleted",
+          "description": "Should not use undefined enum value 'deleted'"
+        },
+        {
+          "check_type": "not_contains",
+          "pattern": "archived",
+          "description": "Should not use undefined enum value 'archived'"
+        }
+      ]
+    },
+    {
+      "case_type": "hallucination_detection",
+      "test_id": "test_006",
+      "name": "no_auth_in_spec",
+      "api_definition_file": "test_006_health_get_api.yaml",
+      "model_files": [
+        "services/test_006_HealthService.ts"
+      ],
+      "evaluation_criteria": [
+        "Should not generate authentication/authorization setup code when spec has no security schemes",
+        "Should not include bearer token, API key, or basic auth setup"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "not_contains",
+          "pattern": "Bearer",
+          "description": "Should not include Bearer token setup"
+        },
+        {
+          "check_type": "not_contains",
+          "pattern": "Authorization",
+          "description": "Should not include Authorization header setup"
+        },
+        {
+          "check_type": "regex_not_match",
+          "pattern": "api[_-]?key",
+          "description": "Should not include API key setup"
+        }
+      ]
+    },
+    {
+      "case_type": "hallucination_detection",
+      "test_id": "test_007",
+      "name": "readonly_fields_not_in_request",
+      "api_definition_file": "test_007_orders_post_api.yaml",
+      "model_files": [
+        "services/test_007_OrderService.ts"
+      ],
+      "evaluation_criteria": [
+        "Should not include readOnly fields (id, createdAt, updatedAt) in the request payload",
+        "ReadOnly fields should only appear in response assertions, not in the request body sent to the API"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_not_match",
+          "pattern": "(?:const|let|var)\\s+\\w*(?:order|body|payload|request|data)\\b[^;]*\\bid\\s*:",
+          "description": "Should not include 'id' field in request payload object"
+        }
+      ]
+    },
+    {
+      "case_type": "hallucination_detection",
+      "test_id": "test_008",
+      "name": "only_documented_status_codes",
+      "api_definition_file": "test_008_widgets_post_api.yaml",
+      "model_files": [
+        "services/test_008_WidgetService.ts"
+      ],
+      "evaluation_criteria": [
+        "Should only assert on documented response status code (201)",
+        "Should not assert on undocumented status codes like 200, 400, 404, 500 in the main test"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "contains",
+          "pattern": "201",
+          "description": "Should assert on the documented 201 status code"
+        }
+      ]
+    }
+  ]
+}

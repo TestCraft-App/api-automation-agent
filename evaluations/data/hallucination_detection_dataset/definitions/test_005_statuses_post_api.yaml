@@ -1,0 +1,48 @@
+openapi: "3.0.0"
+info:
+  title: Statuses API
+  version: "1.0.0"
+  description: Status management with enum constraints
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /statuses:
+    post:
+      operationId: createStatus
+      summary: Create a status entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - status
+              properties:
+                name:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                    - active
+                    - inactive
+                    - pending
+      responses:
+        "201":
+          description: Status created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - active
+                      - inactive
+                      - pending

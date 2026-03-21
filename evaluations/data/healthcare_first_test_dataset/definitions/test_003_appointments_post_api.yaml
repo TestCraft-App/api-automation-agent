@@ -1,0 +1,74 @@
+openapi: "3.0.0"
+info:
+  title: Appointments API
+  version: "1.0.0"
+  description: Patient appointments as nested resource
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /patients/{patientId}/appointments:
+    post:
+      operationId: createAppointment
+      summary: Create an appointment for a patient
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - dateTime
+                - duration
+                - type
+              properties:
+                dateTime:
+                  type: string
+                  format: date-time
+                duration:
+                  type: integer
+                  minimum: 15
+                  maximum: 120
+                  description: Duration in minutes
+                type:
+                  type: string
+                  enum:
+                    - checkup
+                    - follow_up
+                    - emergency
+                    - consultation
+                notes:
+                  type: string
+      responses:
+        "201":
+          description: Appointment created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  patientId:
+                    type: string
+                  dateTime:
+                    type: string
+                    format: date-time
+                  duration:
+                    type: integer
+                  type:
+                    type: string
+                  notes:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - scheduled
+                      - confirmed
+                      - cancelled
+                      - completed

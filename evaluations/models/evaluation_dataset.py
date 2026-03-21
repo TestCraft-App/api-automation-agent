@@ -10,7 +10,39 @@ EvaluationType = Literal[
     "generate_models",
     "generate_additional_tests",
     "get_additional_models",
+    "prompt_injection",
+    "hallucination_detection",
+    "architectural_compliance",
+    "prompt_adherence",
+    "fix_typescript",
 ]
+
+EvalMethod = Literal[
+    "assertion_based",
+    "rule_based",
+    "model_graded",
+    "hybrid",
+    "security",
+]
+
+
+class RuleBasedCriterion(BaseModel):
+    """A single deterministic check applied to generated code."""
+
+    check_type: Literal[
+        "contains",
+        "not_contains",
+        "regex_match",
+        "regex_not_match",
+        "file_exists",
+        "import_check",
+    ] = Field(description="Type of check to perform")
+    pattern: str = Field(description="String or regex pattern to check for")
+    description: str = Field(description="Human-readable description of what this criterion checks")
+    target_file: Optional[str] = Field(
+        default=None,
+        description="Specific file to check (None = check all generated files)",
+    )
 
 
 class EvaluationTestCase(BaseModel):
@@ -76,6 +108,27 @@ class EvaluationTestCase(BaseModel):
             "Not required for assertion-based evaluations like get_additional_models."
         ),
     )
+    rule_based_criteria: List[RuleBasedCriterion] = Field(
+        default_factory=list,
+        description=(
+            "List of deterministic rule-based checks applied to generated code. "
+            "Used for rule-based, hybrid, and security evaluations."
+        ),
+    )
+    broken_files: List[str] = Field(
+        default_factory=list,
+        description=(
+            "List of file paths with intentional errors, relative to the tests or models folder. "
+            "Used for fix_typescript evaluations."
+        ),
+    )
+    compiler_errors: List[str] = Field(
+        default_factory=list,
+        description=(
+            "List of TypeScript compiler error messages. "
+            "Used for fix_typescript evaluations."
+        ),
+    )
 
 
 class EvaluationDataset(BaseModel):
@@ -124,6 +177,10 @@ class EvaluationResult(BaseModel):
     evaluation_criteria: List[str] = Field(
         description="Criteria that were evaluated against, in the original order"
     )
+    eval_method: Optional[EvalMethod] = Field(
+        default=None,
+        description="Evaluation method used (assertion_based, rule_based, model_graded, hybrid, security)",
+    )
 
 
 class EvaluationRunResult(BaseModel):
@@ -153,6 +210,15 @@ class EvaluationRunResult(BaseModel):
         description="Absolute path to the folder containing generated files for this run",
     )
     results: List[EvaluationResult] = Field(description="Detailed results for each test case")
+
+
+class CriterionAggregation(BaseModel):
+    """Aggregated pass rate for a single evaluation criterion across multiple test cases."""
+
+    criteria: str = Field(description="The evaluation criterion text")
+    total_count: int = Field(description="Number of times this criterion was evaluated")
+    met_count: int = Field(description="Number of times this criterion was met")
+    pass_rate: float = Field(description="Pass rate (met_count / total_count)")
 
 
 class EvaluationSummary(BaseModel):

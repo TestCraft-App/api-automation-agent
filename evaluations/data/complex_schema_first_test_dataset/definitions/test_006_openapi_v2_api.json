@@ -1,0 +1,72 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Pets API",
+    "version": "1.0.0",
+    "description": "Swagger 2.0 Pets API"
+  },
+  "host": "api.example.com",
+  "basePath": "/v1",
+  "schemes": ["https"],
+  "paths": {
+    "/pets": {
+      "post": {
+        "operationId": "createPet",
+        "summary": "Create a pet",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["name", "species"],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "species": {
+                  "type": "string",
+                  "enum": ["dog", "cat", "bird", "fish"]
+                },
+                "age": {
+                  "type": "integer"
+                },
+                "vaccinated": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Pet created",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "species": {
+                  "type": "string"
+                },
+                "age": {
+                  "type": "integer"
+                },
+                "vaccinated": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

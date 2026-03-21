@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaluation Results Viewer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f5f6fa; color: #2d3436; line-height: 1.5; padding: 24px; }
+  h1 { font-size: 1.6rem; margin-bottom: 4px; }
+  h2 { font-size: 1.2rem; margin-bottom: 12px; color: #636e72; }
+  h3 { font-size: 1rem; margin-bottom: 8px; }
+
+  /* Load area */
+  .load-area { background: #fff; border-radius: 8px; padding: 24px; margin-bottom: 20px; border: 2px dashed #b2bec3; text-align: center; transition: border-color .2s, background .2s; }
+  .load-area.dragover { border-color: #0984e3; background: #dfe6e9; }
+  .load-area input[type="file"] { display: none; }
+  .load-area label { display: inline-block; padding: 10px 24px; background: #0984e3; color: #fff; border-radius: 6px; cursor: pointer; font-weight: 600; margin-bottom: 8px; }
+  .load-area label:hover { background: #0770c2; }
+  .load-area p { color: #636e72; font-size: .9rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; background: #dfe6e9; padding: 4px 12px; border-radius: 16px; font-size: .8rem; }
+  .chip .remove { cursor: pointer; font-weight: bold; margin-left: 4px; color: #d63031; }
+  .btn-clear { background: #d63031; color: #fff; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: .8rem; margin-top: 8px; }
+  .btn-clear:hover { background: #c0392b; }
+
+  /* KPI cards */
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .kpi { background: #fff; border-radius: 8px; padding: 16px; text-align: center; }
+  .kpi .value { font-size: 1.8rem; font-weight: 700; }
+  .kpi .label { font-size: .8rem; color: #636e72; text-transform: uppercase; letter-spacing: .5px; }
+
+  /* Bar chart */
+  .chart-section, .method-section { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+  .bar-row { display: flex; align-items: center; margin-bottom: 6px; }
+  .bar-label { width: 280px; font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+  .bar-track { flex: 1; background: #dfe6e9; border-radius: 4px; height: 22px; position: relative; margin: 0 8px; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width .3s; min-width: 2px; }
+  .bar-value { font-size: .8rem; font-weight: 600; width: 48px; text-align: right; flex-shrink: 0; }
+
+  /* Method summary */
+  .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .method-card { padding: 12px; border-radius: 6px; background: #f5f6fa; text-align: center; }
+  .method-card .m-name { font-size: .75rem; text-transform: uppercase; font-weight: 600; letter-spacing: .5px; margin-bottom: 4px; }
+  .method-card .m-count { font-size: 1.4rem; font-weight: 700; }
+  .method-card .m-score { font-size: .85rem; color: #636e72; }
+
+  /* Filters */
+  .filters { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+  .filter-group { display: flex; flex-direction: column; }
+  .filter-group label { font-size: .75rem; font-weight: 600; text-transform: uppercase; color: #636e72; margin-bottom: 4px; }
+  .filter-group select { padding: 6px 10px; border: 1px solid #b2bec3; border-radius: 4px; font-size: .85rem; min-width: 140px; }
+
+  /* Table */
+  .table-wrap { background: #fff; border-radius: 8px; overflow-x: auto; margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  th { background: #f5f6fa; padding: 10px 12px; text-align: left; cursor: pointer; user-select: none; white-space: nowrap; position: sticky; top: 0; }
+  th:hover { background: #dfe6e9; }
+  th .sort-arrow { margin-left: 4px; font-size: .7rem; color: #b2bec3; }
+  th .sort-arrow.active { color: #2d3436; }
+  td { padding: 10px 12px; border-top: 1px solid #f0f0f0; }
+  tr.clickable { cursor: pointer; }
+  tr.clickable:hover { background: #fafafa; }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .75rem; font-weight: 600; }
+  .badge-green { background: #00b89420; color: #00b894; }
+  .badge-yellow { background: #fdcb6e40; color: #d68910; }
+  .badge-red { background: #d6303120; color: #d63031; }
+  .badge-gray { background: #b2bec320; color: #636e72; }
+  .badge-assertion { background: #0984e320; color: #0984e3; }
+  .badge-rule { background: #00b89420; color: #00b894; }
+  .badge-model_graded { background: #6c5ce720; color: #6c5ce7; }
+  .badge-hybrid { background: #00cec920; color: #00a8a8; }
+  .badge-security { background: #d6303120; color: #d63031; }
+
+  /* Expanded row */
+  .detail-row td { padding: 0; border-top: none; }
+  .detail-panel { padding: 16px 24px; background: #fafafa; border-top: 1px solid #f0f0f0; }
+  .detail-panel .criteria-list { list-style: none; }
+  .detail-panel .criteria-list li { padding: 6px 0; border-bottom: 1px solid #eee; display: flex; gap: 8px; align-items: flex-start; }
+  .detail-panel .criteria-list li:last-child { border-bottom: none; }
+  .icon-met { color: #00b894; font-weight: bold; }
+  .icon-not-met { color: #d63031; font-weight: bold; }
+  .criteria-text { font-weight: 600; }
+  .criteria-details { color: #636e72; font-size: .8rem; }
+  .reasoning { margin-top: 12px; padding: 12px; background: #fff; border-radius: 6px; border-left: 3px solid #6c5ce7; font-size: .85rem; }
+  .generated-files { margin-top: 10px; font-size: .8rem; color: #636e72; }
+  .generated-files code { font-size: .75rem; background: #eee; padding: 2px 4px; border-radius: 3px; }
+
+  /* Most failed criteria */
+  .failed-section { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+  .failed-section table { font-size: .82rem; }
+
+  .hidden { display: none; }
+  .score-green { color: #00b894; }
+  .score-yellow { color: #d68910; }
+  .score-red { color: #d63031; }
+  .no-results { text-align: center; padding: 40px; color: #636e72; }
+</style>
+</head>
+<body>
+
+<h1>Evaluation Results Viewer</h1>
+<h2>Interactive Dashboard for AI Agent Eval Results</h2>
+
+<!-- Load Area -->
+<div class="load-area" id="loadArea">
+  <label for="fileInput">Load Result Files</label>
+  <input type="file" id="fileInput" accept=".json" multiple>
+  <p>or drag &amp; drop JSON result files here</p>
+  <div class="chips" id="fileChips"></div>
+  <button class="btn-clear hidden" id="clearBtn">Clear All</button>
+</div>
+
+<!-- Dashboard (hidden until files loaded) -->
+<div id="dashboard" class="hidden">
+
+  <!-- KPI Cards -->
+  <div class="kpi-row" id="kpiRow"></div>
+
+  <!-- Score by Dataset bar chart -->
+  <div class="chart-section">
+    <h3>Score by Dataset</h3>
+    <div id="barChart"></div>
+  </div>
+
+  <!-- Eval Method Distribution -->
+  <div class="method-section">
+    <h3>Eval Method Distribution</h3>
+    <div class="method-grid" id="methodGrid"></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters" id="filtersRow">
+    <div class="filter-group">
+      <label>Dataset</label>
+      <select id="filterDataset"><option value="">All</option></select>
+    </div>
+    <div class="filter-group">
+      <label>LLM Model</label>
+      <select id="filterModel"><option value="">All</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Eval Method</label>
+      <select id="filterMethod"><option value="">All</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Status</label>
+      <select id="filterStatus"><option value="">All</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Score</label>
+      <select id="filterScore">
+        <option value="">All</option>
+        <option value="pass">Pass (&ge; 0.8)</option>
+        <option value="partial">Partial (0.5 &ndash; 0.8)</option>
+        <option value="fail">Fail (&lt; 0.5)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Results Table -->
+  <div class="table-wrap">
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th data-col="test_id">Test ID <span class="sort-arrow">&#9650;&#9660;</span></th>
+          <th data-col="test_case_name">Test Case Name <span class="sort-arrow">&#9650;&#9660;</span></th>
+          <th data-col="dataset">Dataset <span class="sort-arrow">&#9650;&#9660;</span></th>
+          <th data-col="llm_model">LLM Model <span class="sort-arrow">&#9650;&#9660;</span></th>
+          <th data-col="eval_method">Eval Method <span class="sort-arrow">&#9650;&#9660;</span></th>
+          <th data-col="status">Status <span class="sort-arrow">&#9650;&#9660;</span></th>
+          <th data-col="score">Score <span class="sort-arrow">&#9650;&#9660;</span></th>
+          <th data-col="criteria_met">Criteria Met <span class="sort-arrow">&#9650;&#9660;</span></th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Most Failed Criteria -->
+  <div class="failed-section">
+    <h3>Most Failed Criteria (Top 15)</h3>
+    <table id="failedTable">
+      <thead>
+        <tr>
+          <th>Criterion</th>
+          <th>Pass Rate</th>
+          <th>Met</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="failedBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+(function() {
+  // State
+  let loadedFiles = []; // { name, data: EvaluationRunResult }
+  let flatRows = [];    // flattened rows for table
+  let sortCol = 'test_id';
+  let sortAsc = true;
+  let expandedId = null;
+
+  // DOM refs
+  const fileInput = document.getElementById('fileInput');
+  const loadArea = document.getElementById('loadArea');
+  const fileChips = document.getElementById('fileChips');
+  const clearBtn = document.getElementById('clearBtn');
+  const dashboard = document.getElementById('dashboard');
+
+  // File loading
+  fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+  loadArea.addEventListener('dragover', e => { e.preventDefault(); loadArea.classList.add('dragover'); });
+  loadArea.addEventListener('dragleave', () => loadArea.classList.remove('dragover'));
+  loadArea.addEventListener('drop', e => {
+    e.preventDefault();
+    loadArea.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    loadedFiles = [];
+    flatRows = [];
+    expandedId = null;
+    fileInput.value = '';
+    renderAll();
+  });
+
+  function handleFiles(files) {
+    Array.from(files).forEach(file => {
+      if (!file.name.endsWith('.json')) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!data.dataset_name || !data.results) {
+            alert(`${file.name} does not look like an EvaluationRunResult.`);
+            return;
+          }
+          loadedFiles.push({ name: file.name, data });
+          rebuildFlat();
+          renderAll();
+        } catch (err) {
+          alert(`Error parsing ${file.name}: ${err.message}`);
+        }
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  function rebuildFlat() {
+    flatRows = [];
+    loadedFiles.forEach(f => {
+      const d = f.data;
+      d.results.forEach(r => {
+        const met = r.grade_result ? r.grade_result.evaluation.filter(c => c.met).length : 0;
+        const total = r.grade_result ? r.grade_result.evaluation.length : 0;
+        flatRows.push({
+          test_id: r.test_id,
+          test_case_name: r.test_case_name,
+          dataset: d.dataset_name,
+          llm_model: d.llm_model,
+          eval_method: r.eval_method || 'model_graded',
+          status: r.status,
+          score: r.grade_result && r.grade_result.score != null ? r.grade_result.score : null,
+          criteria_met: total > 0 ? met / total : null,
+          criteria_met_text: total > 0 ? `${met}/${total}` : '-',
+          met, total,
+          grade_result: r.grade_result,
+          generated_files: r.generated_files || [],
+          evaluation_criteria: r.evaluation_criteria || [],
+          _uid: `${d.dataset_name}_${d.llm_model}_${r.test_id}`
+        });
+      });
+    });
+  }
+
+  function renderAll() {
+    renderChips();
+    if (loadedFiles.length === 0) {
+      dashboard.classList.add('hidden');
+      clearBtn.classList.add('hidden');
+      return;
+    }
+    dashboard.classList.remove('hidden');
+    clearBtn.classList.remove('hidden');
+    renderKPIs();
+    renderBarChart();
+    renderMethodGrid();
+    populateFilters();
+    renderTable();
+    renderFailedCriteria();
+  }
+
+  function renderChips() {
+    fileChips.innerHTML = '';
+    loadedFiles.forEach((f, i) => {
+      const chip = document.createElement('span');
+      chip.className = 'chip';
+      chip.innerHTML = `${f.data.dataset_name} (${f.data.llm_model}) <span class="remove" data-idx="${i}">&times;</span>`;
+      fileChips.appendChild(chip);
+    });
+    fileChips.querySelectorAll('.remove').forEach(el => {
+      el.addEventListener('click', e => {
+        const idx = parseInt(e.target.dataset.idx);
+        loadedFiles.splice(idx, 1);
+        rebuildFlat();
+        renderAll();
+      });
+    });
+  }
+
+  function renderKPIs() {
+    let totalCases = 0, graded = 0, scores = [], cost = 0;
+    loadedFiles.forEach(f => {
+      const d = f.data;
+      totalCases += d.total_test_cases;
+      graded += d.graded_count;
+      cost += d.total_cost || 0;
+      if (d.average_score != null) scores.push(d.average_score);
+    });
+    const avgScore = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+    const kpis = [
+      { label: 'Total Test Cases', value: totalCases },
+      { label: 'Graded', value: graded },
+      { label: 'Average Score', value: avgScore != null ? (avgScore * 100).toFixed(1) + '%' : 'N/A' },
+      { label: 'Total Cost', value: '$' + cost.toFixed(4) }
+    ];
+    const row = document.getElementById('kpiRow');
+    row.innerHTML = kpis.map(k => `<div class="kpi"><div class="value">${k.value}</div><div class="label">${k.label}</div></div>`).join('');
+  }
+
+  function scoreColor(s) {
+    if (s == null) return '#b2bec3';
+    if (s >= 0.8) return '#00b894';
+    if (s >= 0.5) return '#fdcb6e';
+    return '#d63031';
+  }
+
+  function scoreBadgeClass(s) {
+    if (s == null) return 'badge-gray';
+    if (s >= 0.8) return 'badge-green';
+    if (s >= 0.5) return 'badge-yellow';
+    return 'badge-red';
+  }
+
+  function scoreTextClass(s) {
+    if (s == null) return '';
+    if (s >= 0.8) return 'score-green';
+    if (s >= 0.5) return 'score-yellow';
+    return 'score-red';
+  }
+
+  function renderBarChart() {
+    const groups = {};
+    loadedFiles.forEach(f => {
+      const key = `${f.data.dataset_name} | ${f.data.llm_model}`;
+      groups[key] = f.data.average_score;
+    });
+    const container = document.getElementById('barChart');
+    container.innerHTML = Object.entries(groups).map(([label, score]) => {
+      const pct = score != null ? (score * 100) : 0;
+      const color = scoreColor(score);
+      const display = score != null ? (score * 100).toFixed(1) + '%' : 'N/A';
+      return `<div class="bar-row">
+        <div class="bar-label" title="${label}">${label}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div class="bar-value" style="color:${color}">${display}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderMethodGrid() {
+    const methods = {};
+    flatRows.forEach(r => {
+      const m = r.eval_method;
+      if (!methods[m]) methods[m] = { count: 0, scores: [] };
+      methods[m].count++;
+      if (r.score != null) methods[m].scores.push(r.score);
+    });
+    const grid = document.getElementById('methodGrid');
+    grid.innerHTML = Object.entries(methods).sort(([a],[b]) => a.localeCompare(b)).map(([name, data]) => {
+      const avg = data.scores.length ? (data.scores.reduce((a,b) => a+b, 0) / data.scores.length) : null;
+      const avgText = avg != null ? (avg * 100).toFixed(1) + '%' : 'N/A';
+      return `<div class="method-card">
+        <div class="m-name"><span class="badge badge-${name}">${name.replace(/_/g, ' ')}</span></div>
+        <div class="m-count">${data.count}</div>
+        <div class="m-score">Avg: ${avgText}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function populateFilters() {
+    fillSelect('filterDataset', [...new Set(flatRows.map(r => r.dataset))].sort());
+    fillSelect('filterModel', [...new Set(flatRows.map(r => r.llm_model))].sort());
+    fillSelect('filterMethod', [...new Set(flatRows.map(r => r.eval_method))].sort());
+    fillSelect('filterStatus', [...new Set(flatRows.map(r => r.status))].sort());
+  }
+
+  function fillSelect(id, options) {
+    const sel = document.getElementById(id);
+    const current = sel.value;
+    const firstOpt = sel.options[0].outerHTML;
+    sel.innerHTML = firstOpt + options.map(o => `<option value="${o}">${o}</option>`).join('');
+    sel.value = current;
+  }
+
+  // Filter listeners
+  ['filterDataset','filterModel','filterMethod','filterStatus','filterScore'].forEach(id => {
+    document.getElementById(id).addEventListener('change', renderTable);
+  });
+
+  function getFiltered() {
+    const fd = document.getElementById('filterDataset').value;
+    const fm = document.getElementById('filterModel').value;
+    const fme = document.getElementById('filterMethod').value;
+    const fs = document.getElementById('filterStatus').value;
+    const fsc = document.getElementById('filterScore').value;
+    return flatRows.filter(r => {
+      if (fd && r.dataset !== fd) return false;
+      if (fm && r.llm_model !== fm) return false;
+      if (fme && r.eval_method !== fme) return false;
+      if (fs && r.status !== fs) return false;
+      if (fsc === 'pass' && (r.score == null || r.score < 0.8)) return false;
+      if (fsc === 'partial' && (r.score == null || r.score < 0.5 || r.score >= 0.8)) return false;
+      if (fsc === 'fail' && (r.score == null || r.score >= 0.5)) return false;
+      return true;
+    });
+  }
+
+  // Sorting
+  document.querySelectorAll('#resultsTable th[data-col]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; }
+      updateSortArrows();
+      renderTable();
+    });
+  });
+
+  function updateSortArrows() {
+    document.querySelectorAll('#resultsTable th[data-col]').forEach(th => {
+      const arrow = th.querySelector('.sort-arrow');
+      arrow.classList.toggle('active', th.dataset.col === sortCol);
+      if (th.dataset.col === sortCol) {
+        arrow.textContent = sortAsc ? '\u25B2' : '\u25BC';
+      } else {
+        arrow.textContent = '\u25B2\u25BC';
+      }
+    });
+  }
+
+  function sortRows(rows) {
+    return rows.slice().sort((a, b) => {
+      let va = a[sortCol], vb = b[sortCol];
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      if (typeof va === 'string') { va = va.toLowerCase(); vb = (vb || '').toLowerCase(); }
+      if (va < vb) return sortAsc ? -1 : 1;
+      if (va > vb) return sortAsc ? 1 : -1;
+      return 0;
+    });
+  }
+
+  function renderTable() {
+    const filtered = sortRows(getFiltered());
+    const tbody = document.getElementById('resultsBody');
+    tbody.innerHTML = '';
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="no-results">No results match the current filters.</td></tr>';
+      return;
+    }
+
+    filtered.forEach(r => {
+      // Main row
+      const tr = document.createElement('tr');
+      tr.className = 'clickable';
+      tr.dataset.uid = r._uid;
+
+      const scoreDisplay = r.score != null ? r.score.toFixed(2) : '-';
+      const statusBadge = r.status === 'GRADED' ? 'badge-green' : r.status === 'ERROR' ? 'badge-red' : 'badge-gray';
+
+      tr.innerHTML = `
+        <td>${esc(r.test_id)}</td>
+        <td>${esc(r.test_case_name)}</td>
+        <td>${esc(r.dataset)}</td>
+        <td>${esc(r.llm_model)}</td>
+        <td><span class="badge badge-${r.eval_method}">${esc(r.eval_method.replace(/_/g, ' '))}</span></td>
+        <td><span class="badge ${statusBadge}">${esc(r.status)}</span></td>
+        <td class="${scoreTextClass(r.score)}" style="font-weight:600">${scoreDisplay}</td>
+        <td>${esc(r.criteria_met_text)}</td>
+      `;
+
+      tr.addEventListener('click', () => toggleDetail(r._uid, tr));
+      tbody.appendChild(tr);
+
+      // Detail row (hidden by default)
+      if (expandedId === r._uid) {
+        tbody.appendChild(buildDetailRow(r));
+      }
+    });
+  }
+
+  function toggleDetail(uid, tr) {
+    if (expandedId === uid) {
+      expandedId = null;
+    } else {
+      expandedId = uid;
+    }
+    renderTable();
+  }
+
+  function buildDetailRow(r) {
+    const dtr = document.createElement('tr');
+    dtr.className = 'detail-row';
+    const td = document.createElement('td');
+    td.colSpan = 8;
+
+    let html = '<div class="detail-panel">';
+
+    // Criteria list
+    if (r.grade_result && r.grade_result.evaluation && r.grade_result.evaluation.length > 0) {
+      html += '<h3>Criteria</h3><ul class="criteria-list">';
+      r.grade_result.evaluation.forEach(c => {
+        const icon = c.met ? '<span class="icon-met">&#10003;</span>' : '<span class="icon-not-met">&#10007;</span>';
+        html += `<li>
+          <div>${icon}</div>
+          <div>
+            <div class="criteria-text">${esc(c.criteria)}</div>
+            <div class="criteria-details">${esc(c.details || '')}</div>
+          </div>
+        </li>`;
+      });
+      html += '</ul>';
+    } else if (r.evaluation_criteria && r.evaluation_criteria.length > 0) {
+      html += '<h3>Evaluation Criteria</h3><ul class="criteria-list">';
+      r.evaluation_criteria.forEach(c => {
+        html += `<li><div class="criteria-text">${esc(c)}</div></li>`;
+      });
+      html += '</ul>';
+    }
+
+    // Reasoning
+    if (r.grade_result && r.grade_result.reasoning) {
+      html += `<div class="reasoning"><strong>Reasoning:</strong> ${esc(r.grade_result.reasoning)}</div>`;
+    }
+
+    // Generated files
+    if (r.generated_files.length > 0) {
+      html += '<div class="generated-files"><strong>Generated files:</strong><br>';
+      r.generated_files.forEach(f => {
+        const short = f.split(/[/\\]/).slice(-3).join('/');
+        html += `<code>${esc(short)}</code><br>`;
+      });
+      html += '</div>';
+    }
+
+    html += '</div>';
+    td.innerHTML = html;
+    dtr.appendChild(td);
+    return dtr;
+  }
+
+  function renderFailedCriteria() {
+    const stats = {};
+    flatRows.forEach(r => {
+      if (!r.grade_result) return;
+      r.grade_result.evaluation.forEach(c => {
+        if (!stats[c.criteria]) stats[c.criteria] = { met: 0, total: 0 };
+        stats[c.criteria].total++;
+        if (c.met) stats[c.criteria].met++;
+      });
+    });
+
+    const sorted = Object.entries(stats)
+      .map(([criteria, s]) => ({ criteria, met: s.met, total: s.total, rate: s.total > 0 ? s.met / s.total : 0 }))
+      .filter(x => x.rate < 1.0)
+      .sort((a, b) => a.rate - b.rate)
+      .slice(0, 15);
+
+    const tbody = document.getElementById('failedBody');
+    if (sorted.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="no-results">All criteria passed!</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = sorted.map(x => {
+      const pct = (x.rate * 100).toFixed(0) + '%';
+      const cls = x.rate >= 0.8 ? 'score-green' : x.rate >= 0.5 ? 'score-yellow' : 'score-red';
+      return `<tr>
+        <td>${esc(x.criteria)}</td>
+        <td class="${cls}" style="font-weight:600">${pct}</td>
+        <td>${x.met}</td>
+        <td>${x.total}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function esc(s) {
+    if (s == null) return '';
+    const d = document.createElement('div');
+    d.textContent = String(s);
+    return d.innerHTML;
+  }
+
+  // Init sort arrows
+  updateSortArrows();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+{
+  "dataset_name": "ecommerce_models_dataset",
+  "test_cases": [
+    {
+      "case_type": "generate_models",
+      "test_id": "test_001",
+      "name": "product_models",
+      "api_definition_file": "test_001_products_post_api.yaml",
+      "evaluation_criteria": [
+        "Generate a ProductModel interface with name (string), price (number), description (optional string), category (string), inStock (optional boolean), tags (optional string[])",
+        "Generate a ProductService class with createProduct method",
+        "Service method should use proper generic type parameter",
+        "All imports should use .js extensions"
+      ]
+    },
+    {
+      "case_type": "generate_models",
+      "test_id": "test_002",
+      "name": "product_list_models",
+      "api_definition_file": "test_002_products_get_api.yaml",
+      "evaluation_criteria": [
+        "Generate a ProductService with listProducts method accepting query parameters",
+        "Generate response model with products array, total, page, limit fields",
+        "Properly type the product items in the array"
+      ]
+    },
+    {
+      "case_type": "generate_models",
+      "test_id": "test_003",
+      "name": "order_models_nested",
+      "api_definition_file": "test_003_orders_post_api.yaml",
+      "evaluation_criteria": [
+        "Generate OrderModel with nested items array (OrderItemModel type)",
+        "Generate ShippingAddress interface as a nested object type",
+        "Generate OrderService with createOrder method",
+        "Properly type status as enum or string literal union",
+        "Handle datetime (createdAt) as string type"
+      ]
+    },
+    {
+      "case_type": "generate_models",
+      "test_id": "test_004",
+      "name": "order_get_models",
+      "api_definition_file": "test_004_orders_get_by_id_api.yaml",
+      "evaluation_criteria": [
+        "Generate OrderService with getOrderById method taking orderId parameter",
+        "Response type should include nested items array and shippingAddress",
+        "Path parameter should be properly typed as string"
+      ]
+    },
+    {
+      "case_type": "generate_models",
+      "test_id": "test_005",
+      "name": "payment_models_nested_resource",
+      "api_definition_file": "test_005_payments_post_api.yaml",
+      "evaluation_criteria": [
+        "Generate PaymentModel with amount (number), currency (enum), method (enum)",
+        "Generate PaymentService with createPayment method taking orderId and payment",
+        "Enum values should be properly typed (USD/EUR/GBP for currency)",
+        "Service method path should include /orders/{orderId}/payments"
+      ]
+    },
+    {
+      "case_type": "generate_models",
+      "test_id": "test_006",
+      "name": "search_models",
+      "api_definition_file": "test_006_products_search_api.yaml",
+      "evaluation_criteria": [
+        "Generate ProductService with searchProducts method",
+        "Method should accept query string and optional sort parameter",
+        "Response model should include results array, total, and query fields"
+      ]
+    },
+    {
+      "case_type": "generate_models",
+      "test_id": "test_007",
+      "name": "product_array_boolean_types",
+      "api_definition_file": "test_001_products_post_api.yaml",
+      "evaluation_criteria": [
+        "tags field should be typed as string[] or Array<string>",
+        "inStock field should be typed as boolean",
+        "price field should be typed as number",
+        "Optional fields should use ? syntax or be marked as optional"
+      ]
+    }
+  ]
+}

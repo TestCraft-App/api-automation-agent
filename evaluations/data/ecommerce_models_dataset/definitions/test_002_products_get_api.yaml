@@ -1,0 +1,68 @@
+openapi: "3.0.0"
+info:
+  title: Products API
+  version: "1.0.0"
+  description: E-commerce Products Listing API
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /products:
+    get:
+      operationId: listProducts
+      summary: List products with filters
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+        - name: inStock
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        price:
+                          type: number
+                        category:
+                          type: string
+                        inStock:
+                          type: boolean
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  limit:
+                    type: integer

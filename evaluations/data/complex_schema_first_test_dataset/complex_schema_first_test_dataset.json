@@ -1,0 +1,97 @@
+{
+  "dataset_name": "complex_schema_first_test_dataset",
+  "test_cases": [
+    {
+      "case_type": "generate_first_test",
+      "test_id": "test_001",
+      "name": "allof_composition",
+      "api_definition_file": "test_001_allof_api.yaml",
+      "model_files": [
+        "services/test_001_EmployeeService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test POST /employees with allOf composed schema",
+        "Assert response contains fields from both PersonBase (firstName, lastName, email) and EmploymentDetails (department, position, startDate)",
+        "Assert status code is 201",
+        "Use proper optional chaining for response assertions"
+      ]
+    },
+    {
+      "case_type": "generate_first_test",
+      "test_id": "test_002",
+      "name": "oneof_notification",
+      "api_definition_file": "test_002_oneof_api.yaml",
+      "model_files": [
+        "services/test_002_NotificationService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test POST /notifications with oneOf schema",
+        "Use one valid notification type (email, sms, or push)",
+        "Assert status code is 201",
+        "Assert response contains the notification id and type"
+      ]
+    },
+    {
+      "case_type": "generate_first_test",
+      "test_id": "test_003",
+      "name": "array_of_objects_invoice",
+      "api_definition_file": "test_003_array_of_objects_api.yaml",
+      "model_files": [
+        "requests/test_003_InvoiceModel.ts",
+        "services/test_003_InvoiceService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test POST /invoices with nested lineItems array of objects",
+        "Include at least one line item with description, quantity, unitPrice, and tax",
+        "Assert status code is 201",
+        "Assert response contains lineItems array with proper structure",
+        "Assert response totalAmount is a number"
+      ]
+    },
+    {
+      "case_type": "generate_first_test",
+      "test_id": "test_004",
+      "name": "enum_query_params",
+      "api_definition_file": "test_004_enum_params_api.yaml",
+      "model_files": [
+        "services/test_004_ReportService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test GET /reports with all-enum query parameters",
+        "Use valid enum values for type, format, and period parameters",
+        "Assert status code is 200",
+        "Assert response contains report data"
+      ]
+    },
+    {
+      "case_type": "generate_first_test",
+      "test_id": "test_005",
+      "name": "header_params",
+      "api_definition_file": "test_005_header_params_api.yaml",
+      "model_files": [
+        "services/test_005_TenantService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test GET /tenants/config with required header parameters",
+        "Include X-API-Version, X-Tenant-ID, and Accept-Language headers",
+        "Assert status code is 200",
+        "Assert response contains tenant configuration"
+      ]
+    },
+    {
+      "case_type": "generate_first_test",
+      "test_id": "test_006",
+      "name": "swagger_v2_format",
+      "api_definition_file": "test_006_openapi_v2_api.json",
+      "model_files": [
+        "services/test_006_PetService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test POST /pets endpoint from Swagger 2.0 spec",
+        "Use PetService.createPet method",
+        "Assert status code is 201 or 200",
+        "Assert response contains pet id and name"
+      ]
+    }
+  ]
+}

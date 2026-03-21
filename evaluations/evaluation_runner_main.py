@@ -26,6 +26,7 @@ from src.services.llm_service import LLMService  # noqa: E402
 from src.utils.logger import Logger  # noqa: E402
 
 from evaluations.models.evaluation_dataset import (  # noqa: E402
+    CriterionAggregation,
     EvaluationDataset,
     EvaluationRunResult,
 )
@@ -174,8 +175,102 @@ def _print_tabulated_summary(
             ]
         )
 
+    # Add totals row
+    if len(table_data) > 1:
+        total_cases = sum(row[2] for row in table_data)
+        total_graded = sum(row[3] for row in table_data)
+        total_tokens = sum(row[4] for row in table_data)
+        total_cost = sum(float(row[5]) for row in table_data)
+        scores = [float(row[6]) for row in table_data if row[6] != "N/A"]
+        avg_score_text = f"{sum(scores) / len(scores):.2f}" if scores else "N/A"
+        table_data.append(
+            ["TOTAL", "", total_cases, total_graded, total_tokens, f"{total_cost:.4f}", avg_score_text]
+        )
+
     print("--- Evaluation Summary Table ---\n")
-    table_string = tabulate(table_data, headers=headers, tablefmt="rounded_grid")
+    table_string = tabulate(table_data, headers=headers, tablefmt="grid")
+    for line in table_string.splitlines():
+        print(line)
+
+
+def _compute_criteria_aggregation(
+    run_results: List[Tuple[EvaluationRunResult, str]],
+) -> List[CriterionAggregation]:
+    """Compute per-criterion pass rates across all results."""
+    criteria_stats: dict = {}
+    for results, _ in run_results:
+        for result in results.results:
+            if result.grade_result:
+                for criterion in result.grade_result.evaluation:
+                    key = criterion.criteria
+                    if key not in criteria_stats:
+                        criteria_stats[key] = {"total": 0, "met": 0}
+                    criteria_stats[key]["total"] += 1
+                    if criterion.met:
+                        criteria_stats[key]["met"] += 1
+
+    aggregations = []
+    for criteria, stats in criteria_stats.items():
+        aggregations.append(
+            CriterionAggregation(
+                criteria=criteria,
+                total_count=stats["total"],
+                met_count=stats["met"],
+                pass_rate=stats["met"] / stats["total"] if stats["total"] > 0 else 0.0,
+            )
+        )
+    return sorted(aggregations, key=lambda x: x.pass_rate)
+
+
+def _print_most_failed_criteria(
+    run_results: List[Tuple[EvaluationRunResult, str]],
+    top_n: int = 10,
+) -> None:
+    """Print the most frequently failed criteria across all evaluations."""
+    aggregations = _compute_criteria_aggregation(run_results)
+    failed = [a for a in aggregations if a.pass_rate < 1.0]
+
+    if not failed:
+        return
+
+    print(f"\n--- Most Failed Criteria (top {min(top_n, len(failed))}) ---\n")
+    headers = ["Criterion", "Pass Rate", "Met", "Total"]
+    table_data = []
+    for agg in failed[:top_n]:
+        criterion_text = agg.criteria[:80] + "..." if len(agg.criteria) > 80 else agg.criteria
+        table_data.append([criterion_text, f"{agg.pass_rate:.0%}", agg.met_count, agg.total_count])
+
+    table_string = tabulate(table_data, headers=headers, tablefmt="grid")
+    for line in table_string.splitlines():
+        print(line)
+
+
+def _print_eval_method_summary(
+    run_results: List[Tuple[EvaluationRunResult, str]],
+) -> None:
+    """Print count and average scores grouped by eval_method."""
+    method_stats: dict = {}
+    for results, _ in run_results:
+        for result in results.results:
+            method = result.eval_method or "model_graded"
+            if method not in method_stats:
+                method_stats[method] = {"count": 0, "scores": []}
+            method_stats[method]["count"] += 1
+            if result.grade_result and result.grade_result.score is not None:
+                method_stats[method]["scores"].append(result.grade_result.score)
+
+    if not method_stats:
+        return
+
+    print("\n--- Eval Method Distribution ---\n")
+    headers = ["Eval Method", "Count", "Avg Score"]
+    table_data = []
+    for method, stats in sorted(method_stats.items()):
+        avg = sum(stats["scores"]) / len(stats["scores"]) if stats["scores"] else None
+        avg_text = f"{avg:.2f}" if avg is not None else "N/A"
+        table_data.append([method, stats["count"], avg_text])
+
+    table_string = tabulate(table_data, headers=headers, tablefmt="grid")
     for line in table_string.splitlines():
         print(line)
 
@@ -209,12 +304,17 @@ def parse_args() -> argparse.Namespace:
         "--test-data-folder",
         type=str,
         action="append",
-        required=True,
         help=(
             "Path to a dataset folder (e.g., evaluations/data/generate_first_test_dataset). "
             "Provide this flag multiple times for multiple datasets, or supply a comma-separated list. "
             "Each dataset must contain a JSON file named {folder_name}.json."
         ),
+    )
+
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Run all datasets found in evaluations/data/.",
     )
 
     parser.add_argument(
@@ -285,12 +385,23 @@ def main():
             grader_model = Model.CLAUDE_SONNET_4_5
 
     dataset_folders: list[str] = []
-    for entry in args.test_data_folder:
-        parts = [part.strip() for part in entry.split(",") if part.strip()]
-        dataset_folders.extend(parts)
+
+    if args.all:
+        data_dir = os.path.join(os.path.dirname(__file__), "data")
+        for folder_name in sorted(os.listdir(data_dir)):
+            folder_path = os.path.join(data_dir, folder_name)
+            json_file = os.path.join(folder_path, f"{folder_name}.json")
+            if os.path.isdir(folder_path) and os.path.exists(json_file):
+                dataset_folders.append(folder_path)
+        print(f"Auto-discovered {len(dataset_folders)} datasets\n")
+
+    if args.test_data_folder:
+        for entry in args.test_data_folder:
+            parts = [part.strip() for part in entry.split(",") if part.strip()]
+            dataset_folders.extend(parts)
 
     if not dataset_folders:
-        print("Error: No dataset folders provided.")
+        print("Error: No dataset folders provided. Use --test-data-folder or --all.")
         sys.exit(1)
 
     test_ids_filter: Optional[list[str]] = None
@@ -367,6 +478,8 @@ def main():
     summary_rows = _build_summary_rows(run_results)
 
     _print_tabulated_summary(run_results)
+    _print_eval_method_summary(run_results)
+    _print_most_failed_criteria(run_results)
     _print_result_paths(run_results)
 
     if summary_rows:
@@ -376,6 +489,11 @@ def main():
         with open(summary_path, "w", encoding="utf-8") as f:
             json.dump(summary_rows, f, indent=2)
         print(f"\nSummary JSON saved to: {os.path.normpath(summary_path)}")
+
+    viewer_path = os.path.join(os.path.dirname(__file__), "viewer.html")
+    if os.path.exists(viewer_path):
+        print(f"\nOpen the results viewer: {os.path.normpath(viewer_path)}")
+        print("Load the JSON result files above to visualize them.")
 
 
 if __name__ == "__main__":

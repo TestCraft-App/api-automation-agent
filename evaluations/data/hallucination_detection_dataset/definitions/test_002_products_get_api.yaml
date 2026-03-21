@@ -1,0 +1,36 @@
+openapi: "3.0.0"
+info:
+  title: Products API
+  version: "1.0.0"
+  description: Product listing API (GET only, no request body)
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /products:
+    get:
+      operationId: listProducts
+      summary: List all products
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Products list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        price:
+                          type: number

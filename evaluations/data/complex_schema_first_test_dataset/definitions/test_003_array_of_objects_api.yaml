@@ -1,0 +1,76 @@
+openapi: "3.0.0"
+info:
+  title: Invoices API
+  version: "1.0.0"
+  description: Invoice API with array of objects
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /invoices:
+    post:
+      operationId: createInvoice
+      summary: Create an invoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - customerId
+                - lineItems
+              properties:
+                customerId:
+                  type: string
+                lineItems:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required:
+                      - description
+                      - quantity
+                      - unitPrice
+                    properties:
+                      description:
+                        type: string
+                      quantity:
+                        type: integer
+                        minimum: 1
+                      unitPrice:
+                        type: number
+                      tax:
+                        type: number
+                        default: 0
+                notes:
+                  type: string
+      responses:
+        "201":
+          description: Invoice created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  customerId:
+                    type: string
+                  lineItems:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        description:
+                          type: string
+                        quantity:
+                          type: integer
+                        unitPrice:
+                          type: number
+                        tax:
+                          type: number
+                  totalAmount:
+                    type: number
+                  createdAt:
+                    type: string
+                    format: date-time

@@ -1,0 +1,67 @@
+openapi: "3.0.0"
+info:
+  title: Payments API
+  version: "1.0.0"
+  description: Nested payments resource under orders
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /orders/{orderId}/payments:
+    post:
+      operationId: createPayment
+      summary: Create a payment for an order
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+                - currency
+                - method
+              properties:
+                amount:
+                  type: number
+                currency:
+                  type: string
+                  enum:
+                    - USD
+                    - EUR
+                    - GBP
+                method:
+                  type: string
+                  enum:
+                    - credit_card
+                    - debit_card
+                    - bank_transfer
+                    - wallet
+      responses:
+        "201":
+          description: Payment created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  orderId:
+                    type: string
+                  amount:
+                    type: number
+                  currency:
+                    type: string
+                  method:
+                    type: string
+                  status:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time

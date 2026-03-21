@@ -1,0 +1,40 @@
+openapi: "3.0.0"
+info:
+  title: Widgets API
+  version: "1.0.0"
+  description: Widget creation API with single documented status code
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /widgets:
+    post:
+      operationId: createWidget
+      summary: Create a widget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - type
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+      responses:
+        "201":
+          description: Widget created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  type:
+                    type: string

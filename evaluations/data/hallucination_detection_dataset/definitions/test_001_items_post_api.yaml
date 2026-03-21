@@ -1,0 +1,35 @@
+openapi: "3.0.0"
+info:
+  title: Items API
+  version: "1.0.0"
+  description: Minimal items API with limited schema
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /items:
+    post:
+      operationId: createItem
+      summary: Create a new item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+      responses:
+        "201":
+          description: Item created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string

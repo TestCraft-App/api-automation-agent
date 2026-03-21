@@ -82,7 +82,7 @@ You must respond with a JSON object in this exact format:
             if self.config.model.is_anthropic():
                 return ChatAnthropic(
                     model_name=self.config.model.value,
-                    temperature=1,
+                    temperature=0,
                     api_key=pydantic.SecretStr(self.config.anthropic_api_key),
                     timeout=None,
                     stop=None,
@@ -92,14 +92,14 @@ You must respond with a JSON object in this exact format:
             if self.config.model.is_google():
                 return ChatGoogleGenerativeAI(
                     model=self.config.model.value,
-                    temperature=1,
+                    temperature=0,
                     google_api_key=pydantic.SecretStr(self.config.google_api_key),
                     max_retries=3,
                 )
             if self.config.model.is_bedrock():
                 bedrock_kwargs = {
                     "model_id": self.config.model.value,
-                    "model_kwargs": {"temperature": 1, "max_tokens": 8192},
+                    "model_kwargs": {"temperature": 0, "max_tokens": 8192},
                     "region_name": self.config.aws_region or "us-east-1",
                 }
 
@@ -110,7 +110,7 @@ You must respond with a JSON object in this exact format:
                 return ChatBedrock(**bedrock_kwargs)
             return ChatOpenAI(
                 model=self.config.model.value,
-                temperature=1,
+                temperature=0,
                 max_retries=3,
                 api_key=pydantic.SecretStr(self.config.openai_api_key),
             )
@@ -210,8 +210,12 @@ You must respond with a JSON object in this exact format:
                     )
                 )
 
+            # Compute score deterministically from criteria met/not-met
+            criteria_met = sum(1 for e in evaluation_entries if e.met)
+            deterministic_score = criteria_met / len(evaluation_entries) if evaluation_entries else 0.0
+
             return ModelGradeResult(
-                score=grade_data.get("score"),
+                score=deterministic_score,
                 evaluation=evaluation_entries,
                 reasoning=grade_data.get("reasoning"),
             )

@@ -1,0 +1,63 @@
+openapi: "3.0.0"
+info:
+  title: Products API
+  version: "1.0.0"
+  description: E-commerce Products API
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /products:
+    post:
+      operationId: createProduct
+      summary: Create a new product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - price
+                - category
+              properties:
+                name:
+                  type: string
+                price:
+                  type: number
+                  format: double
+                description:
+                  type: string
+                category:
+                  type: string
+                inStock:
+                  type: boolean
+                  default: true
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  price:
+                    type: number
+                  description:
+                    type: string
+                  category:
+                    type: string
+                  inStock:
+                    type: boolean
+                  tags:
+                    type: array
+                    items:
+                      type: string

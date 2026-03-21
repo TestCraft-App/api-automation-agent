@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import shutil
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
@@ -18,6 +19,7 @@ from evaluations.models.evaluation_dataset import (
     EvaluationResult,
     EvaluationTestCase,
     ModelGradeResult,
+    RuleBasedCriterion,
 )
 from evaluations.services.evaluation_data_loader import EvaluationDataLoader
 from evaluations.services.evaluation_file_writer import EvaluationFileWriter
@@ -133,6 +135,94 @@ class BaseEvaluator(ABC):
         )
 
         return self.model_grader.grade(combined_content, evaluation_criteria)
+
+    def _evaluate_rule_based_criteria(
+        self,
+        generated_files: List[FileSpec],
+        rule_based_criteria: List[RuleBasedCriterion],
+    ) -> List[EvaluationCriterionResult]:
+        """
+        Evaluate generated files against deterministic rule-based criteria.
+
+        Args:
+            generated_files: List of generated FileSpec objects
+            rule_based_criteria: List of RuleBasedCriterion checks to apply
+
+        Returns:
+            List of EvaluationCriterionResult with deterministic pass/fail per criterion
+        """
+        results: List[EvaluationCriterionResult] = []
+
+        for criterion in rule_based_criteria:
+            # Select files to check
+            if criterion.target_file:
+                files_to_check = [f for f in generated_files if criterion.target_file in f.path]
+            else:
+                files_to_check = generated_files
+
+            combined_content = "\n".join(f.fileContent for f in files_to_check)
+            file_paths = [f.path for f in generated_files]
+
+            met = False
+            details = ""
+
+            if criterion.check_type == "contains":
+                met = criterion.pattern in combined_content
+                details = (
+                    f"Pattern '{criterion.pattern}' found in generated code"
+                    if met
+                    else f"Pattern '{criterion.pattern}' not found in generated code"
+                )
+
+            elif criterion.check_type == "not_contains":
+                met = criterion.pattern not in combined_content
+                details = (
+                    f"Pattern '{criterion.pattern}' correctly absent from generated code"
+                    if met
+                    else f"Pattern '{criterion.pattern}' was found in generated code (should not be present)"
+                )
+
+            elif criterion.check_type == "regex_match":
+                met = bool(re.search(criterion.pattern, combined_content))
+                details = (
+                    f"Regex pattern '{criterion.pattern}' matched in generated code"
+                    if met
+                    else f"Regex pattern '{criterion.pattern}' did not match in generated code"
+                )
+
+            elif criterion.check_type == "regex_not_match":
+                met = not bool(re.search(criterion.pattern, combined_content))
+                details = (
+                    f"Regex pattern '{criterion.pattern}' correctly not found in generated code"
+                    if met
+                    else f"Regex pattern '{criterion.pattern}' was found in generated code (should not match)"
+                )
+
+            elif criterion.check_type == "file_exists":
+                met = any(criterion.pattern in p for p in file_paths)
+                details = (
+                    f"File matching '{criterion.pattern}' exists in generated files"
+                    if met
+                    else f"No file matching '{criterion.pattern}' found in generated files"
+                )
+
+            elif criterion.check_type == "import_check":
+                met = bool(re.search(rf"import\s+.*{re.escape(criterion.pattern)}", combined_content))
+                details = (
+                    f"Import for '{criterion.pattern}' found in generated code"
+                    if met
+                    else f"Import for '{criterion.pattern}' not found in generated code"
+                )
+
+            results.append(
+                EvaluationCriterionResult(
+                    criteria=criterion.description,
+                    met=met,
+                    details=details,
+                )
+            )
+
+        return results
 
     def _is_postman_case(self, case_type: str) -> bool:
         """Check if the case type is a Postman variant."""

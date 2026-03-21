@@ -1,0 +1,52 @@
+openapi: "3.0.0"
+info:
+  title: Products API
+  version: "1.0.0"
+  description: Product search API
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /products/search:
+    get:
+      operationId: searchProducts
+      summary: Search products
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - price_asc
+              - price_desc
+              - name_asc
+              - name_desc
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        price:
+                          type: number
+                        category:
+                          type: string
+                  total:
+                    type: integer
+                  query:
+                    type: string

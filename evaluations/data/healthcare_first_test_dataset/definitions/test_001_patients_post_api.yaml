@@ -1,0 +1,86 @@
+openapi: "3.0.0"
+info:
+  title: Patients API
+  version: "1.0.0"
+  description: Healthcare Patients API
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /patients:
+    post:
+      operationId: createPatient
+      summary: Create a new patient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - dateOfBirth
+                - gender
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                dateOfBirth:
+                  type: string
+                  format: date
+                gender:
+                  type: string
+                  enum:
+                    - male
+                    - female
+                    - other
+                    - prefer_not_to_say
+                allergies:
+                  type: array
+                  items:
+                    type: string
+                emergencyContact:
+                  type: object
+                  required:
+                    - name
+                    - phone
+                  properties:
+                    name:
+                      type: string
+                    phone:
+                      type: string
+                    relationship:
+                      type: string
+      responses:
+        "201":
+          description: Patient created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  firstName:
+                    type: string
+                  lastName:
+                    type: string
+                  dateOfBirth:
+                    type: string
+                    format: date
+                  gender:
+                    type: string
+                  allergies:
+                    type: array
+                    items:
+                      type: string
+                  emergencyContact:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      phone:
+                        type: string
+                      relationship:
+                        type: string

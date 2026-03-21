@@ -1,0 +1,64 @@
+openapi: "3.0.0"
+info:
+  title: Employees API
+  version: "1.0.0"
+  description: Employee API using allOf composition
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /employees:
+    post:
+      operationId: createEmployee
+      summary: Create a new employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/PersonBase'
+                - $ref: '#/components/schemas/EmploymentDetails'
+      responses:
+        "201":
+          description: Employee created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+                  - $ref: '#/components/schemas/PersonBase'
+                  - $ref: '#/components/schemas/EmploymentDetails'
+components:
+  schemas:
+    PersonBase:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+    EmploymentDetails:
+      type: object
+      required:
+        - department
+        - position
+      properties:
+        department:
+          type: string
+        position:
+          type: string
+        startDate:
+          type: string
+          format: date
+        salary:
+          type: number

@@ -1,0 +1,32 @@
+openapi: "3.0.0"
+info:
+  title: Books API
+  version: "1.0.0"
+  description: Books API with limited schema properties
+servers:
+  - url: "https://api.example.com/v1"
+paths:
+  /books/{id}:
+    get:
+      operationId: getBookById
+      summary: Get a book by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Book details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  title:
+                    type: string
+                  author:
+                    type: string

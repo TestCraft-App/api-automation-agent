@@ -1,0 +1,173 @@
+{
+  "dataset_name": "ecommerce_first_test_dataset",
+  "test_cases": [
+    {
+      "case_type": "generate_first_test",
+      "test_id": "test_001",
+      "name": "create_product",
+      "api_definition_file": "test_001_products_post_api.yaml",
+      "model_files": [
+        "requests/test_001_ProductModel.ts",
+        "services/test_001_ProductService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for POST /products to create a product",
+        "Use ProductService.createProduct method with ProductModel type",
+        "Assert status code is 201",
+        "Assert response contains id, name, price, and category using optional chaining",
+        "Generate random values for unique fields to avoid collisions"
+      ]
+    },
+    {
+      "case_type": "generate_first_test",
+      "test_id": "test_002",
+      "name": "list_products_with_filters",
+      "api_definition_file": "test_002_products_get_api.yaml",
+      "model_files": [
+        "services/test_002_ProductService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for GET /products listing",
+        "Use ProductService.listProducts method",
+        "Assert status code is 200",
+        "Assert response contains array of products",
+        "Should handle query parameters (category, minPrice, maxPrice)"
+      ]
+    },
+    {
+      "case_type": "generate_first_test",
+      "test_id": "test_003",
+      "name": "create_order_nested_objects",
+      "api_definition_file": "test_003_orders_post_api.yaml",
+      "model_files": [
+        "requests/test_003_OrderModel.ts",
+        "requests/test_003_OrderItemModel.ts",
+        "services/test_003_OrderService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test the main positive scenario for POST /orders to create an order",
+        "Use OrderService.createOrder method with OrderModel type",
+        "Assert status code is 201",
+        "Include nested items array with at least one OrderItemModel",
+        "Include nested shippingAddress object with required fields",
+        "Assert response contains the nested structures"
+      ]
+    },
+    {
+      "case_type": "generate_first_test",
+      "test_id": "test_004",
+      "name": "get_order_by_id",
+      "api_definition_file": "test_004_orders_get_by_id_api.yaml",
+      "model_files": [
+        "requests/test_003_OrderModel.ts",
+        "requests/test_003_OrderItemModel.ts",
+        "services/test_004_OrderService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test GET /orders/{orderId} to retrieve a specific order",
+        "Use OrderService with appropriate method",
+        "Include setup hook to create an order first",
+        "Assert status code is 200",
+        "Assert response includes nested items array and shippingAddress"
+      ]
+    },
+    {
+      "case_type": "generate_first_test",
+      "test_id": "test_005",
+      "name": "create_payment_nested_resource",
+      "api_definition_file": "test_005_payments_post_api.yaml",
+      "model_files": [
+        "requests/test_005_PaymentModel.ts",
+        "services/test_005_PaymentService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test POST /orders/{orderId}/payments nested resource",
+        "Use PaymentService.createPayment with orderId parameter",
+        "Assert status code is 201",
+        "Assert response contains amount, currency, and method fields",
+        "Use valid enum values for currency and method"
+      ]
+    },
+    {
+      "case_type": "generate_first_test",
+      "test_id": "test_006",
+      "name": "search_products",
+      "api_definition_file": "test_006_products_search_api.yaml",
+      "model_files": [
+        "services/test_006_ProductService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test GET /products/search with query parameter",
+        "Use ProductService.searchProducts method",
+        "Assert status code is 200",
+        "Assert response contains search results array"
+      ]
+    },
+    {
+      "case_type": "generate_first_test",
+      "test_id": "test_007",
+      "name": "create_product_boolean_fields",
+      "api_definition_file": "test_001_products_post_api.yaml",
+      "model_files": [
+        "requests/test_001_ProductModel.ts",
+        "services/test_001_ProductService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test creating a product with boolean inStock field",
+        "Assert response inStock field is a boolean",
+        "Assert response tags field is an array",
+        "Use proper TypeScript types"
+      ]
+    },
+    {
+      "case_type": "generate_first_test",
+      "test_id": "test_008",
+      "name": "create_order_datetime_handling",
+      "api_definition_file": "test_003_orders_post_api.yaml",
+      "model_files": [
+        "requests/test_003_OrderModel.ts",
+        "requests/test_003_OrderItemModel.ts",
+        "services/test_003_OrderService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test that createdAt datetime field is properly handled",
+        "Assert response createdAt is a valid datetime string",
+        "Assert totalAmount is a number",
+        "Assert status is one of the defined enum values"
+      ]
+    },
+    {
+      "case_type": "generate_first_test",
+      "test_id": "test_009",
+      "name": "create_order_with_precondition",
+      "api_definition_file": "test_003_orders_post_api.yaml",
+      "model_files": [
+        "requests/test_003_OrderModel.ts",
+        "requests/test_003_OrderItemModel.ts",
+        "services/test_003_OrderService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test POST /orders with a before hook to set up dependencies",
+        "Include proper test setup using before() or beforeEach()",
+        "Assert status code is 201",
+        "Use proper test isolation patterns"
+      ]
+    },
+    {
+      "case_type": "generate_first_test",
+      "test_id": "test_010",
+      "name": "create_payment_enum_validation",
+      "api_definition_file": "test_005_payments_post_api.yaml",
+      "model_files": [
+        "requests/test_005_PaymentModel.ts",
+        "services/test_005_PaymentService.ts"
+      ],
+      "evaluation_criteria": [
+        "Test payment creation with valid enum values for currency and method",
+        "Use valid currency enum values (USD, EUR, GBP)",
+        "Use valid method enum values (credit_card, debit_card, bank_transfer, wallet)",
+        "Assert response reflects the submitted enum values"
+      ]
+    }
+  ]
+}

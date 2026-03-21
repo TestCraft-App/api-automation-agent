@@ -1,0 +1,164 @@
+{
+  "dataset_name": "fix_typescript_dataset",
+  "test_cases": [
+    {
+      "case_type": "fix_typescript",
+      "test_id": "test_001",
+      "name": "fix_response_wrapper_error",
+      "broken_files": [
+        "test_001_broken_response_wrapper.ts"
+      ],
+      "compiler_errors": [
+        "src/tests/Create-User.spec.ts(15,42): error TS2344: Type 'Response<UserModel>' does not satisfy the constraint 'UserModel'. Type 'Response<UserModel>' is missing the following properties from type 'UserModel': name, email"
+      ],
+      "evaluation_criteria": [
+        "The fix preserves the test logic and assertions",
+        "The fix maintains proper TypeScript syntax"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "not_contains",
+          "pattern": "Response<UserModel>",
+          "description": "Should remove Response wrapper - use UserModel directly as generic parameter"
+        },
+        {
+          "check_type": "regex_not_match",
+          "pattern": "<Response<",
+          "description": "Should not use nested Response<> generic wrapper"
+        }
+      ]
+    },
+    {
+      "case_type": "fix_typescript",
+      "test_id": "test_002",
+      "name": "fix_missing_optional_chaining",
+      "broken_files": [
+        "test_002_broken_optional_chaining.ts"
+      ],
+      "compiler_errors": [
+        "src/tests/Create-User.spec.ts(20,9): error TS18048: 'response.data' is possibly 'undefined'. Use optional chaining to access 'response.data.name'."
+      ],
+      "evaluation_criteria": [
+        "The fix preserves the assertions and their expected values",
+        "The fix uses optional chaining correctly"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "contains",
+          "pattern": "response.data?.",
+          "description": "Should use optional chaining for response.data access"
+        },
+        {
+          "check_type": "regex_not_match",
+          "pattern": "response\\.data\\.[a-zA-Z]+\\.should",
+          "description": "Should not use response.data.field without optional chaining"
+        }
+      ]
+    },
+    {
+      "case_type": "fix_typescript",
+      "test_id": "test_003",
+      "name": "fix_missing_js_extension",
+      "broken_files": [
+        "test_003_broken_import_extension.ts"
+      ],
+      "compiler_errors": [
+        "src/tests/Create-User.spec.ts(1,32): error TS2835: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16'."
+      ],
+      "evaluation_criteria": [
+        "The fix adds .js to all import paths",
+        "The fix preserves the import structure"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_match",
+          "pattern": "from\\s+['\"]\\S+\\.js['\"]",
+          "description": "Import paths should end with .js extension"
+        },
+        {
+          "check_type": "regex_not_match",
+          "pattern": "from\\s+['\"][^'\"]+(?<!\\.js)['\"]",
+          "description": "No import path should be missing .js extension"
+        }
+      ]
+    },
+    {
+      "case_type": "fix_typescript",
+      "test_id": "test_004",
+      "name": "fix_type_mismatch",
+      "broken_files": [
+        "test_004_broken_type_mismatch.ts"
+      ],
+      "compiler_errors": [
+        "src/tests/Create-User.spec.ts(18,5): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'."
+      ],
+      "evaluation_criteria": [
+        "The fix corrects the type mismatch while preserving the test intent",
+        "The fix uses proper TypeScript types"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_not_match",
+          "pattern": "age:\\s*['\"]\\d+['\"]",
+          "description": "age field should be a number, not a string"
+        }
+      ]
+    },
+    {
+      "case_type": "fix_typescript",
+      "test_id": "test_005",
+      "name": "fix_undeclared_variable",
+      "broken_files": [
+        "test_005_broken_undeclared_var.ts"
+      ],
+      "compiler_errors": [
+        "src/tests/Create-User.spec.ts(22,9): error TS2304: Cannot find name 'userId'. Did you mean 'user'?"
+      ],
+      "evaluation_criteria": [
+        "The fix declares or references the correct variable",
+        "The fix preserves the logical flow of the test"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_not_match",
+          "pattern": "\\buserId\\b(?!.*(?:const|let|var)\\s+userId)",
+          "description": "Should not use undeclared variable 'userId'"
+        }
+      ]
+    },
+    {
+      "case_type": "fix_typescript",
+      "test_id": "test_006",
+      "name": "fix_multiple_errors",
+      "broken_files": [
+        "test_006_broken_multiple_errors.ts"
+      ],
+      "compiler_errors": [
+        "src/tests/Create-User.spec.ts(1,32): error TS2835: Relative import paths need explicit file extensions.",
+        "src/tests/Create-User.spec.ts(15,42): error TS2344: Type 'Response<UserModel>' does not satisfy the constraint.",
+        "src/tests/Create-User.spec.ts(20,9): error TS18048: 'response.data' is possibly 'undefined'."
+      ],
+      "evaluation_criteria": [
+        "All three errors are fixed in a single pass",
+        "The fix preserves the test logic and assertions"
+      ],
+      "rule_based_criteria": [
+        {
+          "check_type": "regex_match",
+          "pattern": "from\\s+['\"]\\S+\\.js['\"]",
+          "description": "Import paths should have .js extension"
+        },
+        {
+          "check_type": "not_contains",
+          "pattern": "Response<UserModel>",
+          "description": "Should not use Response wrapper"
+        },
+        {
+          "check_type": "contains",
+          "pattern": "response.data?.",
+          "description": "Should use optional chaining"
+        }
+      ]
+    }
+  ]
+}
