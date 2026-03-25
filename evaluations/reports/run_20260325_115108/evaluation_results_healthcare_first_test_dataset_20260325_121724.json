@@ -1,0 +1,297 @@
+{
+  "dataset_name": "healthcare_first_test_dataset",
+  "llm_model": "gpt-5.4-mini",
+  "total_test_cases": 6,
+  "graded_count": 6,
+  "not_evaluated_count": 0,
+  "error_count": 0,
+  "total_input_tokens": 24191,
+  "total_output_tokens": 2956,
+  "total_cost": 0.031445249999999994,
+  "average_score": 0.8472222222222223,
+  "generated_files_path": "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\healthcare_first_test_dataset_20260325_121700",
+  "results": [
+    {
+      "test_id": "test_003",
+      "test_case_name": "create_appointment_nested_resource",
+      "api_definition_file": "test_003_appointments_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\healthcare_first_test_dataset_20260325_121700\\test_003\\src\\tests\\appointments\\Post-CreateAppointment.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test POST /patients/{patientId}/appointments nested resource",
+            "met": true,
+            "details": "The test uses a patientId parameter and calls createAppointment with it, which targets the nested resource endpoint /patients/{patientId}/appointments."
+          },
+          {
+            "criteria": "Use AppointmentService.createAppointment with patientId parameter",
+            "met": true,
+            "details": "The test instantiates AppointmentService and calls appointmentService.createAppointment(patientId, appointment), correctly passing the patientId as a parameter."
+          },
+          {
+            "criteria": "Assert status code is 201",
+            "met": true,
+            "details": "The test asserts response.status.should.equal(201, ...), which verifies the HTTP status code is 201."
+          },
+          {
+            "criteria": "Assert response contains dateTime, duration, and type fields",
+            "met": true,
+            "details": "The test asserts response.data?.dateTime, response.data?.duration, and response.data?.type, verifying all three required fields are present and match the expected values."
+          },
+          {
+            "criteria": "Duration value should respect min/max constraints (15-120)",
+            "met": true,
+            "details": "The appointment duration is set to 30, which falls within the valid range of 15-120 minutes."
+          }
+        ],
+        "reasoning": "All five evaluation criteria are fully satisfied. The test correctly targets the nested POST endpoint using AppointmentService.createAppointment with a patientId, asserts a 201 status code, verifies the dateTime, duration, and type fields in the response, and uses a duration value of 30 that respects the 15-120 minute constraint."
+      },
+      "evaluation_criteria": [
+        "Test POST /patients/{patientId}/appointments nested resource",
+        "Use AppointmentService.createAppointment with patientId parameter",
+        "Assert status code is 201",
+        "Assert response contains dateTime, duration, and type fields",
+        "Duration value should respect min/max constraints (15-120)"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_002",
+      "test_case_name": "get_patient_by_id",
+      "api_definition_file": "test_002_patients_get_by_id_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\healthcare_first_test_dataset_20260325_121700\\test_002\\src\\tests\\patients\\Get-GetPatientById.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test GET /patients/{patientId} to retrieve a patient",
+            "met": true,
+            "details": "The test calls `patientService.getPatientById(patientId)` which targets the GET /patients/{patientId} endpoint, and the test is properly structured to retrieve a specific patient by ID."
+          },
+          {
+            "criteria": "Include setup hook to create a patient first",
+            "met": true,
+            "details": "A `before` hook is present that creates a patient using `patientService.createPatient(patient)` and stores the created patient's ID in `patientId` for use in the test."
+          },
+          {
+            "criteria": "Assert status code is 200",
+            "met": true,
+            "details": "The test asserts `(response as any).status.should.equal(200, ...)` which verifies the HTTP status code is 200."
+          },
+          {
+            "criteria": "Assert response contains complete patient record including allergies array",
+            "met": true,
+            "details": "The test asserts all patient fields including `id`, `firstName`, `lastName`, `dateOfBirth`, `gender`, and `allergies` (using `.should.deep.equal` for the array comparison), covering the complete patient record."
+          },
+          {
+            "criteria": "Assert emergencyContact nested object is present",
+            "met": true,
+            "details": "The test asserts all three fields of the `emergencyContact` nested object: `name`, `phone`, and `relationship`, confirming the nested object is fully validated."
+          }
+        ],
+        "reasoning": "All five evaluation criteria are fully satisfied. The test file includes a proper setup hook to create a patient, calls the correct GET endpoint with the patient ID, asserts a 200 status code, validates the complete patient record including the allergies array with deep equality, and verifies all fields of the emergencyContact nested object."
+      },
+      "evaluation_criteria": [
+        "Test GET /patients/{patientId} to retrieve a patient",
+        "Include setup hook to create a patient first",
+        "Assert status code is 200",
+        "Assert response contains complete patient record including allergies array",
+        "Assert emergencyContact nested object is present"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_001",
+      "test_case_name": "create_patient",
+      "api_definition_file": "test_001_patients_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\healthcare_first_test_dataset_20260325_121700\\test_001\\src\\tests\\patients\\Post-CreatePatient.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.8333333333333334,
+        "evaluation": [
+          {
+            "criteria": "Test the main positive scenario for POST /patients to create a patient",
+            "met": true,
+            "details": "The test covers the main positive scenario for creating a patient with a descriptive test name '@Smoke - Create patient successfully - 201'."
+          },
+          {
+            "criteria": "Use PatientService.createPatient with PatientModel type",
+            "met": true,
+            "details": "PatientService is instantiated and createPatient is called with a PatientModel typed object."
+          },
+          {
+            "criteria": "Assert status code is 201",
+            "met": false,
+            "details": "There is no assertion on the HTTP status code 201. The test only asserts on response body fields, not on the status code returned by the service."
+          },
+          {
+            "criteria": "Assert response contains firstName, lastName, dateOfBirth using optional chaining",
+            "met": true,
+            "details": "The test asserts response?.firstName, response?.lastName, and response?.dateOfBirth using optional chaining syntax."
+          },
+          {
+            "criteria": "Generate random values for name fields to avoid collisions",
+            "met": true,
+            "details": "Random digits are appended to firstName, lastName, and emergencyContact name using the randomDigits helper function."
+          },
+          {
+            "criteria": "Include emergencyContact nested object with name, phone, relationship",
+            "met": true,
+            "details": "The patient object includes an emergencyContact with name, phone (unique random), and relationship fields, and all three are asserted in the test."
+          }
+        ],
+        "reasoning": "The test meets 5 out of 6 criteria well. The only missing element is an explicit assertion on the HTTP status code 201 \u2014 the test title mentions 201 but no actual status code check is performed in the test body. All other criteria including PatientService usage, optional chaining assertions, random value generation, and emergencyContact nested object are properly implemented."
+      },
+      "evaluation_criteria": [
+        "Test the main positive scenario for POST /patients to create a patient",
+        "Use PatientService.createPatient with PatientModel type",
+        "Assert status code is 201",
+        "Assert response contains firstName, lastName, dateOfBirth using optional chaining",
+        "Generate random values for name fields to avoid collisions",
+        "Include emergencyContact nested object with name, phone, relationship"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_004",
+      "test_case_name": "list_appointments_date_range",
+      "api_definition_file": "test_004_appointments_get_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\healthcare_first_test_dataset_20260325_121700\\test_004\\src\\tests\\appointments\\Get-ListAppointments.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.75,
+        "evaluation": [
+          {
+            "criteria": "Test GET /patients/{patientId}/appointments with date range parameters",
+            "met": true,
+            "details": "The test calls `appointmentService.listAppointments` with a patientId, from, and to parameters, which maps to the GET /patients/{patientId}/appointments endpoint with date range parameters."
+          },
+          {
+            "criteria": "Use from and to query parameters for date filtering",
+            "met": true,
+            "details": "The variables `from = '2024-01-01'` and `to = '2024-12-31'` are defined and passed to `listAppointments`, indicating date range filtering via query parameters."
+          },
+          {
+            "criteria": "Assert status code is 200",
+            "met": false,
+            "details": "There is no assertion on the HTTP status code in the test. The test only asserts on the response body structure, not on the status code being 200."
+          },
+          {
+            "criteria": "Assert response contains appointments array",
+            "met": true,
+            "details": "The test asserts `response?.appointments?.should.be.an('array')`, confirming the response contains an appointments array."
+          }
+        ],
+        "reasoning": "Three out of four criteria are met: the test correctly targets the right endpoint with date range parameters and asserts the appointments array exists. However, there is no explicit assertion on the HTTP status code being 200, which is a required criterion. This results in a score of 0.625."
+      },
+      "evaluation_criteria": [
+        "Test GET /patients/{patientId}/appointments with date range parameters",
+        "Use from and to query parameters for date filtering",
+        "Assert status code is 200",
+        "Assert response contains appointments array"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_005",
+      "test_case_name": "create_patient_with_allergies",
+      "api_definition_file": "test_001_patients_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\healthcare_first_test_dataset_20260325_121700\\test_005\\src\\tests\\patients\\Post-CreatePatient.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.75,
+        "evaluation": [
+          {
+            "criteria": "Test creating a patient with allergies array populated",
+            "met": true,
+            "details": "The patient object includes an allergies array with two entries: ['peanuts', 'latex'], and the test calls patientService.createPatient with this patient data."
+          },
+          {
+            "criteria": "Include at least one allergy string in the allergies array",
+            "met": true,
+            "details": "The allergies array contains two strings: 'peanuts' and 'latex', satisfying the requirement of at least one allergy string."
+          },
+          {
+            "criteria": "Assert response allergies field is an array",
+            "met": false,
+            "details": "The test asserts response?.allergies?.should.deep.equal(patient.allergies), which checks the value but does not explicitly assert that the allergies field is an array (e.g., using should.be.an('array') or Array.isArray())."
+          },
+          {
+            "criteria": "Assert gender uses one of the defined enum values (male, female, other, prefer_not_to_say)",
+            "met": true,
+            "details": "The patient gender is set to 'male', which is one of the defined enum values, and the test asserts response?.gender?.should.equal(patient.gender) confirming the value is preserved."
+          }
+        ],
+        "reasoning": "Three out of four criteria are fully met. The test correctly creates a patient with a populated allergies array containing multiple strings, uses a valid gender enum value ('male'), and asserts it. However, the test does not explicitly assert that the response allergies field is an array type; it only checks deep equality with the expected array, missing an explicit type assertion."
+      },
+      "evaluation_criteria": [
+        "Test creating a patient with allergies array populated",
+        "Include at least one allergy string in the allergies array",
+        "Assert response allergies field is an array",
+        "Assert gender uses one of the defined enum values (male, female, other, prefer_not_to_say)"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_006",
+      "test_case_name": "create_appointment_datetime_handling",
+      "api_definition_file": "test_003_appointments_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\healthcare_first_test_dataset_20260325_121700\\test_006\\src\\tests\\appointments\\Post-CreateAppointment.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.75,
+        "evaluation": [
+          {
+            "criteria": "Test that dateTime field is properly handled as ISO 8601 datetime",
+            "met": true,
+            "details": "The appointment dateTime is constructed using `new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()`, which produces a valid ISO 8601 datetime string and is correctly assigned to the request model."
+          },
+          {
+            "criteria": "Assert response dateTime is a valid datetime string",
+            "met": false,
+            "details": "The test only asserts `response.data?.dateTime.should.equal(appointment.dateTime)`, which checks equality with the request value but does not validate that the response dateTime is itself a valid ISO 8601 datetime string (e.g., using a regex or Date parsing check)."
+          },
+          {
+            "criteria": "Use proper date/time values in the request",
+            "met": true,
+            "details": "The request uses a future datetime (24 hours from now) formatted as an ISO 8601 string via `.toISOString()`, which is a proper and realistic date/time value for an appointment."
+          },
+          {
+            "criteria": "Assert status field is present in response",
+            "met": true,
+            "details": "The test asserts `response.data?.status.should.equal('scheduled')`, which confirms the status field is present and has the expected value in the response."
+          }
+        ],
+        "reasoning": "Three out of four criteria are fully met. The main gap is that the test does not independently validate the response dateTime as a valid ISO 8601 string \u2014 it only checks equality with the sent value, which does not confirm the format of the returned data. The other criteria (proper ISO 8601 construction, use of valid future datetime, and status field assertion) are all satisfied."
+      },
+      "evaluation_criteria": [
+        "Test that dateTime field is properly handled as ISO 8601 datetime",
+        "Assert response dateTime is a valid datetime string",
+        "Use proper date/time values in the request",
+        "Assert status field is present in response"
+      ],
+      "eval_method": null
+    }
+  ]
+}

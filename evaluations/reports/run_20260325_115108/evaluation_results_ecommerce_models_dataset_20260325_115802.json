@@ -1,0 +1,317 @@
+{
+  "dataset_name": "ecommerce_models_dataset",
+  "llm_model": "claude-opus-4-6",
+  "total_test_cases": 7,
+  "graded_count": 7,
+  "not_evaluated_count": 0,
+  "error_count": 0,
+  "total_input_tokens": 33251,
+  "total_output_tokens": 3469,
+  "total_cost": 0.25298000000000004,
+  "average_score": 0.8452380952380951,
+  "generated_files_path": "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731",
+  "results": [
+    {
+      "test_id": "test_002",
+      "test_case_name": "product_list_models",
+      "api_definition_file": "test_002_products_get_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_002\\src\\models\\responses\\ListProductsResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_002\\src\\models\\services\\ProductsServiceV1.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Generate a ProductService with listProducts method accepting query parameters",
+            "met": true,
+            "details": "ProductsServiceV1 class is generated with a listProducts method that accepts URLSearchParams as query parameters, extending ServiceBase with the /v1/products base URL."
+          },
+          {
+            "criteria": "Generate response model with products array, total, page, limit fields",
+            "met": true,
+            "details": "ListProductsResponse interface is defined with all four required fields: products (array), total (number), page (number), and limit (number)."
+          },
+          {
+            "criteria": "Properly type the product items in the array",
+            "met": true,
+            "details": "A separate ProductItem interface is defined with typed fields (id, name, price, category, inStock), and the products field in ListProductsResponse is typed as ProductItem[] | undefined."
+          }
+        ],
+        "reasoning": "All three evaluation criteria are fully satisfied. The service class correctly implements listProducts with URLSearchParams support, the response model includes all required fields, and product items are properly typed with a dedicated ProductItem interface."
+      },
+      "evaluation_criteria": [
+        "Generate a ProductService with listProducts method accepting query parameters",
+        "Generate response model with products array, total, page, limit fields",
+        "Properly type the product items in the array"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_001",
+      "test_case_name": "product_models",
+      "api_definition_file": "test_001_products_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_001\\src\\models\\requests\\CreateProductRequest.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_001\\src\\models\\responses\\CreateProductResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_001\\src\\models\\services\\ProductServiceV1.ts"
+      ],
+      "grade_result": {
+        "score": 0.75,
+        "evaluation": [
+          {
+            "criteria": "Generate a ProductModel interface with name (string), price (number), description (optional string), category (string), inStock (optional boolean), tags (optional string[])",
+            "met": false,
+            "details": "No dedicated ProductModel interface was generated. The CreateProductRequest and CreateProductResponse interfaces exist but make all fields optional (including name, price, and category which should be required). Additionally, there is no interface named 'ProductModel' as specified."
+          },
+          {
+            "criteria": "Generate a ProductService class with createProduct method",
+            "met": true,
+            "details": "ProductServiceV1 class is generated and contains a createProduct method that accepts a CreateProductRequest and returns a Promise<Response<T>>."
+          },
+          {
+            "criteria": "Service method should use proper generic type parameter",
+            "met": true,
+            "details": "The createProduct method uses a generic type parameter <T> and returns Promise<Response<T>>, which is a proper generic type usage."
+          },
+          {
+            "criteria": "All imports should use .js extensions",
+            "met": true,
+            "details": "All imports in ProductServiceV1.ts use .js extensions (ServiceBase.js, CreateProductRequest.js, Response.js)."
+          }
+        ],
+        "reasoning": "Three out of four criteria are met. The main failure is the absence of a dedicated ProductModel interface with the correct required/optional field distinctions (name, price, category required; description, inStock, tags optional). The service class, generic type usage, and .js import extensions are all correctly implemented, resulting in a score of 0.75."
+      },
+      "evaluation_criteria": [
+        "Generate a ProductModel interface with name (string), price (number), description (optional string), category (string), inStock (optional boolean), tags (optional string[])",
+        "Generate a ProductService class with createProduct method",
+        "Service method should use proper generic type parameter",
+        "All imports should use .js extensions"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_004",
+      "test_case_name": "order_get_models",
+      "api_definition_file": "test_004_orders_get_by_id_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_004\\src\\models\\responses\\OrderResponseModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_004\\src\\models\\services\\OrdersServiceV1.ts"
+      ],
+      "grade_result": {
+        "score": 0.6666666666666666,
+        "evaluation": [
+          {
+            "criteria": "Generate OrderService with getOrderById method taking orderId parameter",
+            "met": true,
+            "details": "The OrdersServiceV1 class is generated with a getOrderById method that accepts an orderId parameter, satisfying this criterion."
+          },
+          {
+            "criteria": "Response type should include nested items array and shippingAddress",
+            "met": true,
+            "details": "The OrderResponseModel interface includes both an 'items' array of OrderItemModel and a 'shippingAddress' of type ShippingAddressModel, fully satisfying this criterion."
+          },
+          {
+            "criteria": "Path parameter should be properly typed as string",
+            "met": false,
+            "details": "The orderId parameter in getOrderById is typed as 'unknown' instead of 'string', which does not satisfy the requirement for proper string typing."
+          }
+        ],
+        "reasoning": "Two out of three criteria are fully met: the service class with getOrderById exists and the response model includes the required nested structures. However, the orderId parameter is typed as 'unknown' rather than 'string', which fails the third criterion. This results in a score of approximately 0.67."
+      },
+      "evaluation_criteria": [
+        "Generate OrderService with getOrderById method taking orderId parameter",
+        "Response type should include nested items array and shippingAddress",
+        "Path parameter should be properly typed as string"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_003",
+      "test_case_name": "order_models_nested",
+      "api_definition_file": "test_003_orders_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_003\\src\\models\\requests\\OrderItemModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_003\\src\\models\\requests\\ShippingAddressModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_003\\src\\models\\requests\\CreateOrderRequestModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_003\\src\\models\\responses\\CreateOrderResponseModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_003\\src\\models\\services\\OrdersServiceV1.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Generate OrderModel with nested items array (OrderItemModel type)",
+            "met": true,
+            "details": "CreateOrderRequestModel includes an `items` field typed as `OrderItemModel[] | undefined`, and CreateOrderResponseModel includes an `items` field typed as `CreateOrderResponseItemModel[] | undefined`. Both request and response models properly use nested array types."
+          },
+          {
+            "criteria": "Generate ShippingAddress interface as a nested object type",
+            "met": true,
+            "details": "ShippingAddressModel is defined as a separate interface with street, city, state, zipCode, and country fields, and is referenced as a nested object in CreateOrderRequestModel. A corresponding response variant (CreateOrderResponseShippingAddressModel) is also defined and nested in the response model."
+          },
+          {
+            "criteria": "Generate OrderService with createOrder method",
+            "met": true,
+            "details": "OrdersServiceV1 extends ServiceBase and implements a `createOrder` method that accepts a CreateOrderRequestModel and returns a Promise<Response<T>>, using the base class `post` method."
+          },
+          {
+            "criteria": "Properly type status as enum or string literal union",
+            "met": true,
+            "details": "The `status` field in CreateOrderResponseModel is typed as a string literal union: `\"pending\" | \"confirmed\" | \"shipped\" | \"delivered\" | \"cancelled\" | undefined`, which correctly represents the possible order statuses."
+          },
+          {
+            "criteria": "Handle datetime (createdAt) as string type",
+            "met": true,
+            "details": "The `createdAt` field in CreateOrderResponseModel is typed as `string | undefined`, correctly representing datetime values as strings."
+          }
+        ],
+        "reasoning": "All five evaluation criteria are fully satisfied. The generated code includes properly structured models with nested arrays and objects, a string literal union for status, datetime as string, and a service class with the required createOrder method. The score is 1.0."
+      },
+      "evaluation_criteria": [
+        "Generate OrderModel with nested items array (OrderItemModel type)",
+        "Generate ShippingAddress interface as a nested object type",
+        "Generate OrderService with createOrder method",
+        "Properly type status as enum or string literal union",
+        "Handle datetime (createdAt) as string type"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_006",
+      "test_case_name": "search_models",
+      "api_definition_file": "test_006_products_search_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_006\\src\\models\\responses\\SearchProductsResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_006\\src\\models\\services\\ProductsSearchServiceV1.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Generate ProductService with searchProducts method",
+            "met": true,
+            "details": "The file ProductsSearchServiceV1.ts defines a class extending ServiceBase with a searchProducts method implemented correctly."
+          },
+          {
+            "criteria": "Method should accept query string and optional sort parameter",
+            "met": true,
+            "details": "The searchProducts method accepts a required 'q' parameter and an optional 'sort' parameter, both appended to URLSearchParams when present."
+          },
+          {
+            "criteria": "Response model should include results array, total, and query fields",
+            "met": true,
+            "details": "SearchProductsResponse interface includes 'results' (array of SearchProductResult), 'total' (number), and 'query' (string) fields as required."
+          }
+        ],
+        "reasoning": "All three evaluation criteria are fully satisfied: a ProductService class with a searchProducts method is generated, the method correctly handles a required query string and optional sort parameter, and the response model includes all required fields (results array, total, and query)."
+      },
+      "evaluation_criteria": [
+        "Generate ProductService with searchProducts method",
+        "Method should accept query string and optional sort parameter",
+        "Response model should include results array, total, and query fields"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_007",
+      "test_case_name": "product_array_boolean_types",
+      "api_definition_file": "test_001_products_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_007\\src\\models\\requests\\CreateProductRequest.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_007\\src\\models\\responses\\CreateProductResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_007\\src\\models\\services\\ProductsServiceV1.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "tags field should be typed as string[] or Array<string>",
+            "met": true,
+            "details": "The tags field is typed as string[] | undefined in both CreateProductRequest and CreateProductResponse interfaces."
+          },
+          {
+            "criteria": "inStock field should be typed as boolean",
+            "met": true,
+            "details": "The inStock field is typed as boolean | undefined in both CreateProductRequest and CreateProductResponse interfaces."
+          },
+          {
+            "criteria": "price field should be typed as number",
+            "met": true,
+            "details": "The price field is typed as number | undefined in both CreateProductRequest and CreateProductResponse interfaces."
+          },
+          {
+            "criteria": "Optional fields should use ? syntax or be marked as optional",
+            "met": true,
+            "details": "All fields in both interfaces use the ? optional syntax (e.g., name?, price?, description?, etc.), correctly marking them as optional."
+          }
+        ],
+        "reasoning": "All four evaluation criteria are fully satisfied. The tags field uses string[], inStock uses boolean, price uses number, and all fields are marked optional using the ? syntax. The score is 1.0."
+      },
+      "evaluation_criteria": [
+        "tags field should be typed as string[] or Array<string>",
+        "inStock field should be typed as boolean",
+        "price field should be typed as number",
+        "Optional fields should use ? syntax or be marked as optional"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_005",
+      "test_case_name": "payment_models_nested_resource",
+      "api_definition_file": "test_005_payments_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_005\\src\\models\\requests\\CreatePaymentRequest.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_005\\src\\models\\responses\\CreatePaymentResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\ecommerce_models_dataset_20260325_115731\\test_005\\src\\models\\services\\OrderPaymentServiceV1.ts"
+      ],
+      "grade_result": {
+        "score": 0.5,
+        "evaluation": [
+          {
+            "criteria": "Generate PaymentModel with amount (number), currency (enum), method (enum)",
+            "met": false,
+            "details": "The CreatePaymentRequest and CreatePaymentResponse use plain string types for currency and method instead of proper TypeScript enums. No enum types (e.g., Currency, PaymentMethod) are defined anywhere in the generated files."
+          },
+          {
+            "criteria": "Generate PaymentService with createPayment method taking orderId and payment",
+            "met": true,
+            "details": "OrderPaymentServiceV1 extends ServiceBase and implements a createPayment method that accepts orderId and payment (CreatePaymentRequest) parameters."
+          },
+          {
+            "criteria": "Enum values should be properly typed (USD/EUR/GBP for currency)",
+            "met": false,
+            "details": "No enum is defined for currency. The currency field is typed as string | undefined, with no USD/EUR/GBP values specified anywhere in the codebase."
+          },
+          {
+            "criteria": "Service method path should include /orders/{orderId}/payments",
+            "met": true,
+            "details": "The createPayment method constructs the URL as `${this.url}/${orderId}/payments`, and the base URL is set to '/v1/orders', resulting in a path of /v1/orders/{orderId}/payments which includes /orders/{orderId}/payments."
+          }
+        ],
+        "reasoning": "Two of the four criteria are met: the service class with createPayment method is properly implemented, and the URL path correctly includes /orders/{orderId}/payments. However, the two criteria related to enums are not met \u2014 currency and method fields are typed as plain strings rather than TypeScript enums with specific values (USD/EUR/GBP for currency), which is a significant gap in the implementation."
+      },
+      "evaluation_criteria": [
+        "Generate PaymentModel with amount (number), currency (enum), method (enum)",
+        "Generate PaymentService with createPayment method taking orderId and payment",
+        "Enum values should be properly typed (USD/EUR/GBP for currency)",
+        "Service method path should include /orders/{orderId}/payments"
+      ],
+      "eval_method": null
+    }
+  ]
+}

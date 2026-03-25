@@ -1,0 +1,377 @@
+{
+  "dataset_name": "hallucination_detection_dataset",
+  "llm_model": "claude-sonnet-4-6",
+  "total_test_cases": 8,
+  "graded_count": 8,
+  "not_evaluated_count": 0,
+  "error_count": 0,
+  "total_input_tokens": 40967,
+  "total_output_tokens": 3882,
+  "total_cost": 0.181131,
+  "average_score": 1.0,
+  "generated_files_path": "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600",
+  "results": [
+    {
+      "test_id": "test_002",
+      "test_case_name": "no_request_body_api",
+      "api_definition_file": "test_002_products_get_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_002\\src\\models\\responses\\ProductsResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_002\\src\\tests\\products\\Get-ListProducts.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should not use POST/PUT/PATCH methods for a GET endpoint",
+            "met": true,
+            "details": "Regex pattern '\\.(post|put|patch)\\s*[<(]' correctly not found in generated code"
+          },
+          {
+            "criteria": "Should not create a request body/payload for a GET endpoint that has no requestBody",
+            "met": true,
+            "details": "The test file calls `productService.listProducts()` with no request body or payload passed as arguments, which is correct for a GET endpoint."
+          },
+          {
+            "criteria": "Should focus on query parameters and response validation only",
+            "met": true,
+            "details": "The test validates the response status (200) and the structure of the response data (products array), focusing solely on response validation. No unnecessary body construction is present."
+          }
+        ],
+        "reasoning": "Hybrid evaluation: 3/3 criteria met (1 rule-based, 2 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "Should not create a request body/payload for a GET endpoint that has no requestBody",
+        "Should focus on query parameters and response validation only"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_001",
+      "test_case_name": "minimal_api_single_field",
+      "api_definition_file": "test_001_items_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_001\\src\\models\\requests\\ItemRequestModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_001\\src\\models\\responses\\ItemResponseModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_001\\src\\tests\\items\\Post-CreateItem.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should not reference 'description' field not in schema",
+            "met": true,
+            "details": "Pattern 'description' correctly absent from generated code"
+          },
+          {
+            "criteria": "Should not reference 'price' field not in schema",
+            "met": true,
+            "details": "Pattern 'price' correctly absent from generated code"
+          },
+          {
+            "criteria": "Should not reference 'category' field not in schema",
+            "met": true,
+            "details": "Pattern 'category' correctly absent from generated code"
+          },
+          {
+            "criteria": "Generated test should only assert on fields defined in the API spec (id, name)",
+            "met": true,
+            "details": "The test only asserts on 'id' and 'name' fields, which are both defined in the ItemResponseModel interface and the API spec."
+          },
+          {
+            "criteria": "Should not assert on fields not in the schema like description, price, category",
+            "met": true,
+            "details": "The test contains no assertions on fields like description, price, or category. Only 'id' and 'name' are checked."
+          }
+        ],
+        "reasoning": "Hybrid evaluation: 5/5 criteria met (3 rule-based, 2 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "Generated test should only assert on fields defined in the API spec (id, name)",
+        "Should not assert on fields not in the schema like description, price, category"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_003",
+      "test_case_name": "limited_methods_service",
+      "api_definition_file": "test_003_records_get_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_003\\src\\models\\responses\\RecordsResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_003\\src\\tests\\records\\Get-GetRecords.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should not call non-existent createRecord method",
+            "met": true,
+            "details": "Pattern 'createRecord' correctly absent from generated code"
+          },
+          {
+            "criteria": "Should not call non-existent deleteRecord method",
+            "met": true,
+            "details": "Pattern 'deleteRecord' correctly absent from generated code"
+          },
+          {
+            "criteria": "Should not call non-existent updateRecord method",
+            "met": true,
+            "details": "Pattern 'updateRecord' correctly absent from generated code"
+          },
+          {
+            "criteria": "Should only use methods defined in RecordService (getRecords)",
+            "met": true,
+            "details": "The test file only calls `recordService.getRecords()`, which is the defined method in RecordService. No other service methods are invoked anywhere in the test."
+          },
+          {
+            "criteria": "Should not call non-existent methods like createRecord, deleteRecord, updateRecord in setup/teardown",
+            "met": true,
+            "details": "There are no beforeEach, afterEach, before, or after hooks in the test file, and no calls to createRecord, deleteRecord, or updateRecord anywhere in the code."
+          }
+        ],
+        "reasoning": "Hybrid evaluation: 5/5 criteria met (3 rule-based, 2 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "Should only use methods defined in RecordService (getRecords)",
+        "Should not call non-existent methods like createRecord, deleteRecord, updateRecord in setup/teardown"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_004",
+      "test_case_name": "exact_schema_properties",
+      "api_definition_file": "test_004_books_get_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_004\\src\\models\\services\\BookService.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_004\\src\\models\\responses\\BookResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_004\\src\\models\\requests\\CreateBookRequest.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_004\\src\\tests\\books\\Get-GetBookById.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should not assert on fabricated 'isbn' field",
+            "met": true,
+            "details": "Pattern '.isbn' correctly absent from generated code"
+          },
+          {
+            "criteria": "Should not assert on fabricated 'publisher' field",
+            "met": true,
+            "details": "Pattern '.publisher' correctly absent from generated code"
+          },
+          {
+            "criteria": "Should not assert on fabricated 'pages' field",
+            "met": true,
+            "details": "Pattern '.pages' correctly absent from generated code"
+          },
+          {
+            "criteria": "Should not assert on fabricated 'genre' field",
+            "met": true,
+            "details": "Pattern '.genre' correctly absent from generated code"
+          },
+          {
+            "criteria": "Should only assert on fields defined in the schema: id, title, author",
+            "met": true,
+            "details": "The test file only asserts on `id`, `title`, and `author` fields, which are all defined in the BookResponse schema. No other fields are asserted upon."
+          },
+          {
+            "criteria": "Should not fabricate additional fields like isbn, publisher, year, pages, genre",
+            "met": true,
+            "details": "None of the generated files (service, response model, request model, or test) include or reference fabricated fields such as isbn, publisher, year, pages, or genre."
+          }
+        ],
+        "reasoning": "Hybrid evaluation: 6/6 criteria met (4 rule-based, 2 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "Should only assert on fields defined in the schema: id, title, author",
+        "Should not fabricate additional fields like isbn, publisher, year, pages, genre"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_005",
+      "test_case_name": "enum_constrained_values",
+      "api_definition_file": "test_005_statuses_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_005\\src\\models\\requests\\StatusRequestModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_005\\src\\models\\responses\\StatusResponseModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_005\\src\\tests\\statuses\\Post-CreateStatus.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should not use undefined enum value 'completed'",
+            "met": true,
+            "details": "Pattern 'completed' correctly absent from generated code"
+          },
+          {
+            "criteria": "Should not use undefined enum value 'cancelled'",
+            "met": true,
+            "details": "Pattern 'cancelled' correctly absent from generated code"
+          },
+          {
+            "criteria": "Should not use undefined enum value 'deleted'",
+            "met": true,
+            "details": "Pattern 'deleted' correctly absent from generated code"
+          },
+          {
+            "criteria": "Should not use undefined enum value 'archived'",
+            "met": true,
+            "details": "Pattern 'archived' correctly absent from generated code"
+          },
+          {
+            "criteria": "Should only use defined enum values for status field: 'active', 'inactive', 'pending'",
+            "met": true,
+            "details": "All files consistently use only the defined enum values 'active', 'inactive', and 'pending' for the status field. The StatusRequestModel, StatusResponseModel, and the test file all reference only these valid values."
+          },
+          {
+            "criteria": "Should not use undefined status values like 'completed', 'cancelled', 'deleted', 'archived'",
+            "met": true,
+            "details": "None of the generated files contain any undefined status values such as 'completed', 'cancelled', 'deleted', or 'archived'. The test uses 'active' which is a valid defined value."
+          }
+        ],
+        "reasoning": "Hybrid evaluation: 6/6 criteria met (4 rule-based, 2 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "Should only use defined enum values for status field: 'active', 'inactive', 'pending'",
+        "Should not use undefined status values like 'completed', 'cancelled', 'deleted', 'archived'"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_006",
+      "test_case_name": "no_auth_in_spec",
+      "api_definition_file": "test_006_health_get_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_006\\src\\models\\responses\\HealthResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_006\\src\\tests\\health\\Get-GetHealth.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should not include Bearer token setup",
+            "met": true,
+            "details": "Pattern 'Bearer' correctly absent from generated code"
+          },
+          {
+            "criteria": "Should not include Authorization header setup",
+            "met": true,
+            "details": "Pattern 'Authorization' correctly absent from generated code"
+          },
+          {
+            "criteria": "Should not include API key setup",
+            "met": true,
+            "details": "Regex pattern 'api[_-]?key' correctly not found in generated code"
+          },
+          {
+            "criteria": "Should not generate authentication/authorization setup code when spec has no security schemes",
+            "met": true,
+            "details": "Neither the HealthResponse model nor the test spec file contains any authentication or authorization setup code. The code is clean and focused solely on the health endpoint functionality."
+          },
+          {
+            "criteria": "Should not include bearer token, API key, or basic auth setup",
+            "met": true,
+            "details": "There is no bearer token, API key, or basic auth configuration present in any of the generated files. The HealthService is instantiated without any authentication parameters."
+          }
+        ],
+        "reasoning": "Hybrid evaluation: 5/5 criteria met (3 rule-based, 2 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "Should not generate authentication/authorization setup code when spec has no security schemes",
+        "Should not include bearer token, API key, or basic auth setup"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_007",
+      "test_case_name": "readonly_fields_not_in_request",
+      "api_definition_file": "test_007_orders_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_007\\src\\models\\requests\\OrderRequestModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_007\\src\\models\\responses\\OrderResponseModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_007\\src\\tests\\orders\\Post-CreateOrder.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should not include 'id' field in request payload object",
+            "met": true,
+            "details": "Regex pattern '(?:const|let|var)\\s+\\w*(?:order|body|payload|request|data)\\b[^;]*\\bid\\s*:' correctly not found in generated code"
+          },
+          {
+            "criteria": "Should not include readOnly fields (id, createdAt, updatedAt) in the request payload",
+            "met": true,
+            "details": "The OrderRequestModel interface only contains 'productName' and 'quantity' fields, with no readOnly fields (id, createdAt, updatedAt) included."
+          },
+          {
+            "criteria": "ReadOnly fields should only appear in response assertions, not in the request body sent to the API",
+            "met": true,
+            "details": "The readOnly fields (id, createdAt, updatedAt) appear only in the OrderResponseModel and are only referenced in the response assertions (response.data?.id, response.data?.createdAt, response.data?.updatedAt), not in the orderRequest object sent to the API."
+          }
+        ],
+        "reasoning": "Hybrid evaluation: 3/3 criteria met (1 rule-based, 2 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "Should not include readOnly fields (id, createdAt, updatedAt) in the request payload",
+        "ReadOnly fields should only appear in response assertions, not in the request body sent to the API"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_008",
+      "test_case_name": "only_documented_status_codes",
+      "api_definition_file": "test_008_widgets_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_008\\src\\models\\requests\\WidgetRequestModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_008\\src\\models\\responses\\WidgetResponseModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\hallucination_detection_dataset_20260325_121600\\test_008\\src\\tests\\widgets\\Post-CreateWidget.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should assert on the documented 201 status code",
+            "met": true,
+            "details": "Pattern '201' found in generated code"
+          },
+          {
+            "criteria": "Should only assert on documented response status code (201)",
+            "met": true,
+            "details": "The test only asserts on status code 201 using `response.status.should.equal(201, ...)`, which matches the documented response status code for widget creation."
+          },
+          {
+            "criteria": "Should not assert on undocumented status codes like 200, 400, 404, 500 in the main test",
+            "met": true,
+            "details": "The test does not contain any assertions on status codes 200, 400, 404, or 500. Only the documented 201 status code is checked."
+          }
+        ],
+        "reasoning": "Hybrid evaluation: 3/3 criteria met (1 rule-based, 2 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "Should only assert on documented response status code (201)",
+        "Should not assert on undocumented status codes like 200, 400, 404, 500 in the main test"
+      ],
+      "eval_method": "hybrid"
+    }
+  ]
+}

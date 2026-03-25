@@ -1,0 +1,244 @@
+{
+  "dataset_name": "architectural_compliance_dataset",
+  "llm_model": "claude-opus-4-6",
+  "total_test_cases": 8,
+  "graded_count": 8,
+  "not_evaluated_count": 0,
+  "error_count": 0,
+  "total_input_tokens": 41316,
+  "total_output_tokens": 3820,
+  "total_cost": 0.30208,
+  "average_score": 0.8125,
+  "generated_files_path": "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130",
+  "results": [
+    {
+      "test_id": "test_001",
+      "test_case_name": "file_path_conventions",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_001\\src\\models\\responses\\UserResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_001\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.0,
+        "evaluation": [
+          {
+            "criteria": "Generated test file should have .spec.ts extension",
+            "met": false,
+            "details": "Regex pattern '\\.spec\\.ts' did not match in generated code"
+          },
+          {
+            "criteria": "File name should start with a verb prefix",
+            "met": false,
+            "details": "Regex pattern '(Post|Get|Put|Patch|Delete|Create|Update|List|Remove)-' did not match in generated code"
+          }
+        ],
+        "reasoning": "Rule-based architectural compliance: 0/2 checks passed. Score: 0.00"
+      },
+      "evaluation_criteria": [],
+      "eval_method": "rule_based"
+    },
+    {
+      "test_id": "test_004",
+      "test_case_name": "typescript_quality",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_004\\src\\models\\responses\\UserResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_004\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should NOT use TypeScript 'any' type",
+            "met": true,
+            "details": "Regex pattern ':\\s*any\\b' correctly not found in generated code"
+          },
+          {
+            "criteria": "Tests should be async",
+            "met": true,
+            "details": "Regex pattern 'async\\s+' matched in generated code"
+          },
+          {
+            "criteria": "Should NOT use var (use const or let instead)",
+            "met": true,
+            "details": "Regex pattern '\\bvar\\b' correctly not found in generated code"
+          }
+        ],
+        "reasoning": "Rule-based architectural compliance: 3/3 checks passed. Score: 1.00"
+      },
+      "evaluation_criteria": [],
+      "eval_method": "rule_based"
+    },
+    {
+      "test_id": "test_002",
+      "test_case_name": "import_conventions",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_002\\src\\models\\responses\\UserResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_002\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.5,
+        "evaluation": [
+          {
+            "criteria": "Imports should use .js extensions",
+            "met": true,
+            "details": "Regex pattern 'from\\s+['\"]\\S+\\.js['\"]' matched in generated code"
+          },
+          {
+            "criteria": "Should not directly import Response type (use generic type parameter instead)",
+            "met": false,
+            "details": "Regex pattern 'import.*Response.*from' was found in generated code (should not match)"
+          }
+        ],
+        "reasoning": "Rule-based architectural compliance: 1/2 checks passed. Score: 0.50"
+      },
+      "evaluation_criteria": [],
+      "eval_method": "rule_based"
+    },
+    {
+      "test_id": "test_003",
+      "test_case_name": "framework_patterns",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_003\\src\\models\\responses\\UserResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_003\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should use Mocha describe() blocks",
+            "met": true,
+            "details": "Pattern 'describe(' found in generated code"
+          },
+          {
+            "criteria": "Should use Mocha it() blocks",
+            "met": true,
+            "details": "Pattern 'it(' found in generated code"
+          },
+          {
+            "criteria": "Should use Chai should-style assertions",
+            "met": true,
+            "details": "Pattern '.should.' found in generated code"
+          },
+          {
+            "criteria": "Should NOT use expect() style assertions (use .should. instead)",
+            "met": true,
+            "details": "Pattern 'expect(' correctly absent from generated code"
+          }
+        ],
+        "reasoning": "Rule-based architectural compliance: 4/4 checks passed. Score: 1.00"
+      },
+      "evaluation_criteria": [],
+      "eval_method": "rule_based"
+    },
+    {
+      "test_id": "test_006",
+      "test_case_name": "service_method_generics",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_006\\src\\models\\responses\\UserResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_006\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Service method calls should use generic type parameter (e.g., service.createUser<UserModel>())",
+            "met": true,
+            "details": "Regex pattern '\\w+Service\\.\\w+<\\w+>' matched in generated code"
+          }
+        ],
+        "reasoning": "Rule-based architectural compliance: 1/1 checks passed. Score: 1.00"
+      },
+      "evaluation_criteria": [],
+      "eval_method": "rule_based"
+    },
+    {
+      "test_id": "test_007",
+      "test_case_name": "test_isolation",
+      "api_definition_file": "test_003_users_delete_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_007\\src\\models\\responses\\UserResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_007\\src\\tests\\users\\Delete-DeleteUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should have setup hooks for tests that need preconditions",
+            "met": true,
+            "details": "Regex pattern 'before\\(|beforeEach\\(' matched in generated code"
+          }
+        ],
+        "reasoning": "Rule-based architectural compliance: 1/1 checks passed. Score: 1.00"
+      },
+      "evaluation_criteria": [],
+      "eval_method": "rule_based"
+    },
+    {
+      "test_id": "test_005",
+      "test_case_name": "optional_chaining",
+      "api_definition_file": "test_002_users_get_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_005\\src\\models\\responses\\UserResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_005\\src\\models\\services\\UserService.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_005\\src\\models\\requests\\CreateUserRequest.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_005\\src\\tests\\users\\Get-GetUserById.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should use optional chaining for response.data access (response.data?.field)",
+            "met": true,
+            "details": "Regex pattern 'response\\.data\\?\\.' matched in generated code"
+          }
+        ],
+        "reasoning": "Rule-based architectural compliance: 1/1 checks passed. Score: 1.00"
+      },
+      "evaluation_criteria": [],
+      "eval_method": "rule_based"
+    },
+    {
+      "test_id": "test_008",
+      "test_case_name": "no_hardcoded_unique_values",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_008\\src\\models\\responses\\UserResponse.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20260325_115108\\generated-files\\architectural_compliance_dataset_20260325_115130\\test_008\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should use randomization for unique field values (Math.random, faker, Date.now, etc.)",
+            "met": true,
+            "details": "Regex pattern 'Math\\.random|faker|Date\\.now|uuid|crypto\\.random|`[^`]*\\$\\{' matched in generated code"
+          }
+        ],
+        "reasoning": "Rule-based architectural compliance: 1/1 checks passed. Score: 1.00"
+      },
+      "evaluation_criteria": [],
+      "eval_method": "rule_based"
+    }
+  ]
+}
