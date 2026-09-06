@@ -9,7 +9,7 @@ This workflow guides you through adding support for a new LLM model to the API A
 
 ## Prerequisites
 
-- Model name and identifier (e.g., `gpt-5.2`, `claude-sonnet-4-5`)
+- Model name and identifier (e.g., `gpt-5.6-sol`, `claude-sonnet-5`)
 - Model pricing information (input and output cost per million tokens)
 - Provider information (OpenAI, Anthropic, Google, or AWS Bedrock)
 - GitHub CLI (`gh`) must be installed and authenticated
@@ -25,7 +25,7 @@ This workflow guides you through adding support for a new LLM model to the API A
    git push -u origin add-model-<model_name>
    ```
    
-   Replace `<model_name>` with a short identifier (e.g., `gpt-5-2`, `claude-opus-4-5`).
+   Replace `<model_name>` with a short identifier (e.g., `gpt-5-6-sol`, `claude-opus-5`).
 
 2. **Add the model to the Model enum**
    
@@ -110,7 +110,7 @@ This workflow guides you through adding support for a new LLM model to the API A
     git push
     ```
     
-    Replace `<model_name>` with the model identifier (e.g., `gpt-5.2`, `claude-sonnet-4-5`).
+    Replace `<model_name>` with the model identifier (e.g., `gpt-5.6-sol`, `claude-sonnet-5`).
 
 // turbo
 13. **Create a Pull Request**
@@ -165,7 +165,7 @@ Before completing, verify:
 
 ## Notes
 
-- Model enum names use uppercase with underscores (e.g., `GPT_5_2`, `CLAUDE_SONNET_4_5`)
+- Model enum names use uppercase with underscores (e.g., `GPT_5_6_SOL`, `CLAUDE_SONNET_5`)
 - Bedrock model IDs follow provider prefixes: `openai.`, `anthropic.`, `google.`
 - Always verify pricing information from the official provider documentation
 - The `ModelCost` uses cost per million tokens (not per 1K tokens)

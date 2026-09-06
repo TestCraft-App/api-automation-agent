@@ -18,7 +18,7 @@ def config():
         aws_access_key_id="test-access-key",
         aws_secret_access_key="test-secret-key",
         aws_region="us-west-2",
-        model=Model.CLAUDE_SONNET_4_5,
+        model=Model.CLAUDE_SONNET_5,
         destination_folder="test-folder",
         debug=False,
         langchain_debug=False,
@@ -31,7 +31,16 @@ def grader(config):
     return ModelGrader(config)
 
 
-def test_get_llm_anthropic(grader, monkeypatch):
+@pytest.mark.parametrize(
+    ("anthropic_model", "expected_temperature"),
+    [
+        (Model.CLAUDE_FABLE_5_1, None),
+        (Model.CLAUDE_OPUS_5, None),
+        (Model.CLAUDE_SONNET_5, None),
+        (Model.CLAUDE_HAIKU_4_5, 0),
+    ],
+)
+def test_get_llm_anthropic(grader, monkeypatch, anthropic_model, expected_temperature):
     """Test LLM initialization for Anthropic models."""
     captured = {}
 
@@ -41,11 +50,15 @@ def test_get_llm_anthropic(grader, monkeypatch):
 
     monkeypatch.setattr("langchain_anthropic.ChatAnthropic", FakeChatAnthropic)
 
-    grader.config.model = Model.CLAUDE_SONNET_4_5
+    grader.config.model = anthropic_model
     llm = grader._get_llm()
 
     assert isinstance(llm, FakeChatAnthropic)
-    assert captured["model_name"] == Model.CLAUDE_SONNET_4_5.value
+    assert captured["model_name"] == anthropic_model.value
+    if expected_temperature is None:
+        assert "temperature" not in captured
+    else:
+        assert captured["temperature"] == expected_temperature
 
 
 def test_get_llm_google(grader, monkeypatch):
@@ -82,7 +95,16 @@ def test_get_llm_openai(grader, monkeypatch):
     assert captured["model"] == Model.GPT_5_6_SOL.value
 
 
-def test_get_llm_bedrock_with_credentials(grader, monkeypatch):
+@pytest.mark.parametrize(
+    ("bedrock_model", "expected_temperature"),
+    [
+        (Model.BEDROCK_CLAUDE_FABLE_5_1, None),
+        (Model.BEDROCK_CLAUDE_OPUS_5, None),
+        (Model.BEDROCK_CLAUDE_SONNET_5, None),
+        (Model.BEDROCK_CLAUDE_HAIKU_4_5, 0),
+    ],
+)
+def test_get_llm_bedrock_with_credentials(grader, monkeypatch, bedrock_model, expected_temperature):
     """Test LLM initialization for Bedrock models with explicit credentials."""
     captured = {}
 
@@ -92,7 +114,7 @@ def test_get_llm_bedrock_with_credentials(grader, monkeypatch):
 
     monkeypatch.setattr("langchain_aws.ChatBedrock", FakeChatBedrock)
 
-    grader.config.model = Model.BEDROCK_CLAUDE_SONNET_4_5
+    grader.config.model = bedrock_model
     grader.config.aws_access_key_id = "test-access-key"
     grader.config.aws_secret_access_key = "test-secret-key"
     grader.config.aws_region = "eu-west-1"
@@ -100,10 +122,14 @@ def test_get_llm_bedrock_with_credentials(grader, monkeypatch):
     llm = grader._get_llm()
 
     assert isinstance(llm, FakeChatBedrock)
-    assert captured["model_id"] == Model.BEDROCK_CLAUDE_SONNET_4_5.value
+    assert captured["model_id"] == bedrock_model.value
     assert captured["region_name"] == "eu-west-1"
     assert captured["aws_access_key_id"] == "test-access-key"
     assert captured["aws_secret_access_key"] == "test-secret-key"
+    if expected_temperature is None:
+        assert "temperature" not in captured["model_kwargs"]
+    else:
+        assert captured["model_kwargs"]["temperature"] == expected_temperature
 
 
 def test_get_llm_bedrock_without_credentials(grader, monkeypatch):
@@ -116,7 +142,7 @@ def test_get_llm_bedrock_without_credentials(grader, monkeypatch):
 
     monkeypatch.setattr("langchain_aws.ChatBedrock", FakeChatBedrock)
 
-    grader.config.model = Model.BEDROCK_CLAUDE_SONNET_4_5
+    grader.config.model = Model.BEDROCK_CLAUDE_SONNET_5
     grader.config.aws_access_key_id = ""
     grader.config.aws_secret_access_key = ""
     grader.config.aws_region = "ap-southeast-2"
@@ -124,7 +150,7 @@ def test_get_llm_bedrock_without_credentials(grader, monkeypatch):
     llm = grader._get_llm()
 
     assert isinstance(llm, FakeChatBedrock)
-    assert captured["model_id"] == Model.BEDROCK_CLAUDE_SONNET_4_5.value
+    assert captured["model_id"] == Model.BEDROCK_CLAUDE_SONNET_5.value
     assert captured["region_name"] == "ap-southeast-2"
     assert "aws_access_key_id" not in captured
     assert "aws_secret_access_key" not in captured

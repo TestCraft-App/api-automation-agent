@@ -85,12 +85,10 @@ This project supports Anthropic, OpenAI, Google Generative AI, and AWS Bedrock l
 
 **Anthropic**
 
-- Claude Sonnet 4.6 (claude-sonnet-4-6) - **Default: Best balance of quality and cost**
-- Claude Opus 4.6 (claude-opus-4-6) - **Highest quality for complex tasks**
-- Claude Sonnet 4.5 (claude-sonnet-4-5)
+- Claude Fable 5.1 (claude-fable-5-1) - **Most capable for long-horizon tasks**
+- Claude Opus 5 (claude-opus-5) - **Complex agentic and enterprise workloads**
+- Claude Sonnet 5 (claude-sonnet-5) - **Default: Best balance of quality and cost**
 - Claude Haiku 4.5 (claude-haiku-4-5) - **Fast + low cost**
-- Claude Opus 4.5 (claude-opus-4-5)
-- Claude Sonnet 4 (claude-sonnet-4)
 
 **OpenAI**
 
@@ -108,7 +106,7 @@ This project supports Anthropic, OpenAI, Google Generative AI, and AWS Bedrock l
 
 AWS Bedrock provides access to multiple model families through a unified API. Use the actual Bedrock model IDs:
 
-- Claude models: anthropic.claude-sonnet-4-6-v1:0, anthropic.claude-opus-4-6-v1:0, anthropic.claude-sonnet-4-5-v1:0, anthropic.claude-haiku-4-5-v1:0, anthropic.claude-opus-4-5-v1:0, anthropic.claude-sonnet-4-v1:0
+- Claude models: anthropic.claude-fable-5-1, anthropic.claude-opus-5, anthropic.claude-sonnet-5, anthropic.claude-haiku-4-5-20251001-v1:0
 - OpenAI models: openai.gpt-5.6-sol, openai.gpt-5.6-terra, openai.gpt-5.6-luna
 - Google models: google.gemini-3.1-pro-preview, google.gemini-3-flash, google.gemini-3-pro-preview
 
@@ -121,13 +119,13 @@ aws configure
 # Enter your AWS Access Key, Secret Key, Region, and Output format
 
 # Then in your .env file:
-MODEL=anthropic.claude-sonnet-4-5-v1:0
+MODEL=anthropic.claude-sonnet-5
 AWS_REGION=us-east-1
 ```
 
 *Option 2: Environment Variables*
 ```env
-MODEL=anthropic.claude-sonnet-4-5-v1:0
+MODEL=anthropic.claude-sonnet-5
 AWS_ACCESS_KEY_ID=your_access_key_id
 AWS_SECRET_ACCESS_KEY=your_secret_access_key
 AWS_REGION=us-east-1

@@ -20,29 +20,21 @@ class Model(Enum):
         "gpt-5.6-luna",
         ModelCost(input_cost_per_million_tokens=0.2, output_cost_per_million_tokens=1.2),
     )
-    CLAUDE_SONNET_4 = (
-        "claude-sonnet-4",
-        ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
+    CLAUDE_FABLE_5_1 = (
+        "claude-fable-5-1",
+        ModelCost(input_cost_per_million_tokens=10.0, output_cost_per_million_tokens=50.0),
     )
-    CLAUDE_SONNET_4_5 = (
-        "claude-sonnet-4-5",
-        ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
+    CLAUDE_OPUS_5 = (
+        "claude-opus-5",
+        ModelCost(input_cost_per_million_tokens=5.0, output_cost_per_million_tokens=25.0),
+    )
+    CLAUDE_SONNET_5 = (
+        "claude-sonnet-5",
+        ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=10.0),
     )
     CLAUDE_HAIKU_4_5 = (
         "claude-haiku-4-5",
         ModelCost(input_cost_per_million_tokens=1.0, output_cost_per_million_tokens=5.0),
-    )
-    CLAUDE_OPUS_4_5 = (
-        "claude-opus-4-5",
-        ModelCost(input_cost_per_million_tokens=5.0, output_cost_per_million_tokens=25.0),
-    )
-    CLAUDE_SONNET_4_6 = (
-        "claude-sonnet-4-6",
-        ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
-    )
-    CLAUDE_OPUS_4_6 = (
-        "claude-opus-4-6",
-        ModelCost(input_cost_per_million_tokens=5.0, output_cost_per_million_tokens=25.0),
     )
     GEMINI_3_PRO_PREVIEW = (
         "gemini-3-pro-preview",
@@ -56,29 +48,23 @@ class Model(Enum):
         "gemini-3-flash",
         ModelCost(input_cost_per_million_tokens=0.5, output_cost_per_million_tokens=3.0),
     )
-    BEDROCK_CLAUDE_SONNET_4 = (
-        "anthropic.claude-sonnet-4-v1:0",
-        ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
+    # Bedrock pricing can differ from direct Anthropic API pricing. These rates are estimates based
+    # on the corresponding Anthropic base input/output rates, consistent with the existing cost model.
+    BEDROCK_CLAUDE_FABLE_5_1 = (
+        "anthropic.claude-fable-5-1",
+        ModelCost(input_cost_per_million_tokens=10.0, output_cost_per_million_tokens=50.0),
     )
-    BEDROCK_CLAUDE_SONNET_4_5 = (
-        "anthropic.claude-sonnet-4-5-v1:0",
-        ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
+    BEDROCK_CLAUDE_OPUS_5 = (
+        "anthropic.claude-opus-5",
+        ModelCost(input_cost_per_million_tokens=5.0, output_cost_per_million_tokens=25.0),
+    )
+    BEDROCK_CLAUDE_SONNET_5 = (
+        "anthropic.claude-sonnet-5",
+        ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=10.0),
     )
     BEDROCK_CLAUDE_HAIKU_4_5 = (
-        "anthropic.claude-haiku-4-5-v1:0",
+        "anthropic.claude-haiku-4-5-20251001-v1:0",
         ModelCost(input_cost_per_million_tokens=1.0, output_cost_per_million_tokens=5.0),
-    )
-    BEDROCK_CLAUDE_OPUS_4_5 = (
-        "anthropic.claude-opus-4-5-v1:0",
-        ModelCost(input_cost_per_million_tokens=5.0, output_cost_per_million_tokens=25.0),
-    )
-    BEDROCK_CLAUDE_SONNET_4_6 = (
-        "anthropic.claude-sonnet-4-6-v1:0",
-        ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
-    )
-    BEDROCK_CLAUDE_OPUS_4_6 = (
-        "anthropic.claude-opus-4-6-v1:0",
-        ModelCost(input_cost_per_million_tokens=5.0, output_cost_per_million_tokens=25.0),
     )
     # Bedrock pricing can differ from direct OpenAI API pricing. These rates are estimates based on
     # the corresponding OpenAI standard short-context rates, consistent with the existing cost model.
@@ -119,12 +105,21 @@ class Model(Enum):
 
     def is_anthropic(self) -> bool:
         return self in [
-            Model.CLAUDE_SONNET_4,
-            Model.CLAUDE_SONNET_4_5,
+            Model.CLAUDE_FABLE_5_1,
+            Model.CLAUDE_OPUS_5,
+            Model.CLAUDE_SONNET_5,
             Model.CLAUDE_HAIKU_4_5,
-            Model.CLAUDE_OPUS_4_5,
-            Model.CLAUDE_SONNET_4_6,
-            Model.CLAUDE_OPUS_4_6,
+        ]
+
+    def uses_default_anthropic_sampling(self) -> bool:
+        """Whether the model rejects non-default Anthropic sampling parameters."""
+        return self in [
+            Model.CLAUDE_FABLE_5_1,
+            Model.CLAUDE_OPUS_5,
+            Model.CLAUDE_SONNET_5,
+            Model.BEDROCK_CLAUDE_FABLE_5_1,
+            Model.BEDROCK_CLAUDE_OPUS_5,
+            Model.BEDROCK_CLAUDE_SONNET_5,
         ]
 
     def is_google(self) -> bool:
@@ -136,12 +131,10 @@ class Model(Enum):
 
     def is_bedrock(self) -> bool:
         return self in [
-            Model.BEDROCK_CLAUDE_SONNET_4,
-            Model.BEDROCK_CLAUDE_SONNET_4_5,
+            Model.BEDROCK_CLAUDE_FABLE_5_1,
+            Model.BEDROCK_CLAUDE_OPUS_5,
+            Model.BEDROCK_CLAUDE_SONNET_5,
             Model.BEDROCK_CLAUDE_HAIKU_4_5,
-            Model.BEDROCK_CLAUDE_OPUS_4_5,
-            Model.BEDROCK_CLAUDE_SONNET_4_6,
-            Model.BEDROCK_CLAUDE_OPUS_4_6,
             Model.BEDROCK_GPT_5_6_SOL,
             Model.BEDROCK_GPT_5_6_TERRA,
             Model.BEDROCK_GPT_5_6_LUNA,

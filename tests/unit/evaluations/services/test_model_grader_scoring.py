@@ -14,7 +14,7 @@ def config():
         openai_api_key="test-openai-key",
         anthropic_api_key="test-anthropic-key",
         google_api_key="test-google-key",
-        model=Model.CLAUDE_SONNET_4_5,
+        model=Model.CLAUDE_SONNET_5,
         destination_folder="test-folder",
         debug=False,
         langchain_debug=False,
@@ -111,8 +111,8 @@ def test_deterministic_score_none_met(config):
     assert result.score == 0.0
 
 
-def test_temperature_is_zero_anthropic(config, monkeypatch):
-    """Verify temperature=0 is used for Anthropic models."""
+def test_temperature_is_omitted_for_claude_5(config, monkeypatch):
+    """Verify Claude 5 uses Anthropic's required default sampling settings."""
     captured = {}
 
     class FakeChatAnthropic:
@@ -122,10 +122,10 @@ def test_temperature_is_zero_anthropic(config, monkeypatch):
     monkeypatch.setattr("langchain_anthropic.ChatAnthropic", FakeChatAnthropic)
 
     grader = ModelGrader(config)
-    grader.config.model = Model.CLAUDE_SONNET_4_5
+    grader.config.model = Model.CLAUDE_SONNET_5
     grader._get_llm()
 
-    assert captured["temperature"] == 0
+    assert "temperature" not in captured
 
 
 def test_temperature_is_zero_openai(config, monkeypatch):

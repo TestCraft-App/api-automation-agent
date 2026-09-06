@@ -17,7 +17,7 @@ class TestInteractiveSetupIntegration:
 
         self.example_env.write_text(
             """# Example environment configuration
-MODEL=claude-sonnet-4
+MODEL=claude-sonnet-5
 OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
 GOOGLE_API_KEY=
@@ -144,13 +144,13 @@ DEBUG=False
 
         with patch("builtins.print"):
             result = InteractiveSetup.update_env_file(
-                provider, "claude-sonnet-4", {"ANTHROPIC_API_KEY": "sk-ant-key"}
+                provider, "claude-sonnet-5", {"ANTHROPIC_API_KEY": "sk-ant-key"}
             )
 
         assert result is True
         content = self.env_file.read_text()
         assert "ANTHROPIC_API_KEY=sk-ant-key" in content
-        assert "MODEL=claude-sonnet-4" in content
+        assert "MODEL=claude-sonnet-5" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_update_env_file_bedrock_provider(self, mock_get_dir):
@@ -201,7 +201,7 @@ DEBUG=False
         def mock_api_key_input(prompt):
             return "sk-ant-test-key"
 
-        with patch("builtins.input", side_effect=["1", "1"]):
+        with patch("builtins.input", side_effect=["1", ""]):
             with patch("builtins.print"):
                 result = InteractiveSetup.run_interactive_setup(input_func=mock_api_key_input)
 
@@ -210,7 +210,7 @@ DEBUG=False
 
         content = self.env_file.read_text()
         assert "ANTHROPIC_API_KEY=sk-ant-test-key" in content
-        assert "MODEL=claude-sonnet-4-6" in content
+        assert "MODEL=claude-sonnet-5" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_bedrock(self, mock_get_dir):
@@ -236,7 +236,7 @@ DEBUG=False
         assert "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE" in content
         assert "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" in content
         assert "AWS_REGION=us-west-2" in content
-        assert "MODEL=anthropic.claude-sonnet-4-6-v1:0" in content
+        assert "MODEL=anthropic.claude-sonnet-5" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_bedrock_aws_cli(self, mock_get_dir):
@@ -258,7 +258,7 @@ DEBUG=False
         # Should only have region, no access keys
         assert "AWS_REGION=eu-central-1" in content
         assert "AWS_ACCESS_KEY_ID" not in content or "AWS_ACCESS_KEY_ID=" in content
-        assert "MODEL=anthropic.claude-sonnet-4-6-v1:0" in content
+        assert "MODEL=anthropic.claude-sonnet-5" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_invalid_provider_then_valid(self, mock_get_dir):
@@ -320,9 +320,13 @@ class TestInteractiveSetupConfiguration:
 
         assert anthropic_config["name"] == "Anthropic (recommended)"
         assert anthropic_config["env_key"] == "ANTHROPIC_API_KEY"
-        assert len(anthropic_config["models"]) > 0
-        assert anthropic_config["default_model"] in anthropic_config["models"]
-        assert "claude-sonnet-4" in anthropic_config["models"]
+        assert anthropic_config["models"] == [
+            "claude-fable-5-1",
+            "claude-opus-5",
+            "claude-sonnet-5",
+            "claude-haiku-4-5",
+        ]
+        assert anthropic_config["default_model"] == "claude-sonnet-5"
 
     def test_bedrock_provider_configuration(self):
         """Test AWS Bedrock provider configuration."""
@@ -333,9 +337,13 @@ class TestInteractiveSetupConfiguration:
         assert "additional_keys" in bedrock_config
         assert "AWS_SECRET_ACCESS_KEY" in bedrock_config["additional_keys"]
         assert "AWS_REGION" in bedrock_config["additional_keys"]
-        assert len(bedrock_config["models"]) > 0
-        assert bedrock_config["default_model"] in bedrock_config["models"]
-        assert "anthropic.claude-sonnet-4-5-v1:0" in bedrock_config["models"]
+        assert bedrock_config["default_model"] == "anthropic.claude-sonnet-5"
+        assert {model for model in bedrock_config["models"] if model.startswith("anthropic.")} == {
+            "anthropic.claude-fable-5-1",
+            "anthropic.claude-opus-5",
+            "anthropic.claude-sonnet-5",
+            "anthropic.claude-haiku-4-5-20251001-v1:0",
+        }
         assert {model for model in bedrock_config["models"] if model.startswith("openai.")} == {
             "openai.gpt-5.6-sol",
             "openai.gpt-5.6-terra",

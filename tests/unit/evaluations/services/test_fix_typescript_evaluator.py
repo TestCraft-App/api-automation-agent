@@ -26,7 +26,7 @@ def config():
         openai_api_key="test",
         anthropic_api_key="test",
         google_api_key="test",
-        model=Model.CLAUDE_SONNET_4_5,
+        model=Model.CLAUDE_SONNET_5,
         destination_folder="test-folder",
         debug=False,
         langchain_debug=False,

@@ -80,15 +80,17 @@ You must respond with a JSON object in this exact format:
 
         try:
             if self.config.model.is_anthropic():
-                return ChatAnthropic(
-                    model_name=self.config.model.value,
-                    temperature=0,
-                    api_key=pydantic.SecretStr(self.config.anthropic_api_key),
-                    timeout=None,
-                    stop=None,
-                    max_retries=3,
-                    max_tokens_to_sample=8192,
-                )
+                anthropic_kwargs = {
+                    "model_name": self.config.model.value,
+                    "api_key": pydantic.SecretStr(self.config.anthropic_api_key),
+                    "timeout": None,
+                    "stop": None,
+                    "max_retries": 3,
+                    "max_tokens_to_sample": 8192,
+                }
+                if not self.config.model.uses_default_anthropic_sampling():
+                    anthropic_kwargs["temperature"] = 0
+                return ChatAnthropic(**anthropic_kwargs)
             if self.config.model.is_google():
                 return ChatGoogleGenerativeAI(
                     model=self.config.model.value,
@@ -99,9 +101,11 @@ You must respond with a JSON object in this exact format:
             if self.config.model.is_bedrock():
                 bedrock_kwargs = {
                     "model_id": self.config.model.value,
-                    "model_kwargs": {"temperature": 0, "max_tokens": 8192},
+                    "model_kwargs": {"max_tokens": 8192},
                     "region_name": self.config.aws_region or "us-east-1",
                 }
+                if not self.config.model.uses_default_anthropic_sampling():
+                    bedrock_kwargs["model_kwargs"]["temperature"] = 0
 
                 if self.config.aws_access_key_id and self.config.aws_secret_access_key:
                     bedrock_kwargs["aws_access_key_id"] = self.config.aws_access_key_id

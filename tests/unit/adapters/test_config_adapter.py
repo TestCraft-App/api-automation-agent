@@ -17,7 +17,7 @@ class TestBaseConfigAdapter:
     @patch.dict(
         os.environ,
         {
-            "MODEL": "claude-sonnet-4",
+            "MODEL": "claude-sonnet-5",
             "DEBUG": "True",
             "LANGCHAIN_DEBUG": "True",
             "ANTHROPIC_API_KEY": "sk-ant-test-key",
@@ -32,7 +32,7 @@ class TestBaseConfigAdapter:
         config = BaseConfigAdapter.get_base_config(Envs.DEV)
 
         assert config.env == Envs.DEV
-        assert config.model == Model.CLAUDE_SONNET_4
+        assert config.model == Model.CLAUDE_SONNET_5
         assert config.debug is True
         assert config.langchain_debug is True
         assert config.anthropic_api_key == "sk-ant-test-key"
@@ -51,7 +51,7 @@ class TestBaseConfigAdapter:
         config = BaseConfigAdapter.get_base_config(Envs.PROD)
 
         assert config.env == Envs.PROD
-        assert config.model == Model.CLAUDE_SONNET_4_5
+        assert config.model == Model.CLAUDE_SONNET_5
         assert config.debug is False
         assert config.langchain_debug is False
         assert config.anthropic_api_key == ""
@@ -198,7 +198,7 @@ class TestDevConfigAdapter:
 
     @patch("src.adapters.config_adapter.set_debug")
     @patch("src.adapters.config_adapter.load_dotenv")
-    @patch.dict(os.environ, {"MODEL": "claude-sonnet-4-5"}, clear=True)
+    @patch.dict(os.environ, {"MODEL": "claude-sonnet-5"}, clear=True)
     def test_dev_config_adapter_singleton(self, mock_load_dotenv, mock_set_debug):
         """Test that DevConfigAdapter uses singleton provider."""
         adapter = DevConfigAdapter()
@@ -289,7 +289,7 @@ class TestConfigAdapterEdgeCases:
     @patch.dict(
         os.environ,
         {
-            "MODEL": "anthropic.claude-sonnet-4-5-v1:0",
+            "MODEL": "anthropic.claude-sonnet-5",
             "AWS_ACCESS_KEY_ID": "test-access-key-id",
             "AWS_SECRET_ACCESS_KEY": "test-secret-access-key",
             "AWS_REGION": "us-west-2",
@@ -300,7 +300,7 @@ class TestConfigAdapterEdgeCases:
         """Test config loading with AWS Bedrock credentials."""
         config = BaseConfigAdapter.get_base_config(Envs.DEV)
 
-        assert config.model == Model.BEDROCK_CLAUDE_SONNET_4_5
+        assert config.model == Model.BEDROCK_CLAUDE_SONNET_5
         assert config.aws_access_key_id == "test-access-key-id"
         assert config.aws_secret_access_key == "test-secret-access-key"
         assert config.aws_region == "us-west-2"

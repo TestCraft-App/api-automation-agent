@@ -26,6 +26,14 @@ def llm_service(temp_config):
         (Model.GPT_5_6_SOL, 4.0, 20.0),
         (Model.GPT_5_6_TERRA, 2.0, 12.0),
         (Model.GPT_5_6_LUNA, 0.2, 1.2),
+        (Model.CLAUDE_FABLE_5_1, 10.0, 50.0),
+        (Model.CLAUDE_OPUS_5, 5.0, 25.0),
+        (Model.CLAUDE_SONNET_5, 2.0, 10.0),
+        (Model.CLAUDE_HAIKU_4_5, 1.0, 5.0),
+        (Model.BEDROCK_CLAUDE_FABLE_5_1, 10.0, 50.0),
+        (Model.BEDROCK_CLAUDE_OPUS_5, 5.0, 25.0),
+        (Model.BEDROCK_CLAUDE_SONNET_5, 2.0, 10.0),
+        (Model.BEDROCK_CLAUDE_HAIKU_4_5, 1.0, 5.0),
     ],
 )
 def test_calculate_llm_call_cost_returns_expected_value(llm_service, model, input_rate, output_rate):
@@ -292,10 +300,10 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
         # Single tool cases
         (Model.GPT_5_6_LUNA, False, "auto", "openai_no_force_single", lambda: [DummyTool()]),
         (Model.GPT_5_6_LUNA, True, "required", "openai_force_single", lambda: [DummyTool()]),
-        (Model.CLAUDE_SONNET_4, False, "auto", "anthropic_no_force_single", lambda: [DummyTool()]),
-        (Model.CLAUDE_SONNET_4, True, "any", "anthropic_force_single", lambda: [DummyTool()]),
-        (Model.BEDROCK_CLAUDE_SONNET_4_5, False, "auto", "bedrock_no_force_single", lambda: [DummyTool()]),
-        (Model.BEDROCK_CLAUDE_SONNET_4_5, True, "any", "bedrock_force_single", lambda: [DummyTool()]),
+        (Model.CLAUDE_SONNET_5, False, "auto", "anthropic_no_force_single", lambda: [DummyTool()]),
+        (Model.CLAUDE_SONNET_5, True, "any", "anthropic_force_single", lambda: [DummyTool()]),
+        (Model.BEDROCK_CLAUDE_SONNET_5, False, "auto", "bedrock_no_force_single", lambda: [DummyTool()]),
+        (Model.BEDROCK_CLAUDE_SONNET_5, True, "any", "bedrock_force_single", lambda: [DummyTool()]),
         # Multiple tools cases (should behave identically wrt tool_choice)
         (
             Model.GPT_5_6_LUNA,
@@ -305,7 +313,7 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
             lambda: [DummyTool("a"), DummyTool("b")],
         ),
         (
-            Model.CLAUDE_SONNET_4,
+            Model.CLAUDE_SONNET_5,
             True,
             "any",
             "anthropic_force_multi",
@@ -343,7 +351,7 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
         initial_bind_calls = fake_llm.bind_calls
 
     # No-tools scenarios: ensure bind_tools NOT called and chain creation still works.
-    for model_enum in (Model.GPT_5_6_LUNA, Model.CLAUDE_SONNET_4):
+    for model_enum in (Model.GPT_5_6_LUNA, Model.CLAUDE_SONNET_5):
         llm_service.config.model = model_enum
         chain = llm_service.create_ai_chain(
             str(prompt_path), tools=None, must_use_tool=False, language_model=model_enum
@@ -521,24 +529,36 @@ def test_create_ai_chain_tool_call_name_not_found_returns_content(llm_service, m
 # ---------------------- Tests for _select_language_model ---------------------- #
 
 
-def test_select_language_model_returns_anthropic_client_for_anthropic_model(llm_service, monkeypatch):
+@pytest.mark.parametrize(
+    ("anthropic_model", "expected_temperature"),
+    [
+        (Model.CLAUDE_FABLE_5_1, None),
+        (Model.CLAUDE_OPUS_5, None),
+        (Model.CLAUDE_SONNET_5, None),
+        (Model.CLAUDE_HAIKU_4_5, 1),
+    ],
+)
+def test_select_language_model_returns_anthropic_client_for_anthropic_model(
+    llm_service, monkeypatch, anthropic_model, expected_temperature
+):
     captured = {}
 
     class FakeAnthropic:
         def __init__(self, **kwargs):
             captured.update(kwargs)
 
-    from src.configuration.models import Model
-
-    llm_service.config.model = Model.CLAUDE_SONNET_4
+    llm_service.config.model = anthropic_model
 
     monkeypatch.setattr("src.services.llm_service.ChatAnthropic", FakeAnthropic)
 
     result = llm_service._select_language_model()
 
     assert isinstance(result, FakeAnthropic)
-    assert captured["model_name"] == Model.CLAUDE_SONNET_4.value
-    assert captured["temperature"] == 1
+    assert captured["model_name"] == anthropic_model.value
+    if expected_temperature is None:
+        assert "temperature" not in captured
+    else:
+        assert captured["temperature"] == expected_temperature
     assert "api_key" in captured
 
 
@@ -546,16 +566,12 @@ def test_select_language_model_returns_anthropic_client_for_anthropic_model(llm_
     "openai_model",
     [Model.GPT_5_6_SOL, Model.GPT_5_6_TERRA, Model.GPT_5_6_LUNA],
 )
-def test_select_language_model_returns_openai_client_for_openai_model(
-    llm_service, monkeypatch, openai_model
-):
+def test_select_language_model_returns_openai_client_for_openai_model(llm_service, monkeypatch, openai_model):
     captured = {}
 
     class FakeOpenAI:
         def __init__(self, **kwargs):
             captured.update(kwargs)
-
-    from src.configuration.models import Model
 
     llm_service.config.model = openai_model
     monkeypatch.setattr("src.services.llm_service.ChatOpenAI", FakeOpenAI)
@@ -573,7 +589,7 @@ def test_select_language_model_override_updates_config(llm_service, monkeypatch)
 
     from src.configuration.models import Model
 
-    llm_service.config.model = Model.CLAUDE_SONNET_4
+    llm_service.config.model = Model.CLAUDE_SONNET_5
 
     class FakeOpenAI:
         def __init__(self, **kwargs):
@@ -594,7 +610,7 @@ def test_select_language_model_without_override_ignores_language_model_arg(llm_s
 
     from src.configuration.models import Model
 
-    llm_service.config.model = Model.CLAUDE_SONNET_4
+    llm_service.config.model = Model.CLAUDE_SONNET_5
 
     class FakeAnthropic:
         def __init__(self, **kwargs):
@@ -606,9 +622,9 @@ def test_select_language_model_without_override_ignores_language_model_arg(llm_s
 
     assert isinstance(result, FakeAnthropic)
     assert (
-        llm_service.config.model == Model.CLAUDE_SONNET_4
+        llm_service.config.model == Model.CLAUDE_SONNET_5
     ), "Config model should remain unchanged when override=False"
-    assert result.kwargs["model_name"] == Model.CLAUDE_SONNET_4.value
+    assert result.kwargs["model_name"] == Model.CLAUDE_SONNET_5.value
 
 
 def test_select_language_model_propagates_initialization_error(llm_service, monkeypatch):
@@ -627,7 +643,18 @@ def test_select_language_model_propagates_initialization_error(llm_service, monk
         llm_service._select_language_model()
 
 
-def test_select_language_model_returns_bedrock_client_for_bedrock_model(llm_service, monkeypatch):
+@pytest.mark.parametrize(
+    ("bedrock_model", "expected_temperature"),
+    [
+        (Model.BEDROCK_CLAUDE_FABLE_5_1, None),
+        (Model.BEDROCK_CLAUDE_OPUS_5, None),
+        (Model.BEDROCK_CLAUDE_SONNET_5, None),
+        (Model.BEDROCK_CLAUDE_HAIKU_4_5, 1),
+    ],
+)
+def test_select_language_model_returns_bedrock_client_for_bedrock_model(
+    llm_service, monkeypatch, bedrock_model, expected_temperature
+):
     """Test that Bedrock models return ChatBedrockConverse client with correct configuration."""
     captured = {}
 
@@ -635,9 +662,7 @@ def test_select_language_model_returns_bedrock_client_for_bedrock_model(llm_serv
         def __init__(self, **kwargs):
             captured.update(kwargs)
 
-    from src.configuration.models import Model
-
-    llm_service.config.model = Model.BEDROCK_CLAUDE_SONNET_4_5
+    llm_service.config.model = bedrock_model
     llm_service.config.aws_access_key_id = "test-access-key"
     llm_service.config.aws_secret_access_key = "test-secret-key"
     llm_service.config.aws_region = "us-west-2"
@@ -647,11 +672,14 @@ def test_select_language_model_returns_bedrock_client_for_bedrock_model(llm_serv
     result = llm_service._select_language_model()
 
     assert isinstance(result, FakeBedrock)
-    assert captured["model"] == Model.BEDROCK_CLAUDE_SONNET_4_5.value
+    assert captured["model"] == bedrock_model.value
     assert captured["region_name"] == "us-west-2"
     assert captured["aws_access_key_id"].get_secret_value() == "test-access-key"
     assert captured["aws_secret_access_key"].get_secret_value() == "test-secret-key"
-    assert captured["temperature"] == 1
+    if expected_temperature is None:
+        assert "temperature" not in captured
+    else:
+        assert captured["temperature"] == expected_temperature
     assert captured["max_tokens"] == 8192
 
 
@@ -666,8 +694,6 @@ def test_select_language_model_bedrock_gpt_model(llm_service, monkeypatch, bedro
     class FakeBedrock:
         def __init__(self, **kwargs):
             captured.update(kwargs)
-
-    from src.configuration.models import Model
 
     llm_service.config.model = bedrock_model
     llm_service.config.aws_region = "eu-west-1"
@@ -711,7 +737,7 @@ def test_select_language_model_bedrock_without_credentials(llm_service, monkeypa
         def __init__(self, **kwargs):
             captured.update(kwargs)
 
-    llm_service.config.model = Model.BEDROCK_CLAUDE_SONNET_4_5
+    llm_service.config.model = Model.BEDROCK_CLAUDE_SONNET_5
     llm_service.config.aws_region = "eu-west-1"
     llm_service.config.aws_access_key_id = ""  # No credentials provided
     llm_service.config.aws_secret_access_key = ""
@@ -721,7 +747,7 @@ def test_select_language_model_bedrock_without_credentials(llm_service, monkeypa
     result = llm_service._select_language_model()
 
     assert isinstance(result, FakeBedrock)
-    assert captured["model"] == Model.BEDROCK_CLAUDE_SONNET_4_5.value
+    assert captured["model"] == Model.BEDROCK_CLAUDE_SONNET_5.value
     assert captured["region_name"] == "eu-west-1"
     # Verify credentials were NOT passed (will use AWS default credential chain)
     assert "aws_access_key_id" not in captured
@@ -736,7 +762,7 @@ def test_select_language_model_bedrock_default_region(llm_service, monkeypatch):
         def __init__(self, **kwargs):
             captured.update(kwargs)
 
-    llm_service.config.model = Model.BEDROCK_CLAUDE_SONNET_4_5
+    llm_service.config.model = Model.BEDROCK_CLAUDE_SONNET_5
     llm_service.config.aws_region = ""  # No region specified
     llm_service.config.aws_access_key_id = ""
     llm_service.config.aws_secret_access_key = ""
