@@ -113,7 +113,9 @@ def test_create_ai_chain_appends_usage_metadata(llm_service, tmp_path, monkeypat
 
     llm_service.config.model = Model.GPT_5_6_LUNA
 
-    monkeypatch.setattr(LLMService, "_select_language_model", lambda self, language_model=None: fake_llm)
+    monkeypatch.setattr(
+        LLMService, "_select_language_model", lambda self, language_model=None, **_kwargs: fake_llm
+    )
     monkeypatch.setattr(
         ChatPromptTemplate,
         "from_template",
@@ -201,7 +203,9 @@ def test_create_ai_chain_usage_metadata_validation_fallback(llm_service, tmp_pat
 
     llm_service.config.model = Model.GPT_5_6_LUNA
 
-    monkeypatch.setattr(LLMService, "_select_language_model", lambda self, language_model=None: fake_llm)
+    monkeypatch.setattr(
+        LLMService, "_select_language_model", lambda self, language_model=None, **_kwargs: fake_llm
+    )
     monkeypatch.setattr(
         ChatPromptTemplate,
         "from_template",
@@ -293,7 +297,9 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
 
     # Shared fake llm instance reused so we can inspect bound tool choices sequentially.
     fake_llm = FakeLLM()
-    monkeypatch.setattr(LLMService, "_select_language_model", lambda self, language_model=None: fake_llm)
+    monkeypatch.setattr(
+        LLMService, "_select_language_model", lambda self, language_model=None, **_kwargs: fake_llm
+    )
 
     scenarios = [
         # (model_enum, must_use_tool, expected_tool_choice, label, tools_provider)
@@ -433,7 +439,9 @@ def test_create_ai_chain_tool_call_invokes_selected_tool(llm_service, monkeypatc
 
     llm_service.config.model = Model.GPT_5_6_LUNA
 
-    monkeypatch.setattr(LLMService, "_select_language_model", lambda self, language_model=None: fake_llm)
+    monkeypatch.setattr(
+        LLMService, "_select_language_model", lambda self, language_model=None, **_kwargs: fake_llm
+    )
     monkeypatch.setattr(
         ChatPromptTemplate,
         "from_template",
@@ -512,7 +520,9 @@ def test_create_ai_chain_tool_call_name_not_found_returns_content(llm_service, m
 
     llm_service.config.model = Model.GPT_5_6_LUNA
 
-    monkeypatch.setattr(LLMService, "_select_language_model", lambda self, language_model=None: fake_llm)
+    monkeypatch.setattr(
+        LLMService, "_select_language_model", lambda self, language_model=None, **_kwargs: fake_llm
+    )
     monkeypatch.setattr(
         ChatPromptTemplate,
         "from_template",
@@ -582,6 +592,28 @@ def test_select_language_model_returns_openai_client_for_openai_model(llm_servic
     assert captured["model"] == openai_model.value
     assert captured["temperature"] == 1
     assert captured["max_retries"] == 3
+    assert "reasoning_effort" not in captured
+
+
+@pytest.mark.parametrize(
+    "openai_model",
+    [Model.GPT_5_6_SOL, Model.GPT_5_6_TERRA, Model.GPT_5_6_LUNA],
+)
+def test_select_language_model_disables_reasoning_for_openai_function_tools(
+    llm_service, monkeypatch, openai_model
+):
+    captured = {}
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    llm_service.config.model = openai_model
+    monkeypatch.setattr("src.services.llm_service.ChatOpenAI", FakeOpenAI)
+
+    llm_service._select_language_model(use_function_tools=True)
+
+    assert captured["reasoning_effort"] == "none"
 
 
 def test_select_language_model_override_updates_config(llm_service, monkeypatch):
