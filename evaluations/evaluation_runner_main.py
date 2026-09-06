@@ -85,7 +85,7 @@ def _parse_llms(llm_string: str) -> List[Model]:
     Parse a comma-separated string of LLM names into a list of Model enums.
 
     Example:
-        --llms GPT_5_1,CLAUDE_SONNET_4_5
+        --llms GPT_5_6_SOL,CLAUDE_SONNET_4_5
     """
     llm_names = [name.strip() for name in llm_string.split(",") if name.strip()]
     valid_llms: List[Model] = []
@@ -330,7 +330,7 @@ def parse_args() -> argparse.Namespace:
         help=(
             "Optional: Comma-separated list of LLM models to evaluate. "
             f"Choices: {', '.join(_get_llm_choices())}. "
-            "Example: --llms GPT_5_1,CLAUDE_SONNET_4_5"
+            "Example: --llms GPT_5_6_SOL,CLAUDE_SONNET_4_5"
         ),
     )
 

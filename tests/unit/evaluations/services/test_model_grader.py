@@ -75,11 +75,11 @@ def test_get_llm_openai(grader, monkeypatch):
 
     monkeypatch.setattr("langchain_openai.ChatOpenAI", FakeChatOpenAI)
 
-    grader.config.model = Model.GPT_5_1
+    grader.config.model = Model.GPT_5_6_SOL
     llm = grader._get_llm()
 
     assert isinstance(llm, FakeChatOpenAI)
-    assert captured["model"] == Model.GPT_5_1.value
+    assert captured["model"] == Model.GPT_5_6_SOL.value
 
 
 def test_get_llm_bedrock_with_credentials(grader, monkeypatch):
@@ -140,7 +140,7 @@ def test_get_llm_bedrock_default_region(grader, monkeypatch):
 
     monkeypatch.setattr("langchain_aws.ChatBedrock", FakeChatBedrock)
 
-    grader.config.model = Model.BEDROCK_GPT_5_1
+    grader.config.model = Model.BEDROCK_GPT_5_6_SOL
     grader.config.aws_access_key_id = ""
     grader.config.aws_secret_access_key = ""
     grader.config.aws_region = ""

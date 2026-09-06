@@ -103,12 +103,14 @@ LANGCHAIN_DEBUG=False
         provider = InteractiveSetup.SUPPORTED_PROVIDERS["2"]
 
         with patch("builtins.print"):
-            result = InteractiveSetup.update_env_file(provider, "gpt-5-mini", {"OPENAI_API_KEY": "test-key"})
+            result = InteractiveSetup.update_env_file(
+                provider, "gpt-5.6-luna", {"OPENAI_API_KEY": "test-key"}
+            )
 
         assert result is True
         content = self.env_file.read_text()
         assert "OPENAI_API_KEY=test-key" in content
-        assert "MODEL=gpt-5-mini" in content
+        assert "MODEL=gpt-5.6-luna" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_update_env_file_existing_file(self, mock_get_dir):
@@ -125,12 +127,12 @@ DEBUG=False
         provider = InteractiveSetup.SUPPORTED_PROVIDERS["2"]
 
         with patch("builtins.print"):
-            result = InteractiveSetup.update_env_file(provider, "gpt-5-mini", {"OPENAI_API_KEY": "new-key"})
+            result = InteractiveSetup.update_env_file(provider, "gpt-5.6-luna", {"OPENAI_API_KEY": "new-key"})
 
         assert result is True
         content = self.env_file.read_text()
         assert "OPENAI_API_KEY=new-key" in content
-        assert "MODEL=gpt-5-mini" in content
+        assert "MODEL=gpt-5.6-luna" in content
         assert "old-key" not in content
         assert "DEBUG=False" in content
 
@@ -163,14 +165,14 @@ DEBUG=False
         }
 
         with patch("builtins.print"):
-            result = InteractiveSetup.update_env_file(provider, "openai.gpt-5.1", credentials)
+            result = InteractiveSetup.update_env_file(provider, "openai.gpt-5.6-sol", credentials)
 
         assert result is True
         content = self.env_file.read_text()
         assert "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE" in content
         assert "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" in content
         assert "AWS_REGION=eu-west-1" in content
-        assert "MODEL=openai.gpt-5.1" in content
+        assert "MODEL=openai.gpt-5.6-sol" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_openai(self, mock_get_dir):
@@ -189,7 +191,7 @@ DEBUG=False
 
         content = self.env_file.read_text()
         assert "OPENAI_API_KEY=sk-test-openai-key" in content
-        assert "MODEL=gpt-5.4" in content
+        assert "MODEL=gpt-5.6-sol" in content
 
     @patch.object(InteractiveSetup, "get_executable_directory")
     def test_complete_setup_flow_anthropic(self, mock_get_dir):
@@ -309,9 +311,8 @@ class TestInteractiveSetupConfiguration:
 
         assert openai_config["name"] == "OpenAI"
         assert openai_config["env_key"] == "OPENAI_API_KEY"
-        assert len(openai_config["models"]) > 0
-        assert openai_config["default_model"] in openai_config["models"]
-        assert "gpt-5-mini" in openai_config["models"]
+        assert openai_config["models"] == ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"]
+        assert openai_config["default_model"] == "gpt-5.6-sol"
 
     def test_anthropic_provider_configuration(self):
         """Test Anthropic provider configuration."""
@@ -335,7 +336,11 @@ class TestInteractiveSetupConfiguration:
         assert len(bedrock_config["models"]) > 0
         assert bedrock_config["default_model"] in bedrock_config["models"]
         assert "anthropic.claude-sonnet-4-5-v1:0" in bedrock_config["models"]
-        assert "openai.gpt-5.2" in bedrock_config["models"]
+        assert {model for model in bedrock_config["models"] if model.startswith("openai.")} == {
+            "openai.gpt-5.6-sol",
+            "openai.gpt-5.6-terra",
+            "openai.gpt-5.6-luna",
+        }
         assert "google.gemini-3-flash" in bedrock_config["models"]
 
     def test_get_executable_directory_returns_path(self):

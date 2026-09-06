@@ -139,7 +139,7 @@ def test_temperature_is_zero_openai(config, monkeypatch):
     monkeypatch.setattr("langchain_openai.ChatOpenAI", FakeChatOpenAI)
 
     grader = ModelGrader(config)
-    grader.config.model = Model.GPT_5_1
+    grader.config.model = Model.GPT_5_6_SOL
     grader._get_llm()
 
     assert captured["temperature"] == 0

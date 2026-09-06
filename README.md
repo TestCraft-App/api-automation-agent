@@ -94,15 +94,9 @@ This project supports Anthropic, OpenAI, Google Generative AI, and AWS Bedrock l
 
 **OpenAI**
 
-- GPT-5.4 (gpt-5.4) - **Recommended**
-- GPT-5.3 Codex (gpt-5.3-codex) - **Optimized for code**
-- GPT-5.4 Mini (gpt-5.4-mini) - **Fast + low cost**
-- GPT-5.4 Nano (gpt-5.4-nano) - **Cheapest**
-- GPT-5.2 (gpt-5.2)
-- GPT-5.1 (gpt-5.1)
-- GPT-5 (gpt-5)
-- GPT-4.1 (gpt-4.1)
-- GPT-5 Mini (gpt-5-mini)
+- GPT-5.6 Sol (gpt-5.6-sol) - **Recommended: Flagship capability**
+- GPT-5.6 Terra (gpt-5.6-terra) - **Balanced quality and cost**
+- GPT-5.6 Luna (gpt-5.6-luna) - **Efficient, high-volume workloads**
 
 **Google**
 
@@ -115,7 +109,7 @@ This project supports Anthropic, OpenAI, Google Generative AI, and AWS Bedrock l
 AWS Bedrock provides access to multiple model families through a unified API. Use the actual Bedrock model IDs:
 
 - Claude models: anthropic.claude-sonnet-4-6-v1:0, anthropic.claude-opus-4-6-v1:0, anthropic.claude-sonnet-4-5-v1:0, anthropic.claude-haiku-4-5-v1:0, anthropic.claude-opus-4-5-v1:0, anthropic.claude-sonnet-4-v1:0
-- OpenAI models: openai.gpt-5.4, openai.gpt-5.3-codex, openai.gpt-5.4-mini, openai.gpt-5.4-nano, openai.gpt-5.2, openai.gpt-5.1, openai.gpt-5, openai.gpt-4.1, openai.gpt-5-mini
+- OpenAI models: openai.gpt-5.6-sol, openai.gpt-5.6-terra, openai.gpt-5.6-luna
 - Google models: google.gemini-3.1-pro-preview, google.gemini-3-flash, google.gemini-3-pro-preview
 
 **Authentication Options:**
@@ -144,10 +138,11 @@ The agent will automatically use your AWS CLI configuration if credentials are n
 You can configure your preferred model in the `.env` file:
 
 ```env
-MODEL=gpt-5.1
+MODEL=gpt-5.6-sol
 ```
 
 > **Important**: Before using any model, check the current pricing and costs on the respective provider's website (Anthropic, OpenAI, or Google). Model costs can vary significantly and may impact your usage budget.
+> Bedrock cost reporting uses the corresponding direct OpenAI short-context rates as an estimate; AWS pricing may differ by deployment and region.
 
 ## Running the Agent
 

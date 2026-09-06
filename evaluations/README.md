@@ -140,7 +140,7 @@ python evaluations/evaluation_runner_main.py \
 # Multiple LLMs with specific grader
 python evaluations/evaluation_runner_main.py \
   --test-data-folder evaluations/data/generate_first_test_dataset \
-  --llms GPT_5_1,CLAUDE_SONNET_4_6 \
+  --llms GPT_5_6_SOL,CLAUDE_SONNET_4_6 \
   --grader CLAUDE_SONNET_4_6
 ```
 

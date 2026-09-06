@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 ## Project Overview
 
@@ -38,7 +38,7 @@ flake8 .
 python ./main.py <path_or_url_to_openapi_or_postman>
 
 # Run benchmarks
-python benchmarks/benchmark_runner.py --openapi-spec <spec> --llms GPT_5_6_SOL,CLAUDE_SONNET_4_6 --endpoints /users --output-dir ./benchmark_results
+python benchmarks/benchmark_runner.py --openapi-spec <spec> --llms GPT_5_1,CLAUDE_SONNET_4_6 --endpoints /users --output-dir ./benchmark_results
 
 # Run all evaluations
 python evaluations/evaluation_runner_main.py --all --llms CLAUDE_SONNET_4_6 --grader CLAUDE_SONNET_4_6 --output-dir ./eval_results
