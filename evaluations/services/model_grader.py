@@ -122,6 +122,29 @@ You must respond with a JSON object in this exact format:
             self.logger.error(f"Model initialization error: {e}")
             raise
 
+    @staticmethod
+    def _response_text(response: object) -> str:
+        """Extract text from string and structured LangChain responses."""
+        text_method = getattr(response, "text", None)
+        if callable(text_method):
+            text = text_method()
+            if isinstance(text, str):
+                return text
+
+        content = getattr(response, "content", response)
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            text_parts = []
+            for block in content:
+                if isinstance(block, str):
+                    text_parts.append(block)
+                elif isinstance(block, dict) and isinstance(block.get("text"), str):
+                    text_parts.append(block["text"])
+            return "".join(text_parts)
+
+        return str(content)
+
     def grade(self, generated_file_content: str, evaluation_criteria: Sequence[str]) -> ModelGradeResult:
         """
         Grade a generated file against evaluation criteria.
@@ -151,8 +174,7 @@ You must respond with a JSON object in this exact format:
                 }
             )
 
-            content = response.content if hasattr(response, "content") else str(response)
-            content = content.strip()
+            content = self._response_text(response).strip()
 
             if content.startswith("```"):
                 lines = content.split("\n")

@@ -474,15 +474,45 @@ Found a bug or have a suggestion? Please open an issue on GitHub with:
 This project uses strict code formatting rules to maintain consistency:
 
 - [Black](https://black.readthedocs.io/) is used as the Python code formatter
-  - Line length is set to 88 characters
-  - Python 3.7+ compatibility is enforced
+  - Line length is set to 110 characters
+  - Python 3.10 is the formatting target
+- [Flake8](https://flake8.pycqa.org/) is used for linting with the same 110-character line length
 - VS Code is configured for automatic formatting on save
 - Editor settings and recommended extensions are provided in the `.vscode` directory
 
-All Python files will be automatically formatted when you save them in VS Code with the recommended extensions installed. To manually format code, you can run:
+During development, format and lint only the Python files you changed. Run each check separately; `--jobs 1` keeps Flake8 predictable on Windows:
 
 ```bash
-black .
+python -m black path/to/changed_file.py
+python -m black tests/path/to/changed_test.py
+python -m flake8 --jobs 1 path/to/changed_file.py tests/path/to/changed_test.py
+```
+
+For an explicit repository-wide validation, generated frameworks, dependency trees, evaluation output, and benchmark reports are excluded automatically:
+
+```bash
+python -m black --check .
+python -m flake8 --jobs 1 .
+```
+
+## Development Tests
+
+Install development dependencies and run the narrowest relevant test selection first:
+
+```bash
+pip install -r requirements.txt
+pip install -r requirements-test.txt
+
+python -m pytest tests/unit/services/test_file_service.py
+python -m pytest -k "test_file_service"
+python -m pytest tests/unit/
+python -m pytest tests/integration/
+```
+
+Run the full suite with coverage when the change warrants repository-wide verification:
+
+```bash
+python -m pytest --cov=src --cov-report=term --cov-config=.coveragerc
 ```
 
 ## Logging

@@ -6,35 +6,6 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 AI Agent that generates TypeScript test frameworks (Mocha-based) from OpenAPI/Swagger specs or Postman collections. Uses LangChain for multi-provider LLM support (Anthropic, OpenAI, Google, AWS Bedrock). The generated frameworks follow the [api-framework-ts-mocha](https://github.com/damianpereira86/api-framework-ts-mocha) template.
 
-## Common Commands
-
-```bash
-# Install dependencies
-pip install -r requirements.txt
-pip install -r requirements-test.txt
-
-# Run all tests with coverage
-pytest --cov=src --cov-report=term --cov-config=.coveragerc
-
-# Run unit tests only
-pytest tests/unit/
-
-# Run integration tests only
-pytest tests/integration/
-
-# Run a specific test file
-pytest tests/unit/services/test_file_service.py
-
-# Run tests matching a pattern
-pytest -k "test_file_service"
-
-# Format code (line length: 110, target: py310)
-black .
-
-# Lint (max-line-length: 110, ignores E203)
-flake8 .
-```
-
 ## Architecture
 
 ### Dependency Injection
@@ -67,6 +38,14 @@ CI enforces coverage non-regression on PRs via `scripts/coverage_guard.py`.
 
 ## Post-Change Checklist
 
-After modifying code in `src/`:
-1. Run relevant tests — don't skip, fix failures before considering the task complete
-2. Review and update docs if needed: `README.md`, `USAGE-GUIDE.txt`, `benchmarks/README.md`
+Keep verification proportional to the files and behavior changed:
+
+1. Run the smallest relevant test file or test selection first, and fix failures before expanding the test scope.
+2. When Python files change, invoke Black separately for each Python file touched by the current task; multi-file Black runs can stall during worker shutdown on Windows. Then run Flake8 once on that same changed-file set with `--jobs 1`. Do not include unrelated modified files from the shared worktree.
+3. Run broader unit, integration, or coverage suites when the change crosses components or has wider behavioral risk. Changes in `src/` should receive relevant unit coverage at minimum.
+4. Run formatting, linting, and tests as separate commands so a slow or failed step is easy to identify. Skip Python formatting and linting when no Python files changed.
+5. Use repository-wide Black and Flake8 checks only for an explicit full validation or maintenance task. Generated frameworks, dependency trees, evaluation output, and benchmark reports are excluded by tool configuration. In the Windows Codex environment, partition a full Black check into one-file invocations to avoid the worker-shutdown stall.
+6. Review documentation impact, especially `README.md`, `USAGE-GUIDE.txt`, `evaluations/README.md`, and `benchmarks/README.md`, and update only the documents affected by the change.
+7. Inspect the final diff for accidental edits, generated artifacts, and changes belonging to other worktree users before handing off.
+
+Reusable setup and command examples belong in `README.md`; this file defines how to choose and scope those checks.

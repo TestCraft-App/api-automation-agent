@@ -1,7 +1,10 @@
 """Unit tests for ModelGrader service."""
 
+import json
 import pytest
 from unittest.mock import MagicMock
+
+from langchain_core.messages import AIMessage
 
 from evaluations.services.model_grader import ModelGrader
 from src.configuration.config import Config
@@ -185,3 +188,35 @@ def test_get_llm_uses_provided_llm(grader):
     result = grader_with_llm._get_llm()
 
     assert result is mock_llm
+
+
+def test_grade_accepts_structured_message_content(grader, monkeypatch):
+    """Grade list-shaped LangChain content containing text and reasoning blocks."""
+    grade_data = {
+        "score": 0.5,
+        "evaluation": [
+            {"criteria": "Uses Swagger v2 format", "met": True, "details": "The format is correct."}
+        ],
+        "reasoning": "The criterion was met.",
+    }
+    response = AIMessage(
+        content=[
+            {"type": "reasoning", "reasoning": "Internal grader reasoning"},
+            {"type": "text", "text": json.dumps(grade_data)},
+        ]
+    )
+    chain = MagicMock()
+    chain.invoke.return_value = response
+    prompt = MagicMock()
+    prompt.__or__.return_value = chain
+    monkeypatch.setattr(
+        "evaluations.services.model_grader.ChatPromptTemplate.from_template",
+        lambda _template: prompt,
+    )
+
+    result = grader.grade("generated content", ["Uses Swagger v2 format"])
+
+    assert result.score == 1.0
+    assert result.evaluation[0].criteria == "Uses Swagger v2 format"
+    assert result.evaluation[0].met is True
+    assert result.reasoning == "The criterion was met."
