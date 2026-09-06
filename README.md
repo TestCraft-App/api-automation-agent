@@ -488,6 +488,14 @@ python -m black tests/path/to/changed_test.py
 python -m flake8 --jobs 1 path/to/changed_file.py tests/path/to/changed_test.py
 ```
 
+When running Black from multiple Codex tasks or terminals on Windows, assign each task its own cache directory and keep its Black commands sequential. This avoids contention on Black's shared default cache:
+
+```powershell
+$env:BLACK_CACHE_DIR = Join-Path ([System.IO.Path]::GetTempPath()) "api-agent-black-$PID"
+python -m black path/to/changed_file.py
+python -m black tests/path/to/changed_test.py
+```
+
 For an explicit repository-wide validation, generated frameworks, dependency trees, evaluation output, and benchmark reports are excluded automatically:
 
 ```bash

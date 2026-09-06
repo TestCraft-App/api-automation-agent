@@ -111,8 +111,8 @@ class Model(Enum):
             Model.CLAUDE_HAIKU_4_5,
         ]
 
-    def uses_default_anthropic_sampling(self) -> bool:
-        """Whether the model rejects non-default Anthropic sampling parameters."""
+    def uses_default_sampling(self) -> bool:
+        """Whether provider-default sampling parameters must be omitted."""
         return self in [
             Model.CLAUDE_FABLE_5_1,
             Model.CLAUDE_OPUS_5,
@@ -120,6 +120,17 @@ class Model(Enum):
             Model.BEDROCK_CLAUDE_FABLE_5_1,
             Model.BEDROCK_CLAUDE_OPUS_5,
             Model.BEDROCK_CLAUDE_SONNET_5,
+        ]
+
+    def is_gpt_5_6(self) -> bool:
+        """Whether this is a direct or Bedrock GPT-5.6 model."""
+        return self in [
+            Model.GPT_5_6_SOL,
+            Model.GPT_5_6_TERRA,
+            Model.GPT_5_6_LUNA,
+            Model.BEDROCK_GPT_5_6_SOL,
+            Model.BEDROCK_GPT_5_6_TERRA,
+            Model.BEDROCK_GPT_5_6_LUNA,
         ]
 
     def is_google(self) -> bool:

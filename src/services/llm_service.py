@@ -95,7 +95,7 @@ class LLMService:
                     "max_retries": 3,
                     "max_tokens_to_sample": 8192,
                 }
-                if not self.config.model.uses_default_anthropic_sampling():
+                if not self.config.model.uses_default_sampling():
                     anthropic_kwargs["temperature"] = 1
                 return ChatAnthropic(**anthropic_kwargs)
             if self.config.model.is_google():
@@ -111,7 +111,7 @@ class LLMService:
                     "max_tokens": 8192,
                     "region_name": self.config.aws_region or "us-east-1",
                 }
-                if not self.config.model.uses_default_anthropic_sampling():
+                if not self.config.model.uses_default_sampling():
                     bedrock_kwargs["temperature"] = 1
 
                 if self.config.aws_access_key_id and self.config.aws_secret_access_key:
@@ -123,10 +123,11 @@ class LLMService:
                 return ChatBedrockConverse(**bedrock_kwargs)
             openai_kwargs = {
                 "model": self.config.model.value,
-                "temperature": 1,
                 "max_retries": 3,
                 "api_key": pydantic.SecretStr(self.config.openai_api_key),
             }
+            if not self.config.model.uses_default_sampling():
+                openai_kwargs["temperature"] = 1
             if use_function_tools and self.config.model in {
                 Model.GPT_5_6_SOL,
                 Model.GPT_5_6_TERRA,

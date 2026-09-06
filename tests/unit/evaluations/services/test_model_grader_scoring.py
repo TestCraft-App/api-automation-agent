@@ -128,8 +128,12 @@ def test_temperature_is_omitted_for_claude_5(config, monkeypatch):
     assert "temperature" not in captured
 
 
-def test_temperature_is_zero_openai(config, monkeypatch):
-    """Verify temperature=0 is used for OpenAI models."""
+@pytest.mark.parametrize(
+    "openai_model",
+    [Model.GPT_5_6_SOL, Model.GPT_5_6_TERRA, Model.GPT_5_6_LUNA],
+)
+def test_temperature_is_one_for_gpt_5_6(config, monkeypatch, openai_model):
+    """Verify GPT-5.6 receives its required temperature explicitly."""
     captured = {}
 
     class FakeChatOpenAI:
@@ -139,10 +143,10 @@ def test_temperature_is_zero_openai(config, monkeypatch):
     monkeypatch.setattr("langchain_openai.ChatOpenAI", FakeChatOpenAI)
 
     grader = ModelGrader(config)
-    grader.config.model = Model.GPT_5_6_SOL
+    grader.config.model = openai_model
     grader._get_llm()
 
-    assert captured["temperature"] == 0
+    assert captured["temperature"] == 1
 
 
 def test_temperature_is_zero_google(config, monkeypatch):

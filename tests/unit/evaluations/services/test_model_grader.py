@@ -81,7 +81,11 @@ def test_get_llm_google(grader, monkeypatch):
     assert captured["model"] == Model.GEMINI_3_PRO_PREVIEW.value
 
 
-def test_get_llm_openai(grader, monkeypatch):
+@pytest.mark.parametrize(
+    "openai_model",
+    [Model.GPT_5_6_SOL, Model.GPT_5_6_TERRA, Model.GPT_5_6_LUNA],
+)
+def test_get_llm_openai(grader, monkeypatch, openai_model):
     """Test LLM initialization for OpenAI models."""
     captured = {}
 
@@ -91,11 +95,12 @@ def test_get_llm_openai(grader, monkeypatch):
 
     monkeypatch.setattr("langchain_openai.ChatOpenAI", FakeChatOpenAI)
 
-    grader.config.model = Model.GPT_5_6_SOL
+    grader.config.model = openai_model
     llm = grader._get_llm()
 
     assert isinstance(llm, FakeChatOpenAI)
-    assert captured["model"] == Model.GPT_5_6_SOL.value
+    assert captured["model"] == openai_model.value
+    assert captured["temperature"] == 1
 
 
 @pytest.mark.parametrize(
@@ -105,6 +110,9 @@ def test_get_llm_openai(grader, monkeypatch):
         (Model.BEDROCK_CLAUDE_OPUS_5, None),
         (Model.BEDROCK_CLAUDE_SONNET_5, None),
         (Model.BEDROCK_CLAUDE_HAIKU_4_5, 0),
+        (Model.BEDROCK_GPT_5_6_SOL, 1),
+        (Model.BEDROCK_GPT_5_6_TERRA, 1),
+        (Model.BEDROCK_GPT_5_6_LUNA, 1),
     ],
 )
 def test_get_llm_bedrock_with_credentials(grader, monkeypatch, bedrock_model, expected_temperature):

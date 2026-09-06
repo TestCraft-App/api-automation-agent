@@ -88,7 +88,7 @@ You must respond with a JSON object in this exact format:
                     "max_retries": 3,
                     "max_tokens_to_sample": 8192,
                 }
-                if not self.config.model.uses_default_anthropic_sampling():
+                if not self.config.model.uses_default_sampling():
                     anthropic_kwargs["temperature"] = 0
                 return ChatAnthropic(**anthropic_kwargs)
             if self.config.model.is_google():
@@ -104,7 +104,9 @@ You must respond with a JSON object in this exact format:
                     "model_kwargs": {"max_tokens": 8192},
                     "region_name": self.config.aws_region or "us-east-1",
                 }
-                if not self.config.model.uses_default_anthropic_sampling():
+                if self.config.model.is_gpt_5_6():
+                    bedrock_kwargs["model_kwargs"]["temperature"] = 1
+                elif not self.config.model.uses_default_sampling():
                     bedrock_kwargs["model_kwargs"]["temperature"] = 0
 
                 if self.config.aws_access_key_id and self.config.aws_secret_access_key:
@@ -112,12 +114,13 @@ You must respond with a JSON object in this exact format:
                     bedrock_kwargs["aws_secret_access_key"] = self.config.aws_secret_access_key
 
                 return ChatBedrock(**bedrock_kwargs)
-            return ChatOpenAI(
-                model=self.config.model.value,
-                temperature=0,
-                max_retries=3,
-                api_key=pydantic.SecretStr(self.config.openai_api_key),
-            )
+            openai_kwargs = {
+                "model": self.config.model.value,
+                "temperature": 1,
+                "max_retries": 3,
+                "api_key": pydantic.SecretStr(self.config.openai_api_key),
+            }
+            return ChatOpenAI(**openai_kwargs)
         except Exception as e:
             self.logger.error(f"Model initialization error: {e}")
             raise

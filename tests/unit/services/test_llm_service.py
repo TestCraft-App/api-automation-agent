@@ -737,6 +737,7 @@ def test_select_language_model_bedrock_gpt_model(llm_service, monkeypatch, bedro
     assert isinstance(result, FakeBedrock)
     assert captured["model"] == bedrock_model.value
     assert captured["region_name"] == "eu-west-1"
+    assert captured["temperature"] == 1
 
 
 def test_select_language_model_bedrock_gemini_model(llm_service, monkeypatch):
