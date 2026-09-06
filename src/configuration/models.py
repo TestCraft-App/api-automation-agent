@@ -8,50 +8,33 @@ class ModelCost(NamedTuple):
 
 
 class Model(Enum):
-    GPT_5_MINI = (
-        "gpt-5-mini",
-        ModelCost(input_cost_per_million_tokens=0.25, output_cost_per_million_tokens=2.0),
+    GPT_5_6_SOL = (
+        "gpt-5.6-sol",
+        ModelCost(input_cost_per_million_tokens=4.0, output_cost_per_million_tokens=20.0),
     )
-    GPT_4_1 = ("gpt-4.1", ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=8.0))
-    GPT_5 = ("gpt-5", ModelCost(input_cost_per_million_tokens=1.25, output_cost_per_million_tokens=10.0))
-    GPT_5_1 = ("gpt-5.1", ModelCost(input_cost_per_million_tokens=1.25, output_cost_per_million_tokens=10.0))
-    GPT_5_2 = ("gpt-5.2", ModelCost(input_cost_per_million_tokens=1.75, output_cost_per_million_tokens=14.0))
-    GPT_5_3_CODEX = (
-        "gpt-5.3-codex",
-        ModelCost(input_cost_per_million_tokens=1.75, output_cost_per_million_tokens=14.0),
+    GPT_5_6_TERRA = (
+        "gpt-5.6-terra",
+        ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=12.0),
     )
-    GPT_5_4 = ("gpt-5.4", ModelCost(input_cost_per_million_tokens=2.5, output_cost_per_million_tokens=15.0))
-    GPT_5_4_MINI = (
-        "gpt-5.4-mini",
-        ModelCost(input_cost_per_million_tokens=0.75, output_cost_per_million_tokens=4.5),
+    GPT_5_6_LUNA = (
+        "gpt-5.6-luna",
+        ModelCost(input_cost_per_million_tokens=0.2, output_cost_per_million_tokens=1.2),
     )
-    GPT_5_4_NANO = (
-        "gpt-5.4-nano",
-        ModelCost(input_cost_per_million_tokens=0.2, output_cost_per_million_tokens=1.25),
+    CLAUDE_FABLE_5_1 = (
+        "claude-fable-5-1",
+        ModelCost(input_cost_per_million_tokens=10.0, output_cost_per_million_tokens=50.0),
     )
-    CLAUDE_SONNET_4 = (
-        "claude-sonnet-4",
-        ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
+    CLAUDE_OPUS_5 = (
+        "claude-opus-5",
+        ModelCost(input_cost_per_million_tokens=5.0, output_cost_per_million_tokens=25.0),
     )
-    CLAUDE_SONNET_4_5 = (
-        "claude-sonnet-4-5",
-        ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
+    CLAUDE_SONNET_5 = (
+        "claude-sonnet-5",
+        ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=10.0),
     )
     CLAUDE_HAIKU_4_5 = (
         "claude-haiku-4-5",
         ModelCost(input_cost_per_million_tokens=1.0, output_cost_per_million_tokens=5.0),
-    )
-    CLAUDE_OPUS_4_5 = (
-        "claude-opus-4-5",
-        ModelCost(input_cost_per_million_tokens=5.0, output_cost_per_million_tokens=25.0),
-    )
-    CLAUDE_SONNET_4_6 = (
-        "claude-sonnet-4-6",
-        ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
-    )
-    CLAUDE_OPUS_4_6 = (
-        "claude-opus-4-6",
-        ModelCost(input_cost_per_million_tokens=5.0, output_cost_per_million_tokens=25.0),
     )
     GEMINI_3_PRO_PREVIEW = (
         "gemini-3-pro-preview",
@@ -65,65 +48,37 @@ class Model(Enum):
         "gemini-3-flash",
         ModelCost(input_cost_per_million_tokens=0.5, output_cost_per_million_tokens=3.0),
     )
-    BEDROCK_CLAUDE_SONNET_4 = (
-        "anthropic.claude-sonnet-4-v1:0",
-        ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
+    # Bedrock pricing can differ from direct Anthropic API pricing. These rates are estimates based
+    # on the corresponding Anthropic base input/output rates, consistent with the existing cost model.
+    BEDROCK_CLAUDE_FABLE_5_1 = (
+        "anthropic.claude-fable-5-1",
+        ModelCost(input_cost_per_million_tokens=10.0, output_cost_per_million_tokens=50.0),
     )
-    BEDROCK_CLAUDE_SONNET_4_5 = (
-        "anthropic.claude-sonnet-4-5-v1:0",
-        ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
+    BEDROCK_CLAUDE_OPUS_5 = (
+        "anthropic.claude-opus-5",
+        ModelCost(input_cost_per_million_tokens=5.0, output_cost_per_million_tokens=25.0),
+    )
+    BEDROCK_CLAUDE_SONNET_5 = (
+        "anthropic.claude-sonnet-5",
+        ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=10.0),
     )
     BEDROCK_CLAUDE_HAIKU_4_5 = (
-        "anthropic.claude-haiku-4-5-v1:0",
+        "anthropic.claude-haiku-4-5-20251001-v1:0",
         ModelCost(input_cost_per_million_tokens=1.0, output_cost_per_million_tokens=5.0),
     )
-    BEDROCK_CLAUDE_OPUS_4_5 = (
-        "anthropic.claude-opus-4-5-v1:0",
-        ModelCost(input_cost_per_million_tokens=5.0, output_cost_per_million_tokens=25.0),
+    # Bedrock pricing can differ from direct OpenAI API pricing. These rates are estimates based on
+    # the corresponding OpenAI standard short-context rates, consistent with the existing cost model.
+    BEDROCK_GPT_5_6_SOL = (
+        "openai.gpt-5.6-sol",
+        ModelCost(input_cost_per_million_tokens=4.0, output_cost_per_million_tokens=20.0),
     )
-    BEDROCK_CLAUDE_SONNET_4_6 = (
-        "anthropic.claude-sonnet-4-6-v1:0",
-        ModelCost(input_cost_per_million_tokens=3.0, output_cost_per_million_tokens=15.0),
+    BEDROCK_GPT_5_6_TERRA = (
+        "openai.gpt-5.6-terra",
+        ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=12.0),
     )
-    BEDROCK_CLAUDE_OPUS_4_6 = (
-        "anthropic.claude-opus-4-6-v1:0",
-        ModelCost(input_cost_per_million_tokens=5.0, output_cost_per_million_tokens=25.0),
-    )
-    BEDROCK_GPT_5_MINI = (
-        "openai.gpt-5-mini",
-        ModelCost(input_cost_per_million_tokens=0.25, output_cost_per_million_tokens=2.0),
-    )
-    BEDROCK_GPT_4_1 = (
-        "openai.gpt-4.1",
-        ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=8.0),
-    )
-    BEDROCK_GPT_5 = (
-        "openai.gpt-5",
-        ModelCost(input_cost_per_million_tokens=1.25, output_cost_per_million_tokens=10.0),
-    )
-    BEDROCK_GPT_5_1 = (
-        "openai.gpt-5.1",
-        ModelCost(input_cost_per_million_tokens=1.25, output_cost_per_million_tokens=10.0),
-    )
-    BEDROCK_GPT_5_2 = (
-        "openai.gpt-5.2",
-        ModelCost(input_cost_per_million_tokens=1.75, output_cost_per_million_tokens=14.0),
-    )
-    BEDROCK_GPT_5_3_CODEX = (
-        "openai.gpt-5.3-codex",
-        ModelCost(input_cost_per_million_tokens=1.75, output_cost_per_million_tokens=14.0),
-    )
-    BEDROCK_GPT_5_4 = (
-        "openai.gpt-5.4",
-        ModelCost(input_cost_per_million_tokens=2.5, output_cost_per_million_tokens=15.0),
-    )
-    BEDROCK_GPT_5_4_MINI = (
-        "openai.gpt-5.4-mini",
-        ModelCost(input_cost_per_million_tokens=0.75, output_cost_per_million_tokens=4.5),
-    )
-    BEDROCK_GPT_5_4_NANO = (
-        "openai.gpt-5.4-nano",
-        ModelCost(input_cost_per_million_tokens=0.2, output_cost_per_million_tokens=1.25),
+    BEDROCK_GPT_5_6_LUNA = (
+        "openai.gpt-5.6-luna",
+        ModelCost(input_cost_per_million_tokens=0.2, output_cost_per_million_tokens=1.2),
     )
     BEDROCK_GEMINI_3_PRO_PREVIEW = (
         "google.gemini-3-pro-preview",
@@ -150,12 +105,32 @@ class Model(Enum):
 
     def is_anthropic(self) -> bool:
         return self in [
-            Model.CLAUDE_SONNET_4,
-            Model.CLAUDE_SONNET_4_5,
+            Model.CLAUDE_FABLE_5_1,
+            Model.CLAUDE_OPUS_5,
+            Model.CLAUDE_SONNET_5,
             Model.CLAUDE_HAIKU_4_5,
-            Model.CLAUDE_OPUS_4_5,
-            Model.CLAUDE_SONNET_4_6,
-            Model.CLAUDE_OPUS_4_6,
+        ]
+
+    def uses_default_sampling(self) -> bool:
+        """Whether provider-default sampling parameters must be omitted."""
+        return self in [
+            Model.CLAUDE_FABLE_5_1,
+            Model.CLAUDE_OPUS_5,
+            Model.CLAUDE_SONNET_5,
+            Model.BEDROCK_CLAUDE_FABLE_5_1,
+            Model.BEDROCK_CLAUDE_OPUS_5,
+            Model.BEDROCK_CLAUDE_SONNET_5,
+        ]
+
+    def is_gpt_5_6(self) -> bool:
+        """Whether this is a direct or Bedrock GPT-5.6 model."""
+        return self in [
+            Model.GPT_5_6_SOL,
+            Model.GPT_5_6_TERRA,
+            Model.GPT_5_6_LUNA,
+            Model.BEDROCK_GPT_5_6_SOL,
+            Model.BEDROCK_GPT_5_6_TERRA,
+            Model.BEDROCK_GPT_5_6_LUNA,
         ]
 
     def is_google(self) -> bool:
@@ -167,21 +142,13 @@ class Model(Enum):
 
     def is_bedrock(self) -> bool:
         return self in [
-            Model.BEDROCK_CLAUDE_SONNET_4,
-            Model.BEDROCK_CLAUDE_SONNET_4_5,
+            Model.BEDROCK_CLAUDE_FABLE_5_1,
+            Model.BEDROCK_CLAUDE_OPUS_5,
+            Model.BEDROCK_CLAUDE_SONNET_5,
             Model.BEDROCK_CLAUDE_HAIKU_4_5,
-            Model.BEDROCK_CLAUDE_OPUS_4_5,
-            Model.BEDROCK_CLAUDE_SONNET_4_6,
-            Model.BEDROCK_CLAUDE_OPUS_4_6,
-            Model.BEDROCK_GPT_5_MINI,
-            Model.BEDROCK_GPT_4_1,
-            Model.BEDROCK_GPT_5,
-            Model.BEDROCK_GPT_5_1,
-            Model.BEDROCK_GPT_5_2,
-            Model.BEDROCK_GPT_5_3_CODEX,
-            Model.BEDROCK_GPT_5_4,
-            Model.BEDROCK_GPT_5_4_MINI,
-            Model.BEDROCK_GPT_5_4_NANO,
+            Model.BEDROCK_GPT_5_6_SOL,
+            Model.BEDROCK_GPT_5_6_TERRA,
+            Model.BEDROCK_GPT_5_6_LUNA,
             Model.BEDROCK_GEMINI_3_PRO_PREVIEW,
             Model.BEDROCK_GEMINI_3_1_PRO_PREVIEW,
             Model.BEDROCK_GEMINI_3_FLASH,

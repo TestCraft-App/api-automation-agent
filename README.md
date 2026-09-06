@@ -85,24 +85,16 @@ This project supports Anthropic, OpenAI, Google Generative AI, and AWS Bedrock l
 
 **Anthropic**
 
-- Claude Sonnet 4.6 (claude-sonnet-4-6) - **Default: Best balance of quality and cost**
-- Claude Opus 4.6 (claude-opus-4-6) - **Highest quality for complex tasks**
-- Claude Sonnet 4.5 (claude-sonnet-4-5)
+- Claude Fable 5.1 (claude-fable-5-1) - **Most capable for long-horizon tasks**
+- Claude Opus 5 (claude-opus-5) - **Complex agentic and enterprise workloads**
+- Claude Sonnet 5 (claude-sonnet-5) - **Default: Best balance of quality and cost**
 - Claude Haiku 4.5 (claude-haiku-4-5) - **Fast + low cost**
-- Claude Opus 4.5 (claude-opus-4-5)
-- Claude Sonnet 4 (claude-sonnet-4)
 
 **OpenAI**
 
-- GPT-5.4 (gpt-5.4) - **Recommended**
-- GPT-5.3 Codex (gpt-5.3-codex) - **Optimized for code**
-- GPT-5.4 Mini (gpt-5.4-mini) - **Fast + low cost**
-- GPT-5.4 Nano (gpt-5.4-nano) - **Cheapest**
-- GPT-5.2 (gpt-5.2)
-- GPT-5.1 (gpt-5.1)
-- GPT-5 (gpt-5)
-- GPT-4.1 (gpt-4.1)
-- GPT-5 Mini (gpt-5-mini)
+- GPT-5.6 Sol (gpt-5.6-sol) - **Recommended: Flagship capability**
+- GPT-5.6 Terra (gpt-5.6-terra) - **Balanced quality and cost**
+- GPT-5.6 Luna (gpt-5.6-luna) - **Efficient, high-volume workloads**
 
 **Google**
 
@@ -114,8 +106,8 @@ This project supports Anthropic, OpenAI, Google Generative AI, and AWS Bedrock l
 
 AWS Bedrock provides access to multiple model families through a unified API. Use the actual Bedrock model IDs:
 
-- Claude models: anthropic.claude-sonnet-4-6-v1:0, anthropic.claude-opus-4-6-v1:0, anthropic.claude-sonnet-4-5-v1:0, anthropic.claude-haiku-4-5-v1:0, anthropic.claude-opus-4-5-v1:0, anthropic.claude-sonnet-4-v1:0
-- OpenAI models: openai.gpt-5.4, openai.gpt-5.3-codex, openai.gpt-5.4-mini, openai.gpt-5.4-nano, openai.gpt-5.2, openai.gpt-5.1, openai.gpt-5, openai.gpt-4.1, openai.gpt-5-mini
+- Claude models: anthropic.claude-fable-5-1, anthropic.claude-opus-5, anthropic.claude-sonnet-5, anthropic.claude-haiku-4-5-20251001-v1:0
+- OpenAI models: openai.gpt-5.6-sol, openai.gpt-5.6-terra, openai.gpt-5.6-luna
 - Google models: google.gemini-3.1-pro-preview, google.gemini-3-flash, google.gemini-3-pro-preview
 
 **Authentication Options:**
@@ -127,13 +119,13 @@ aws configure
 # Enter your AWS Access Key, Secret Key, Region, and Output format
 
 # Then in your .env file:
-MODEL=anthropic.claude-sonnet-4-5-v1:0
+MODEL=anthropic.claude-sonnet-5
 AWS_REGION=us-east-1
 ```
 
 *Option 2: Environment Variables*
 ```env
-MODEL=anthropic.claude-sonnet-4-5-v1:0
+MODEL=anthropic.claude-sonnet-5
 AWS_ACCESS_KEY_ID=your_access_key_id
 AWS_SECRET_ACCESS_KEY=your_secret_access_key
 AWS_REGION=us-east-1
@@ -144,10 +136,11 @@ The agent will automatically use your AWS CLI configuration if credentials are n
 You can configure your preferred model in the `.env` file:
 
 ```env
-MODEL=gpt-5.1
+MODEL=gpt-5.6-sol
 ```
 
 > **Important**: Before using any model, check the current pricing and costs on the respective provider's website (Anthropic, OpenAI, or Google). Model costs can vary significantly and may impact your usage budget.
+> Bedrock cost reporting uses the corresponding direct OpenAI short-context rates as an estimate; AWS pricing may differ by deployment and region.
 
 ## Running the Agent
 
@@ -481,15 +474,53 @@ Found a bug or have a suggestion? Please open an issue on GitHub with:
 This project uses strict code formatting rules to maintain consistency:
 
 - [Black](https://black.readthedocs.io/) is used as the Python code formatter
-  - Line length is set to 88 characters
-  - Python 3.7+ compatibility is enforced
+  - Line length is set to 110 characters
+  - Python 3.10 is the formatting target
+- [Flake8](https://flake8.pycqa.org/) is used for linting with the same 110-character line length
 - VS Code is configured for automatic formatting on save
 - Editor settings and recommended extensions are provided in the `.vscode` directory
 
-All Python files will be automatically formatted when you save them in VS Code with the recommended extensions installed. To manually format code, you can run:
+During development, format and lint only the Python files you changed. Run each check separately; `--jobs 1` keeps Flake8 predictable on Windows:
 
 ```bash
-black .
+python -m black path/to/changed_file.py
+python -m black tests/path/to/changed_test.py
+python -m flake8 --jobs 1 path/to/changed_file.py tests/path/to/changed_test.py
+```
+
+When running Black from multiple Codex tasks or terminals on Windows, assign each task its own cache directory and keep its Black commands sequential. This avoids contention on Black's shared default cache:
+
+```powershell
+$env:BLACK_CACHE_DIR = Join-Path ([System.IO.Path]::GetTempPath()) "api-agent-black-$PID"
+python -m black path/to/changed_file.py
+python -m black tests/path/to/changed_test.py
+```
+
+For an explicit repository-wide validation, generated frameworks, dependency trees, evaluation output, and benchmark reports are excluded automatically:
+
+```bash
+python -m black --check .
+python -m flake8 --jobs 1 .
+```
+
+## Development Tests
+
+Install development dependencies and run the narrowest relevant test selection first:
+
+```bash
+pip install -r requirements.txt
+pip install -r requirements-test.txt
+
+python -m pytest tests/unit/services/test_file_service.py
+python -m pytest -k "test_file_service"
+python -m pytest tests/unit/
+python -m pytest tests/integration/
+```
+
+Run the full suite with coverage when the change warrants repository-wide verification:
+
+```bash
+python -m pytest --cov=src --cov-report=term --cov-config=.coveragerc
 ```
 
 ## Logging

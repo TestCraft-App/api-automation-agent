@@ -1,0 +1,256 @@
+{
+  "dataset_name": "fix_typescript_dataset",
+  "llm_model": "claude-haiku-4-5",
+  "total_test_cases": 6,
+  "graded_count": 6,
+  "not_evaluated_count": 0,
+  "error_count": 0,
+  "total_input_tokens": 10091,
+  "total_output_tokens": 1602,
+  "total_cost": 0.018101000000000003,
+  "average_score": 0.125,
+  "generated_files_path": "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\fix_typescript_dataset_20260906_200734",
+  "results": [
+    {
+      "test_id": "test_003",
+      "test_case_name": "fix_missing_js_extension",
+      "api_definition_file": null,
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "src/tests/broken_import_extension.ts"
+      ],
+      "grade_result": {
+        "score": 0.25,
+        "evaluation": [
+          {
+            "criteria": "Import paths should end with .js extension",
+            "met": false,
+            "details": "Regex pattern 'from\\s+['\"]\\S+\\.js['\"]' did not match in generated code"
+          },
+          {
+            "criteria": "No import path should be missing .js extension",
+            "met": false,
+            "details": "Regex pattern 'from\\s+['\"][^'\"]+(?<!\\.js)['\"]' was found in generated code (should not match)"
+          },
+          {
+            "criteria": "The fix adds .js to all import paths",
+            "met": false,
+            "details": "Neither import statement includes a .js extension; both '../models/services/UserService' and '../models/requests/UserModel' remain without file extensions."
+          },
+          {
+            "criteria": "The fix preserves the import structure",
+            "met": true,
+            "details": "The relative paths and named import structure (UserService, UserModel) are preserved from the original, only the .js extension is missing."
+          }
+        ],
+        "reasoning": "Fix TypeScript hybrid: 1/4 criteria met. Score: 0.25"
+      },
+      "evaluation_criteria": [
+        "The fix adds .js to all import paths",
+        "The fix preserves the import structure"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_002",
+      "test_case_name": "fix_missing_optional_chaining",
+      "api_definition_file": null,
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "src/tests/broken_optional_chaining.ts"
+      ],
+      "grade_result": {
+        "score": 0.25,
+        "evaluation": [
+          {
+            "criteria": "Should use optional chaining for response.data access",
+            "met": false,
+            "details": "Pattern 'response.data?.' not found in generated code"
+          },
+          {
+            "criteria": "Should not use response.data.field without optional chaining",
+            "met": false,
+            "details": "Regex pattern 'response\\.data\\.[a-zA-Z]+\\.should' was found in generated code (should not match)"
+          },
+          {
+            "criteria": "The fix preserves the assertions and their expected values",
+            "met": true,
+            "details": "The assertions checking status, name, email, and age against the expected user values are all present and unchanged in intent."
+          },
+          {
+            "criteria": "The fix uses optional chaining correctly",
+            "met": false,
+            "details": "The code does not use optional chaining (?.) anywhere; it uses direct property access (e.g., response.data.name.should.equal), so this criterion is not addressed at all."
+          }
+        ],
+        "reasoning": "Fix TypeScript hybrid: 1/4 criteria met. Score: 0.25"
+      },
+      "evaluation_criteria": [
+        "The fix preserves the assertions and their expected values",
+        "The fix uses optional chaining correctly"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_004",
+      "test_case_name": "fix_type_mismatch",
+      "api_definition_file": null,
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "src\\tests\\broken_type_mismatch.ts"
+      ],
+      "grade_result": {
+        "score": 0.0,
+        "evaluation": [
+          {
+            "criteria": "age field should be a number, not a string",
+            "met": false,
+            "details": "Regex pattern 'age:\\s*['\"]\\d+['\"]' was found in generated code (should not match)"
+          },
+          {
+            "criteria": "The fix corrects the type mismatch while preserving the test intent",
+            "met": false,
+            "details": "The file still assigns age: \"25\" as a string literal, which is the original type mismatch (assuming UserModel expects age as a number). No correction was applied to resolve the mismatch."
+          },
+          {
+            "criteria": "The fix uses proper TypeScript types",
+            "met": false,
+            "details": "Since the type error remains unaddressed, the code does not demonstrate proper TypeScript typing for the age field; it still uses a string where presumably a number is expected."
+          }
+        ],
+        "reasoning": "Fix TypeScript hybrid: 0/3 criteria met. Score: 0.00"
+      },
+      "evaluation_criteria": [
+        "The fix corrects the type mismatch while preserving the test intent",
+        "The fix uses proper TypeScript types"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_005",
+      "test_case_name": "fix_undeclared_variable",
+      "api_definition_file": null,
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "src/tests/broken_undeclared_var.ts"
+      ],
+      "grade_result": {
+        "score": 0.0,
+        "evaluation": [
+          {
+            "criteria": "Should not use undeclared variable 'userId'",
+            "met": false,
+            "details": "Regex pattern '\\buserId\\b(?!.*(?:const|let|var)\\s+userId)' was found in generated code (should not match)"
+          },
+          {
+            "criteria": "The fix declares or references the correct variable",
+            "met": false,
+            "details": "The test still references 'userId', which is never declared; it should use 'createdUser.id' (or similar) since 'createdUser' was populated in the before() hook."
+          },
+          {
+            "criteria": "The fix preserves the logical flow of the test",
+            "met": false,
+            "details": "The before() hook creates a user and stores it in 'createdUser', but the test does not use this variable at all, breaking the intended flow of creating then deleting the same user."
+          }
+        ],
+        "reasoning": "Fix TypeScript hybrid: 0/3 criteria met. Score: 0.00"
+      },
+      "evaluation_criteria": [
+        "The fix declares or references the correct variable",
+        "The fix preserves the logical flow of the test"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_001",
+      "test_case_name": "fix_response_wrapper_error",
+      "api_definition_file": null,
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "src/tests/broken_response_wrapper.ts"
+      ],
+      "grade_result": {
+        "score": 0.25,
+        "evaluation": [
+          {
+            "criteria": "Should remove Response wrapper - use UserModel directly as generic parameter",
+            "met": false,
+            "details": "Pattern 'Response<UserModel>' was found in generated code (should not be present)"
+          },
+          {
+            "criteria": "Should not use nested Response<> generic wrapper",
+            "met": false,
+            "details": "Regex pattern '<Response<' was found in generated code (should not match)"
+          },
+          {
+            "criteria": "The fix preserves the test logic and assertions",
+            "met": true,
+            "details": "The test still creates a user, calls the service, and checks status/data properties for name and email as in the original logic."
+          },
+          {
+            "criteria": "The fix maintains proper TypeScript syntax",
+            "met": false,
+            "details": "The code uses `Response<UserModel>` as a generic type argument, but `Response` is not imported anywhere in the file (it isn't the global fetch Response type, which isn't generic either), causing a likely compile-time error due to an unresolved or misused type reference."
+          }
+        ],
+        "reasoning": "Fix TypeScript hybrid: 1/4 criteria met. Score: 0.25"
+      },
+      "evaluation_criteria": [
+        "The fix preserves the test logic and assertions",
+        "The fix maintains proper TypeScript syntax"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_006",
+      "test_case_name": "fix_multiple_errors",
+      "api_definition_file": null,
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "src/tests/broken_multiple_errors.ts"
+      ],
+      "grade_result": {
+        "score": 0.0,
+        "evaluation": [
+          {
+            "criteria": "Import paths should have .js extension",
+            "met": false,
+            "details": "Regex pattern 'from\\s+['\"]\\S+\\.js['\"]' did not match in generated code"
+          },
+          {
+            "criteria": "Should not use Response wrapper",
+            "met": false,
+            "details": "Pattern 'Response<UserModel>' was found in generated code (should not be present)"
+          },
+          {
+            "criteria": "Should use optional chaining",
+            "met": false,
+            "details": "Pattern 'response.data?.' not found in generated code"
+          },
+          {
+            "criteria": "All three errors are fixed in a single pass",
+            "met": false,
+            "details": "The file still contains the original broken code: `Response<UserModel>` is used without any import or type definition, and `.should` assertions are used without importing/enabling the chai `should` interface, indicating the errors were not addressed."
+          },
+          {
+            "criteria": "The fix preserves the test logic and assertions",
+            "met": false,
+            "details": "Since no fix was applied, there's no evidence the original test logic and assertions were preserved through a repair process; the code is unchanged from its broken state."
+          }
+        ],
+        "reasoning": "Fix TypeScript hybrid: 0/5 criteria met. Score: 0.00"
+      },
+      "evaluation_criteria": [
+        "All three errors are fixed in a single pass",
+        "The fix preserves the test logic and assertions"
+      ],
+      "eval_method": "hybrid"
+    }
+  ]
+}

@@ -67,7 +67,10 @@ class LLMService:
         return self.aggregated_usage_metadata
 
     def _select_language_model(
-        self, language_model: Optional[Model] = None, override: bool = False
+        self,
+        language_model: Optional[Model] = None,
+        override: bool = False,
+        use_function_tools: bool = False,
     ) -> BaseLanguageModel:
         """
         Select and configure the appropriate language model.
@@ -75,6 +78,7 @@ class LLMService:
         Args:
             language_model (Optional[Model]): Optional model to use
             override (bool): Whether to override the default model
+            use_function_tools (bool): Whether the request binds function tools
 
         Returns:
             BaseLanguageModel: Configured language model
@@ -83,15 +87,17 @@ class LLMService:
             if language_model and override:
                 self.config.model = language_model
             if self.config.model.is_anthropic():
-                return ChatAnthropic(
-                    model_name=self.config.model.value,
-                    temperature=1,
-                    api_key=pydantic.SecretStr(self.config.anthropic_api_key),
-                    timeout=None,
-                    stop=None,
-                    max_retries=3,
-                    max_tokens_to_sample=8192,
-                )
+                anthropic_kwargs = {
+                    "model_name": self.config.model.value,
+                    "api_key": pydantic.SecretStr(self.config.anthropic_api_key),
+                    "timeout": None,
+                    "stop": None,
+                    "max_retries": 3,
+                    "max_tokens_to_sample": 8192,
+                }
+                if not self.config.model.uses_default_sampling():
+                    anthropic_kwargs["temperature"] = 1
+                return ChatAnthropic(**anthropic_kwargs)
             if self.config.model.is_google():
                 return ChatGoogleGenerativeAI(
                     model=self.config.model.value,
@@ -102,10 +108,11 @@ class LLMService:
             if self.config.model.is_bedrock():
                 bedrock_kwargs = {
                     "model": self.config.model.value,
-                    "temperature": 1,
                     "max_tokens": 8192,
                     "region_name": self.config.aws_region or "us-east-1",
                 }
+                if not self.config.model.uses_default_sampling():
+                    bedrock_kwargs["temperature"] = 1
 
                 if self.config.aws_access_key_id and self.config.aws_secret_access_key:
                     bedrock_kwargs["aws_access_key_id"] = pydantic.SecretStr(self.config.aws_access_key_id)
@@ -114,12 +121,20 @@ class LLMService:
                     )
 
                 return ChatBedrockConverse(**bedrock_kwargs)
-            return ChatOpenAI(
-                model=self.config.model.value,
-                temperature=1,
-                max_retries=3,
-                api_key=pydantic.SecretStr(self.config.openai_api_key),
-            )
+            openai_kwargs = {
+                "model": self.config.model.value,
+                "max_retries": 3,
+                "api_key": pydantic.SecretStr(self.config.openai_api_key),
+            }
+            if not self.config.model.uses_default_sampling():
+                openai_kwargs["temperature"] = 1
+            if use_function_tools and self.config.model in {
+                Model.GPT_5_6_SOL,
+                Model.GPT_5_6_TERRA,
+                Model.GPT_5_6_LUNA,
+            }:
+                openai_kwargs["reasoning_effort"] = "none"
+            return ChatOpenAI(**openai_kwargs)
         except Exception as e:
             self.logger.error(f"Model initialization error: {e}")
             raise
@@ -174,7 +189,7 @@ class LLMService:
         try:
             all_tools = tools or []
 
-            llm = self._select_language_model(language_model)
+            llm = self._select_language_model(language_model, use_function_tools=bool(tools))
             prompt_template = ChatPromptTemplate.from_template(self._load_prompt(prompt_path))
 
             if tools:

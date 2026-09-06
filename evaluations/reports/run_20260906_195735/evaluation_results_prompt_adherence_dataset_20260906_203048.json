@@ -1,0 +1,202 @@
+{
+  "dataset_name": "prompt_adherence_dataset",
+  "llm_model": "claude-opus-5",
+  "total_test_cases": 6,
+  "graded_count": 6,
+  "not_evaluated_count": 0,
+  "error_count": 0,
+  "total_input_tokens": 38777,
+  "total_output_tokens": 4126,
+  "total_cost": 0.297035,
+  "average_score": 0.9166666666666666,
+  "generated_files_path": "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\prompt_adherence_dataset_20260906_203024",
+  "results": [
+    {
+      "test_id": "test_001",
+      "test_case_name": "single_test_only",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\prompt_adherence_dataset_20260906_203024\\test_001\\src\\models\\responses\\UserResponse.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\prompt_adherence_dataset_20260906_203024\\test_001\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should contain at least one it() block",
+            "met": true,
+            "details": "Regex pattern 'it\\(' matched in generated code"
+          },
+          {
+            "criteria": "Test covers the main positive scenario (creating a user successfully)",
+            "met": true,
+            "details": "The test creates a user with valid name, email, and age, calls createUser, and asserts a 201 status along with matching response fields (id, name, email, age), fully covering the positive creation scenario."
+          }
+        ],
+        "reasoning": "Hybrid prompt adherence: 2/2 criteria met (1 rule-based, 1 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "Test covers the main positive scenario (creating a user successfully)"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_004",
+      "test_case_name": "proper_hooks_usage",
+      "api_definition_file": "test_004_users_delete_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\prompt_adherence_dataset_20260906_203024\\test_004\\src\\models\\responses\\UserResponse.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\prompt_adherence_dataset_20260906_203024\\test_004\\src\\tests\\users\\Delete-DeleteUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should contain before() or beforeEach() hook for test setup",
+            "met": true,
+            "details": "Regex pattern 'before\\(|beforeEach\\(' matched in generated code"
+          },
+          {
+            "criteria": "Setup hook creates a resource needed for the DELETE test",
+            "met": true,
+            "details": "The before() hook creates a user via userService.createUser, verifies the status is 200/201, and stores the resulting user ID in the userId variable used by the DELETE test."
+          }
+        ],
+        "reasoning": "Hybrid prompt adherence: 2/2 criteria met (1 rule-based, 1 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "Setup hook creates a resource needed for the DELETE test"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_003",
+      "test_case_name": "no_response_file",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\prompt_adherence_dataset_20260906_203024\\test_003\\src\\models\\responses\\UserResponse.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\prompt_adherence_dataset_20260906_203024\\test_003\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should not create or reference a Response.ts file",
+            "met": true,
+            "details": "Regex pattern 'Response\\.ts' correctly not found in generated code"
+          },
+          {
+            "criteria": "The test should work without relying on a separate Response.ts model",
+            "met": true,
+            "details": "The spec file only imports UserModel, UserResponse (data shape), and UserService, and directly accesses response.status and response.data without importing any generic Response.ts wrapper type."
+          }
+        ],
+        "reasoning": "Hybrid prompt adherence: 2/2 criteria met (1 rule-based, 1 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "The test should work without relying on a separate Response.ts model"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_002",
+      "test_case_name": "js_import_extensions",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\prompt_adherence_dataset_20260906_203024\\test_002\\src\\models\\responses\\UserResponse.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\prompt_adherence_dataset_20260906_203024\\test_002\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "All import paths should end with .js extension",
+            "met": true,
+            "details": "Regex pattern 'from\\s+['\"][^'\"]+(?<!\\.js)['\"]' correctly not found in generated code"
+          },
+          {
+            "criteria": "All import paths reference the correct service and model files",
+            "met": true,
+            "details": "The relative paths '../../models/requests/UserModel.js', '../../models/responses/UserResponse.js', and '../../models/services/UserService.js' correctly resolve from 'src/tests/users/' to the expected 'src/models/...' locations, and the UserResponse import matches the provided UserResponse.ts file exactly."
+          }
+        ],
+        "reasoning": "Hybrid prompt adherence: 2/2 criteria met (1 rule-based, 1 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "All import paths reference the correct service and model files"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_006",
+      "test_case_name": "random_unique_values",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\prompt_adherence_dataset_20260906_203024\\test_006\\src\\models\\responses\\UserResponse.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\prompt_adherence_dataset_20260906_203024\\test_006\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should use randomization for unique values (Math.random, faker, Date.now, template literals, etc.)",
+            "met": true,
+            "details": "Regex pattern 'Math\\.random|faker|Date\\.now|uuid|crypto\\.random|`[^`]*\\$\\{' matched in generated code"
+          },
+          {
+            "criteria": "Random values are used for fields that require uniqueness, and generated values make sense for the field type",
+            "met": true,
+            "details": "The email field, which requires uniqueness, uses a combination of Date.now() timestamp and a random string suffix to ensure uniqueness, and is formatted as a valid email address. The name field also uses a random string suffix for variability, and age is a sensible numeric value (30) appropriate for the field type."
+          }
+        ],
+        "reasoning": "Hybrid prompt adherence: 2/2 criteria met (1 rule-based, 1 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "Random values are used for fields that require uniqueness, and generated values make sense for the field type"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_005",
+      "test_case_name": "file_name_verb_prefix",
+      "api_definition_file": "test_005_users_patch_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\prompt_adherence_dataset_20260906_203024\\test_005\\src\\models\\responses\\UserModel.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\prompt_adherence_dataset_20260906_203024\\test_005\\src\\models\\requests\\CreateUserModel.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\prompt_adherence_dataset_20260906_203024\\test_005\\src\\tests\\users\\Patch-PatchUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.5,
+        "evaluation": [
+          {
+            "criteria": "File name should start with appropriate verb prefix (Patch- or Update-)",
+            "met": false,
+            "details": "Regex pattern '(Patch|Update)-' did not match in generated code"
+          },
+          {
+            "criteria": "The generated test file tests the PATCH operation correctly",
+            "met": true,
+            "details": "The test creates a user via CreateUserModel, then calls userService.patchUser with a PatchUserModel payload, checks that the response status is 200, and verifies that the returned id, name, email, and age match the patched data, which correctly validates a partial update (PATCH) semantics."
+          }
+        ],
+        "reasoning": "Hybrid prompt adherence: 1/2 criteria met (1 rule-based, 1 model-graded). Score: 0.50"
+      },
+      "evaluation_criteria": [
+        "The generated test file tests the PATCH operation correctly"
+      ],
+      "eval_method": "hybrid"
+    }
+  ]
+}

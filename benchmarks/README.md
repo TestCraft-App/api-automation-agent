@@ -10,7 +10,7 @@ The benchmark tool (`benchmark_runner.py`) is designed to evaluate the performan
 
 For each LLM, the benchmark collects the following metrics:
 
-- **LLM Model Value**: The specific model string used by the underlying libraries (e.g., `gpt-5-mini`). This corresponds to the value of the `Model` enum member (e.g., `Model.GPT_5_MINI.value`).
+- **LLM Model Value**: The specific model string used by the underlying libraries (e.g., `gpt-5.6-sol`). This corresponds to the value of the `Model` enum member (e.g., `Model.GPT_5_6_SOL.value`).
 - **Status**: Indicates whether the benchmark run for this LLM was `COMPLETED` or `FAILED`.
 - **Error Message**: If the status is `FAILED`, this field will contain the error message.
 - **Framework Output Path**: The directory where the generated framework and tests for this LLM are stored.
@@ -67,8 +67,8 @@ python benchmarks/benchmark_runner.py --openapi-spec <path_to_openapi_spec> --ll
 
 *   `--openapi-spec` (Required): Path to the OpenAPI specification file (e.g., `path/to/your/api.yaml`).
 *   `--llms` (Required): A comma-separated list of LLM models to benchmark. Do not use spaces between names.
-    *   Available choices: `GPT_5_4`, `GPT_5_3_CODEX`, `GPT_5_4_MINI`, `GPT_5_4_NANO`, `GPT_5_2`, `GPT_5_1`, `GPT_5`, `GPT_4_1`, `GPT_5_MINI`, `CLAUDE_SONNET_4_6`, `CLAUDE_OPUS_4_6`, `CLAUDE_SONNET_4_5`, `CLAUDE_HAIKU_4_5`, `CLAUDE_OPUS_4_5`, `CLAUDE_SONNET_4`, `GEMINI_3_1_PRO_PREVIEW`, `GEMINI_3_FLASH`, `GEMINI_3_PRO_PREVIEW` (these are derived from the `Model` enum in `src/configuration/models.py`).
-    *   Example: `GPT_5_1,CLAUDE_SONNET_4_5`
+    *   Available direct OpenAI choices: `GPT_5_6_SOL`, `GPT_5_6_TERRA`, `GPT_5_6_LUNA` (all choices are derived from the `Model` enum in `src/configuration/models.py`).
+    *   Example: `GPT_5_6_SOL,CLAUDE_SONNET_5`
 *   `--endpoints` (Optional): Specific endpoints to target from the OpenAPI specification. If not provided, all endpoints will be targeted.
     *   Example: `/users/{id}`
 *   `--output-dir` (Optional): Directory to save benchmark reports and generated frameworks.
@@ -80,10 +80,10 @@ python benchmarks/benchmark_runner.py --openapi-spec <path_to_openapi_spec> --ll
 **Example Usage**:
 
 ```bash
-python benchmarks/benchmark_runner.py --openapi-spec http://localhost:3000/swagger.json --endpoints /adopters --llms GPT_5_1,CLAUDE_SONNET_4_5 --output-dir ./benchmark_run_results
+python benchmarks/benchmark_runner.py --openapi-spec http://localhost:3000/swagger.json --endpoints /adopters --llms GPT_5_6_SOL,CLAUDE_SONNET_5 --output-dir ./benchmark_run_results
 ```
 
-This command will run the benchmark using the `http://localhost:3000/swagger.json` API definition, targeting the `/adopters` endpoint for the `GPT_5_1` and `CLAUDE_SONNET_4_5` models, saving results to the `./benchmark_run_results` directory.
+This command will run the benchmark using the `http://localhost:3000/swagger.json` API definition, targeting the `/adopters` endpoint for the `GPT_5_6_SOL` and `CLAUDE_SONNET_5` models, saving results to the `./benchmark_run_results` directory.
 
 > **Important Note on Cost**: Running benchmarks, especially with multiple LLMs and/or large OpenAPI specifications (i.e., many endpoints), can incur significant costs due to API calls to the language models. It is highly recommended to start by targeting a single endpoint or a small set of endpoints, as shown in the example above, to understand the potential cost before running benchmarks against an entire API specification. Refer to your LLM provider's pricing page for details on token costs.
 
@@ -125,4 +125,4 @@ By comparing these metrics across different LLMs, you can gain insights into the
 *   **API Key Errors**: Ensure your `.env` file is correctly set up in the project root and contains valid API keys for the LLMs you are testing.
 *   **Dependency Issues**: Double-check that all Python and Node.js dependencies are installed.
 *   **File Path Errors**: Verify that the path to your OpenAPI specification is correct.
-*   **TypeScript Compilation Errors**: If many files are skipped, it might point to systemic issues in how an LLM generates code. Review the generated files in the output directory for that LLM. 
+*   **TypeScript Compilation Errors**: If many files are skipped, it might point to systemic issues in how an LLM generates code. Review the generated files in the output directory for that LLM.

@@ -80,15 +80,17 @@ You must respond with a JSON object in this exact format:
 
         try:
             if self.config.model.is_anthropic():
-                return ChatAnthropic(
-                    model_name=self.config.model.value,
-                    temperature=0,
-                    api_key=pydantic.SecretStr(self.config.anthropic_api_key),
-                    timeout=None,
-                    stop=None,
-                    max_retries=3,
-                    max_tokens_to_sample=8192,
-                )
+                anthropic_kwargs = {
+                    "model_name": self.config.model.value,
+                    "api_key": pydantic.SecretStr(self.config.anthropic_api_key),
+                    "timeout": None,
+                    "stop": None,
+                    "max_retries": 3,
+                    "max_tokens_to_sample": 8192,
+                }
+                if not self.config.model.uses_default_sampling():
+                    anthropic_kwargs["temperature"] = 0
+                return ChatAnthropic(**anthropic_kwargs)
             if self.config.model.is_google():
                 return ChatGoogleGenerativeAI(
                     model=self.config.model.value,
@@ -99,24 +101,52 @@ You must respond with a JSON object in this exact format:
             if self.config.model.is_bedrock():
                 bedrock_kwargs = {
                     "model_id": self.config.model.value,
-                    "model_kwargs": {"temperature": 0, "max_tokens": 8192},
+                    "model_kwargs": {"max_tokens": 8192},
                     "region_name": self.config.aws_region or "us-east-1",
                 }
+                if self.config.model.is_gpt_5_6():
+                    bedrock_kwargs["model_kwargs"]["temperature"] = 1
+                elif not self.config.model.uses_default_sampling():
+                    bedrock_kwargs["model_kwargs"]["temperature"] = 0
 
                 if self.config.aws_access_key_id and self.config.aws_secret_access_key:
                     bedrock_kwargs["aws_access_key_id"] = self.config.aws_access_key_id
                     bedrock_kwargs["aws_secret_access_key"] = self.config.aws_secret_access_key
 
                 return ChatBedrock(**bedrock_kwargs)
-            return ChatOpenAI(
-                model=self.config.model.value,
-                temperature=0,
-                max_retries=3,
-                api_key=pydantic.SecretStr(self.config.openai_api_key),
-            )
+            openai_kwargs = {
+                "model": self.config.model.value,
+                "temperature": 1,
+                "max_retries": 3,
+                "api_key": pydantic.SecretStr(self.config.openai_api_key),
+            }
+            return ChatOpenAI(**openai_kwargs)
         except Exception as e:
             self.logger.error(f"Model initialization error: {e}")
             raise
+
+    @staticmethod
+    def _response_text(response: object) -> str:
+        """Extract text from string and structured LangChain responses."""
+        text_method = getattr(response, "text", None)
+        if callable(text_method):
+            text = text_method()
+            if isinstance(text, str):
+                return text
+
+        content = getattr(response, "content", response)
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            text_parts = []
+            for block in content:
+                if isinstance(block, str):
+                    text_parts.append(block)
+                elif isinstance(block, dict) and isinstance(block.get("text"), str):
+                    text_parts.append(block["text"])
+            return "".join(text_parts)
+
+        return str(content)
 
     def grade(self, generated_file_content: str, evaluation_criteria: Sequence[str]) -> ModelGradeResult:
         """
@@ -147,8 +177,7 @@ You must respond with a JSON object in this exact format:
                 }
             )
 
-            content = response.content if hasattr(response, "content") else str(response)
-            content = content.strip()
+            content = self._response_text(response).strip()
 
             if content.startswith("```"):
                 lines = content.split("\n")

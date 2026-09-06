@@ -33,18 +33,6 @@ black .
 
 # Lint (max-line-length: 110, ignores E203)
 flake8 .
-
-# Run the agent
-python ./main.py <path_or_url_to_openapi_or_postman>
-
-# Run benchmarks
-python benchmarks/benchmark_runner.py --openapi-spec <spec> --llms GPT_5_1,CLAUDE_SONNET_4_6 --endpoints /users --output-dir ./benchmark_results
-
-# Run all evaluations
-python evaluations/evaluation_runner_main.py --all --llms CLAUDE_SONNET_4_6 --grader CLAUDE_SONNET_4_6 --output-dir ./eval_results
-
-# Run a single evaluation dataset
-python evaluations/evaluation_runner_main.py --test-data-folder evaluations/data/prompt_injection_dataset --llms CLAUDE_SONNET_4_6 --grader CLAUDE_SONNET_4_6
 ```
 
 ## Architecture
@@ -81,4 +69,4 @@ CI enforces coverage non-regression on PRs via `scripts/coverage_guard.py`.
 
 After modifying code in `src/`:
 1. Run relevant tests — don't skip, fix failures before considering the task complete
-2. Review and update docs if needed: `README.md`, `USAGE-GUIDE.txt`, `benchmarks/README.md`
+2. Review and update docs if needed: `README.md`, `USAGE-GUIDE.txt`, `evaluations/README.md`, `benchmarks/README.md`

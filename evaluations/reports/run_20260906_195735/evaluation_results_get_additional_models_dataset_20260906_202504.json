@@ -1,0 +1,103 @@
+{
+  "dataset_name": "get_additional_models_dataset",
+  "llm_model": "gpt-5.6-sol",
+  "total_test_cases": 3,
+  "graded_count": 3,
+  "not_evaluated_count": 0,
+  "error_count": 0,
+  "total_input_tokens": 2340,
+  "total_output_tokens": 110,
+  "total_cost": 0.01156,
+  "average_score": 1.0,
+  "generated_files_path": "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\get_additional_models_dataset_20260906_202502",
+  "results": [
+    {
+      "test_id": "test_002",
+      "test_case_name": "category_service_no_dependencies",
+      "api_definition_file": null,
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "All expected files are returned",
+            "met": true,
+            "details": "All expected files were correctly identified"
+          },
+          {
+            "criteria": "No unnecessary files are returned",
+            "met": true,
+            "details": "No unnecessary files were read"
+          }
+        ],
+        "reasoning": "Expected 0 file(s), got 0. Missing: 0, Extra: 0."
+      },
+      "evaluation_criteria": [],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_001",
+      "test_case_name": "order_service_depends_on_user_and_product",
+      "api_definition_file": null,
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "src/models/requests/ProductModel.ts",
+        "src/models/requests/UserModel.ts",
+        "src/models/services/ProductService.ts",
+        "src/models/services/UserService.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "All expected files are returned",
+            "met": true,
+            "details": "All expected files were correctly identified"
+          },
+          {
+            "criteria": "No unnecessary files are returned",
+            "met": true,
+            "details": "No unnecessary files were read"
+          }
+        ],
+        "reasoning": "Expected 4 file(s), got 4. Missing: 0, Extra: 0."
+      },
+      "evaluation_criteria": [],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_003",
+      "test_case_name": "invoice_service_depends_on_order_and_user",
+      "api_definition_file": null,
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "src/models/requests/OrderModel.ts",
+        "src/models/requests/UserModel.ts",
+        "src/models/services/OrderService.ts",
+        "src/models/services/UserService.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "All expected files are returned",
+            "met": true,
+            "details": "All expected files were correctly identified"
+          },
+          {
+            "criteria": "No unnecessary files are returned",
+            "met": true,
+            "details": "No unnecessary files were read"
+          }
+        ],
+        "reasoning": "Expected 4 file(s), got 4. Missing: 0, Extra: 0."
+      },
+      "evaluation_criteria": [],
+      "eval_method": null
+    }
+  ]
+}
