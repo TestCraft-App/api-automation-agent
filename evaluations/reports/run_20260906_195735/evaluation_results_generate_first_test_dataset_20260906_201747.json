@@ -1,0 +1,867 @@
+{
+  "dataset_name": "generate_first_test_dataset",
+  "llm_model": "claude-sonnet-5",
+  "total_test_cases": 16,
+  "graded_count": 16,
+  "not_evaluated_count": 0,
+  "error_count": 0,
+  "total_input_tokens": 113824,
+  "total_output_tokens": 10104,
+  "total_cost": 0.328688,
+  "average_score": 0.8050595238095238,
+  "generated_files_path": "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656",
+  "results": [
+    {
+      "test_id": "test_004",
+      "test_case_name": "update_user",
+      "api_definition_file": "users_put_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_004\\src\\tests\\users\\Put-UpdateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the update target",
+            "met": true,
+            "details": "A user is created using userService.createUser inside a before() hook and the resulting id is stored in userId."
+          },
+          {
+            "criteria": "Test the main positive scenario for the PUT /users/{userId} endpoint that updates an existing user",
+            "met": true,
+            "details": "The test 'Update User successfully - 200' exercises the update flow for the created user."
+          },
+          {
+            "criteria": "Call UserService.updateUser with the created user's id and a payload typed as UpdateUserModel",
+            "met": true,
+            "details": "userService.updateUser(userId, updatedUser) is called where updatedUser is explicitly typed as UpdateUserModel."
+          },
+          {
+            "criteria": "Assert that the update response status is 200",
+            "met": true,
+            "details": "response.status.should.equal(200, ...) is asserted."
+          },
+          {
+            "criteria": "Assert that the response data keeps the same id and reflects the updated name and email using optional chaining",
+            "met": true,
+            "details": "Assertions use response.data?.id, response.data?.name, and response.data?.email with optional chaining."
+          },
+          {
+            "criteria": "Use new values (e.g., a randomized email) to verify the update actually changed the stored data",
+            "met": true,
+            "details": "A new randomSuffix is generated for the update payload, producing a different name and email than the original user."
+          }
+        ],
+        "reasoning": "All criteria are fully satisfied: the test creates a user in a before hook, calls updateUser with a typed UpdateUserModel payload, and asserts status 200 along with id, name, and email using optional chaining and randomized new values."
+      },
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the update target",
+        "Test the main positive scenario for the PUT /users/{userId} endpoint that updates an existing user",
+        "Call UserService.updateUser with the created user's id and a payload typed as UpdateUserModel",
+        "Assert that the update response status is 200",
+        "Assert that the response data keeps the same id and reflects the updated name and email using optional chaining (e.g., response.data?.email)",
+        "Use new values (e.g., a randomized email) to verify the update actually changed the stored data"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_001",
+      "test_case_name": "create_user",
+      "api_definition_file": "users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_001\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test the main positive scenario for a POST endpoint to create a user",
+            "met": true,
+            "details": "The test creates a user with valid data and expects a successful creation response."
+          },
+          {
+            "criteria": "Use the UserService.createUser method with UserModel type",
+            "met": true,
+            "details": "The test calls userService.createUser<UserModel>(newUser) with a properly typed UserModel object."
+          },
+          {
+            "criteria": "Assert that the status code is 201",
+            "met": true,
+            "details": "The test asserts response.status.should.equal(201, ...) to verify successful creation."
+          },
+          {
+            "criteria": "Assert that the response data contains the created user's id, name, and email using optional chaining",
+            "met": true,
+            "details": "The test uses response.data?.id, response.data?.name, and response.data?.email with optional chaining to validate the created user's properties."
+          },
+          {
+            "criteria": "Generate random values for required fields (email) to avoid collisions",
+            "met": true,
+            "details": "A random suffix is generated using Math.random() and appended to both the name and email fields to ensure uniqueness."
+          }
+        ],
+        "reasoning": "All five evaluation criteria are fully satisfied: the test covers the positive POST scenario, uses the correct service method and type, asserts the 201 status code, validates id/name/email via optional chaining, and generates randomized values to prevent collisions."
+      },
+      "evaluation_criteria": [
+        "Test the main positive scenario for a POST endpoint to create a user",
+        "Use the UserService.createUser method with UserModel type",
+        "Assert that the status code is 201",
+        "Assert that the response data contains the created user's id, name, and email using optional chaining (e.g., response.data?.id)",
+        "Generate random values for required fields (email) to avoid collisions"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_002",
+      "test_case_name": "list_users",
+      "api_definition_file": "users_get_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_002\\src\\models\\requests\\CreateUserModel.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_002\\src\\models\\services\\UserAdminService.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_002\\src\\tests\\users\\Get-ListUsers.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.5,
+        "evaluation": [
+          {
+            "criteria": "Test the main positive scenario for the GET /users endpoint that retrieves a paginated list of users",
+            "met": true,
+            "details": "The spec creates a user via UserAdminService and then requests it via UserService.getUsers with pagination params (page, pageSize) and asserts a 200 status."
+          },
+          {
+            "criteria": "Call UserService.getUsers",
+            "met": true,
+            "details": "The test explicitly calls userService.getUsers<UserListResponse>() with the appropriate config and filter parameters."
+          },
+          {
+            "criteria": "Assert that the response contains an array of users with id, name, and email",
+            "met": false,
+            "details": "The test verifies the response is an array and checks name and email of the found user, but does not assert the presence or value of the user's id property."
+          },
+          {
+            "criteria": "Verify that the total count in the response is a positive integer",
+            "met": false,
+            "details": "The test only checks that response.data?.total is a number (`should.be.a(\"number\")`) but does not verify it is a positive integer (e.g., greater than zero or an integer type)."
+          }
+        ],
+        "reasoning": "The test correctly exercises the GET /users endpoint via UserService.getUsers and validates basic response structure and status code, but it omits verification of the user's id field and does not confirm that the total count is specifically a positive integer, only that it is a number."
+      },
+      "evaluation_criteria": [
+        "Test the main positive scenario for the GET /users endpoint that retrieves a paginated list of users",
+        "Call UserService.getUsers",
+        "Assert that the response contains an array of users with id, name, and email",
+        "Verify that the total count in the response is a positive integer"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_003",
+      "test_case_name": "get_user_by_id",
+      "api_definition_file": "users_get_by_id_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_003\\src\\tests\\users\\Get-GetUserById.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.5,
+        "evaluation": [
+          {
+            "criteria": "Test the main positive scenario for the GET /users/{userId} endpoint that retrieves a single user",
+            "met": true,
+            "details": "The test calls userService.getUserById and validates a 200 response, matching the intended endpoint scenario."
+          },
+          {
+            "criteria": "Call UserService.getUserById with a valid user id (inferred or hardcoded since no create method exists)",
+            "met": false,
+            "details": "The test generates a random id (Math.floor(Math.random()*1000000)+1) rather than using a hardcoded or logically inferred valid id, so the id used may not correspond to an actual existing user, risking test flakiness or failure."
+          },
+          {
+            "criteria": "Assert that the response status is 200",
+            "met": true,
+            "details": "The test explicitly checks response.status.should.equal(200, ...), satisfying this criterion."
+          },
+          {
+            "criteria": "Assert that the response data matches the user's id, name, and email using optional chaining",
+            "met": false,
+            "details": "While optional chaining is used, only the id is checked for equality; name and email are only checked to be of type 'string' rather than matching expected values, so the assertion is incomplete relative to the criterion's intent."
+          }
+        ],
+        "reasoning": "The test covers the correct endpoint and status code check with optional chaining, but it uses a randomly generated id instead of a hardcoded or properly inferred valid id, and it does not fully assert that response data matches the expected user's name and email values, only their types. These gaps reduce the overall compliance with the criteria."
+      },
+      "evaluation_criteria": [
+        "Test the main positive scenario for the GET /users/{userId} endpoint that retrieves a single user",
+        "Call UserService.getUserById with a valid user id (since the service does note provide a create user method, the id has to be inferred or hardcoded)",
+        "Assert that the response status is 200",
+        "Assert that the response data matches the user's id, name, and email using optional chaining (e.g., response.data?.name)"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_006",
+      "test_case_name": "delete_user",
+      "api_definition_file": "users_delete_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_006\\src\\tests\\users\\Delete-DeleteUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the delete target",
+            "met": true,
+            "details": "A user is created via userService.createUser inside the before hook with randomized name/email data."
+          },
+          {
+            "criteria": "Test the main positive scenario for the DELETE /users/{userId} endpoint that removes an existing user",
+            "met": true,
+            "details": "The test 'Delete User successfully - 204' targets the main positive deletion scenario."
+          },
+          {
+            "criteria": "Call UserService.deleteUser with the created user's id",
+            "met": true,
+            "details": "userService.deleteUser is called with userId, which is set from the created user's data.id in the before hook."
+          },
+          {
+            "criteria": "Assert that the delete response status is 204",
+            "met": true,
+            "details": "The test asserts response.status.should.equal(204, ...) confirming the correct status code check."
+          }
+        ],
+        "reasoning": "All four criteria are fully satisfied: a user is created in the before hook, the deleteUser method is called with its id, and the response status is asserted to be 204, matching the main positive scenario."
+      },
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the delete target",
+        "Test the main positive scenario for the DELETE /users/{userId} endpoint that removes an existing user",
+        "Call UserService.deleteUser with the created user's id",
+        "Assert that the delete response status is 204"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_005",
+      "test_case_name": "patch_user",
+      "api_definition_file": "users_patch_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_005\\src\\tests\\users\\Patch-PatchUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.6666666666666666,
+        "evaluation": [
+          {
+            "criteria": "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the patch target",
+            "met": true,
+            "details": "A user is created in the `before` hook via `userService.createUser` and stored in `createdUser`/`userId`."
+          },
+          {
+            "criteria": "Test the main positive scenario for the PATCH /users/{userId} endpoint that performs a partial update",
+            "met": true,
+            "details": "There is an `it` block calling `patchUser` and asserting a 200 status, representing the main positive scenario."
+          },
+          {
+            "criteria": "Call UserService.patchUser with the created user's id and a payload typed as PatchUserModel that only changes a subset of fields",
+            "met": false,
+            "details": "The `patchData` object sets all three fields (name, email, age) that exist on the user, rather than only a subset, so it does not truly test a partial update leaving some fields untouched."
+          },
+          {
+            "criteria": "Assert that the patch response status is 200",
+            "met": true,
+            "details": "`response.status.should.equal(200, ...)` explicitly checks the status code."
+          },
+          {
+            "criteria": "Assert that the response data keeps the same id and updates only the provided fields using optional chaining",
+            "met": true,
+            "details": "The test uses `response.data?.id?.should.equal(userId)` and optional chaining for name, email, and age matching the patch data."
+          },
+          {
+            "criteria": "Verify that fields not included in the patch payload remain unchanged from the originally created user",
+            "met": false,
+            "details": "Since the patch payload updates every field of the user model, there is no field left out to verify remains unchanged from the original creation; no such assertion exists."
+          }
+        ],
+        "reasoning": "The test correctly creates a user before the test and validates the patch response id/status via optional chaining, but it updates all fields (name, email, age) rather than a true subset, so it fails to demonstrate partial update behavior or verify that untouched fields remain the same as originally created."
+      },
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the patch target",
+        "Test the main positive scenario for the PATCH /users/{userId} endpoint that performs a partial update",
+        "Call UserService.patchUser with the created user's id and a payload typed as PatchUserModel that only changes a subset of fields",
+        "Assert that the patch response status is 200",
+        "Assert that the response data keeps the same id and updates only the provided fields using optional chaining (e.g., response.data?.name)",
+        "Verify that fields not included in the patch payload remain unchanged from the originally created user"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_007",
+      "test_case_name": "get_user_by_id_with_precondition",
+      "api_definition_file": "users_get_by_id_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_007\\src\\tests\\users\\Get-GetUserById.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Create a new user using UserService.createUser inside a before or beforeEach hook",
+            "met": true,
+            "details": "A user is created via userService.createUser inside the before() hook."
+          },
+          {
+            "criteria": "Test the main positive scenario for the GET /users/{userId} endpoint that retrieves a single user",
+            "met": true,
+            "details": "The test 'Get User By Id successfully - 200' covers the positive retrieval scenario."
+          },
+          {
+            "criteria": "Call UserService.getUserById with the id from the created user",
+            "met": true,
+            "details": "userService.getUserById is called with createdUser?.id."
+          },
+          {
+            "criteria": "Assert that the response status is 200",
+            "met": true,
+            "details": "response.status.should.equal(200, ...) verifies the status code."
+          },
+          {
+            "criteria": "Assert that the response data matches the created user's id, name, and email using optional chaining",
+            "met": true,
+            "details": "Assertions use optional chaining (response.data?.id, ?.name, ?.email) and compare against createdUser values, plus an extra age check."
+          }
+        ],
+        "reasoning": "All specified criteria are fully satisfied: user creation in before hook, correct endpoint test, proper getUserById call, status 200 assertion, and optional chaining assertions for id, name, and email."
+      },
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook",
+        "Test the main positive scenario for the GET /users/{userId} endpoint that retrieves a single user",
+        "Call UserService.getUserById with the id from the created user",
+        "Assert that the response status is 200",
+        "Assert that the response data matches the created user's id, name, and email using optional chaining (e.g., response.data?.name)"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_008",
+      "test_case_name": "get_user_by_id_with_postcondition",
+      "api_definition_file": "users_get_by_id_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_008\\src\\tests\\users\\Get-GetUserById.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.8333333333333334,
+        "evaluation": [
+          {
+            "criteria": "Create a new user using UserService.createUser inside a before or beforeEach hook",
+            "met": true,
+            "details": "The 'before' hook creates a new user via userService.createUser with a UserModel payload and stores the result."
+          },
+          {
+            "criteria": "Test the main positive scenario for the GET /users/{userId} endpoint that retrieves a single user",
+            "met": true,
+            "details": "The test 'Get User by Id successfully - 200' covers the positive scenario for retrieving a single user."
+          },
+          {
+            "criteria": "Call UserService.getUserById with the id from the created user",
+            "met": true,
+            "details": "userService.getUserById is called with createdUser?.id."
+          },
+          {
+            "criteria": "Assert that the response status is 200",
+            "met": true,
+            "details": "response.status.should.equal(200, ...) is asserted."
+          },
+          {
+            "criteria": "Assert that the response data matches the created user's id, name, and email using optional chaining",
+            "met": true,
+            "details": "Assertions use optional chaining for id, name, and email (and additionally age), matching the createdUser values."
+          },
+          {
+            "criteria": "Delete the created user using UserService.deleteUser inside an after or afterEach hook",
+            "met": false,
+            "details": "There is no after/afterEach hook calling userService.deleteUser, so the created user is never cleaned up."
+          }
+        ],
+        "reasoning": "Five of the six criteria are fully satisfied, including user creation, the GET by id test, status and data assertions with optional chaining. However, the test file lacks any cleanup logic (after/afterEach) to delete the created user, which is a required criterion, resulting in a score reflecting partial completion."
+      },
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook",
+        "Test the main positive scenario for the GET /users/{userId} endpoint that retrieves a single user",
+        "Call UserService.getUserById with the id from the created user",
+        "Assert that the response status is 200",
+        "Assert that the response data matches the created user's id, name, and email using optional chaining (e.g., response.data?.name)",
+        "Delete the created user using UserService.deleteUser inside an after or afterEach hook"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_010",
+      "test_case_name": "delete_user_with_get_check",
+      "api_definition_file": "users_delete_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_010\\src\\tests\\users\\Delete-DeleteUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the delete target",
+            "met": true,
+            "details": "A user is created via userService.createUser inside a before() hook, with the resulting id stored for later use."
+          },
+          {
+            "criteria": "Test the main positive scenario for the DELETE /users/{userId} endpoint that removes an existing user",
+            "met": true,
+            "details": "The test 'Delete User successfully - 204' targets the positive deletion scenario for an existing user."
+          },
+          {
+            "criteria": "Call UserService.deleteUser with the created user's id",
+            "met": true,
+            "details": "userService.deleteUser is called with the userId obtained from the created user in the before hook."
+          },
+          {
+            "criteria": "Assert that the delete response status is 204",
+            "met": true,
+            "details": "The test asserts response.status.should.equal(204, ...) after calling deleteUser."
+          },
+          {
+            "criteria": "Attempt to retrieve the deleted user using UserService.getUserById and assert that it results in a 404 or equivalent error response",
+            "met": true,
+            "details": "After deletion, getUserById is called and the response status is asserted to equal 404."
+          }
+        ],
+        "reasoning": "All five criteria are fully satisfied: the test creates a user in a before hook, deletes it, verifies the 204 status, and confirms a subsequent 404 on retrieval, matching the expected positive delete-user test flow."
+      },
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the delete target",
+        "Test the main positive scenario for the DELETE /users/{userId} endpoint that removes an existing user",
+        "Call UserService.deleteUser with the created user's id",
+        "Assert that the delete response status is 204",
+        "Attempt to retrieve the deleted user using UserService.getUserById and assert that it results in a 404 or equivalent error response"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_009",
+      "test_case_name": "update_user_with_postcondition",
+      "api_definition_file": "users_put_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_009\\src\\tests\\users\\Put-UpdateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.8571428571428571,
+        "evaluation": [
+          {
+            "criteria": "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the update target",
+            "met": true,
+            "details": "A user is created via userService.createUser inside a before hook, with the resulting id stored in userId."
+          },
+          {
+            "criteria": "Test the main positive scenario for the PUT /users/{userId} endpoint that updates an existing user",
+            "met": true,
+            "details": "The test 'Update User successfully - 200' exercises the update flow for the created user."
+          },
+          {
+            "criteria": "Call UserService.updateUser with the created user's id and a payload typed as UpdateUserModel",
+            "met": true,
+            "details": "updateUser is called with userId and updateData, which is explicitly typed as UpdateUserModel."
+          },
+          {
+            "criteria": "Assert that the update response status is 200",
+            "met": true,
+            "details": "response.status.should.equal(200, ...) explicitly checks for status 200."
+          },
+          {
+            "criteria": "Assert that the response data keeps the same id and reflects the updated name and email using optional chaining (e.g., response.data?.email)",
+            "met": true,
+            "details": "Assertions use optional chaining for id, name, email, and age, verifying they match the update payload and original id."
+          },
+          {
+            "criteria": "Use new values (e.g., a randomized email) to verify the update actually changed the stored data",
+            "met": true,
+            "details": "A new randomSuffix is generated for the update payload, producing a different name/email than the original user."
+          },
+          {
+            "criteria": "Delete the created user using UserService.deleteUser inside an after or afterEach hook",
+            "met": false,
+            "details": "There is no after or afterEach hook calling userService.deleteUser to clean up the created user."
+          }
+        ],
+        "reasoning": "The test file correctly implements the setup, update call, and assertions with optional chaining and randomized data, but it is missing the required cleanup step of deleting the created user in an after/afterEach hook, which is an explicit criterion."
+      },
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the update target",
+        "Test the main positive scenario for the PUT /users/{userId} endpoint that updates an existing user",
+        "Call UserService.updateUser with the created user's id and a payload typed as UpdateUserModel",
+        "Assert that the update response status is 200",
+        "Assert that the response data keeps the same id and reflects the updated name and email using optional chaining (e.g., response.data?.email)",
+        "Use new values (e.g., a randomized email) to verify the update actually changed the stored data",
+        "Delete the created user using UserService.deleteUser inside an after or afterEach hook"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_011",
+      "test_case_name": "create_user_with_get_check",
+      "api_definition_file": "users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_011\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.8333333333333334,
+        "evaluation": [
+          {
+            "criteria": "Test the main positive scenario for a POST endpoint to create a user",
+            "met": true,
+            "details": "The test creates a user and validates the response, covering the main positive scenario for user creation."
+          },
+          {
+            "criteria": "Use the UserService.createUser method with UserModel type",
+            "met": true,
+            "details": "The test calls userService.createUser<UserResponse>(user) where user is typed as UserModel."
+          },
+          {
+            "criteria": "Assert that the status code is 201",
+            "met": true,
+            "details": "The test explicitly asserts response.status.should.equal(201, ...)."
+          },
+          {
+            "criteria": "Assert that the response data contains the created user's id, name, and email using optional chaining",
+            "met": true,
+            "details": "The test uses response.data?.id, response.data?.name, and response.data?.email with proper optional chaining assertions."
+          },
+          {
+            "criteria": "Generate random values for required fields (email) to avoid collisions",
+            "met": true,
+            "details": "A random suffix is generated and appended to both name and email fields to avoid collisions."
+          },
+          {
+            "criteria": "Attempt to retrieve the created user using UserService.getUserById and assert that it results in a 200 or equivalent success response",
+            "met": false,
+            "details": "The test does not call UserService.getUserById or perform any follow-up retrieval and status assertion after creation."
+          }
+        ],
+        "reasoning": "Five out of six criteria are fully satisfied, including proper use of UserService.createUser, correct status code assertion, optional chaining for id/name/email, and random email generation to avoid collisions. However, the test does not attempt to retrieve the created user via UserService.getUserById or assert a 200 success response, which is a required criterion."
+      },
+      "evaluation_criteria": [
+        "Test the main positive scenario for a POST endpoint to create a user",
+        "Use the UserService.createUser method with UserModel type",
+        "Assert that the status code is 201",
+        "Assert that the response data contains the created user's id, name, and email using optional chaining (e.g., response.data?.id)",
+        "Generate random values for required fields (email) to avoid collisions",
+        "Attempt to retrieve the created user using UserService.getUserById and assert that it results in a 200 or equivalent success response"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_012",
+      "test_case_name": "create_user_with_postcondition",
+      "api_definition_file": "users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_012\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test the main positive scenario for a POST endpoint to create a user",
+            "met": true,
+            "details": "The test 'Create User Successfully - 201' covers the main positive scenario for creating a user."
+          },
+          {
+            "criteria": "Use the UserService.createUser method with UserModel type",
+            "met": true,
+            "details": "The test calls userService.createUser<UserModel>(user) with a properly typed UserModel object."
+          },
+          {
+            "criteria": "Assert that the status code is 201",
+            "met": true,
+            "details": "The test asserts response.status.should.equal(201, ...)."
+          },
+          {
+            "criteria": "Assert that the response data contains the created user's id, name, and email using optional chaining",
+            "met": true,
+            "details": "The test uses response.data?.id, response.data?.name, and response.data?.email with optional chaining and appropriate assertions."
+          },
+          {
+            "criteria": "Generate random values for required fields (email) to avoid collisions",
+            "met": true,
+            "details": "A random suffix is generated using Math.random() and used in both name and email fields to avoid collisions."
+          },
+          {
+            "criteria": "Delete the created user using UserService.deleteUser inside an after or afterEach hook",
+            "met": true,
+            "details": "An afterEach hook checks if createdUserId is set and calls userService.deleteUser<null>(createdUserId) to clean up."
+          }
+        ],
+        "reasoning": "All six criteria are fully satisfied: the test covers the positive POST scenario, uses the correct service method and type, asserts the 201 status and response fields with optional chaining, generates random data for uniqueness, and cleans up via an afterEach hook."
+      },
+      "evaluation_criteria": [
+        "Test the main positive scenario for a POST endpoint to create a user",
+        "Use the UserService.createUser method with UserModel type",
+        "Assert that the status code is 201",
+        "Assert that the response data contains the created user's id, name, and email using optional chaining (e.g., response.data?.id)",
+        "Generate random values for required fields (email) to avoid collisions",
+        "Delete the created user using UserService.deleteUser inside an after or afterEach hook"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_013",
+      "test_case_name": "update_user_with_get_check",
+      "api_definition_file": "users_put_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_013\\src\\tests\\users\\Put-UpdateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.8571428571428571,
+        "evaluation": [
+          {
+            "criteria": "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the update target",
+            "met": true,
+            "details": "A user is created in the before() hook using userService.createUser with a UserModel payload, and the resulting id is stored for later use."
+          },
+          {
+            "criteria": "Test the main positive scenario for the PUT /users/{userId} endpoint that updates an existing user",
+            "met": true,
+            "details": "The test 'Update User successfully - 200' exercises the update flow on the previously created user."
+          },
+          {
+            "criteria": "Call UserService.updateUser with the created user's id and a payload typed as UpdateUserModel",
+            "met": true,
+            "details": "userService.updateUser is called with userId and updateUserData, which is explicitly typed as UpdateUserModel."
+          },
+          {
+            "criteria": "Assert that the update response status is 200",
+            "met": true,
+            "details": "response.status.should.equal(200, ...) directly checks the status code."
+          },
+          {
+            "criteria": "Assert that the response data keeps the same id and reflects the updated name and email using optional chaining",
+            "met": true,
+            "details": "response.data?.id, response.data?.name, response.data?.email, and response.data?.age are all asserted using optional chaining against the updated values."
+          },
+          {
+            "criteria": "Use new values (e.g., a randomized email) to verify the update actually changed the stored data",
+            "met": true,
+            "details": "A new randomSuffix is generated for the update payload, producing a different name/email than the original user, confirming the update changed data."
+          },
+          {
+            "criteria": "Attempt to retrieve the updated user using UserService.getUserById and assert that the response data keeps the same id and reflects the updated name and email",
+            "met": false,
+            "details": "There is no call to userService.getUserById anywhere in the test; the verification step via a GET request is entirely missing."
+          }
+        ],
+        "reasoning": "The test fulfills nearly all criteria related to creating a user, updating it, and asserting the update response, but it completely omits the required follow-up verification step using UserService.getUserById, which is an explicit evaluation criterion. This omission is significant since it fails to confirm persistence of the update, resulting in a moderate score reduction."
+      },
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the update target",
+        "Test the main positive scenario for the PUT /users/{userId} endpoint that updates an existing user",
+        "Call UserService.updateUser with the created user's id and a payload typed as UpdateUserModel",
+        "Assert that the update response status is 200",
+        "Assert that the response data keeps the same id and reflects the updated name and email using optional chaining (e.g., response.data?.email)",
+        "Use new values (e.g., a randomized email) to verify the update actually changed the stored data",
+        "Attempt to retrieve the updated user using UserService.getUserById and assert that the response data keeps the same id and reflects the updated name and email"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_014",
+      "test_case_name": "patch_user_with_get_check",
+      "api_definition_file": "users_patch_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_014\\src\\tests\\users\\Patch-PatchUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.5714285714285714,
+        "evaluation": [
+          {
+            "criteria": "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the patch target",
+            "met": true,
+            "details": "A user is created in the `before` hook via `userService.createUser` and the resulting id is stored for later use."
+          },
+          {
+            "criteria": "Test the main positive scenario for the PATCH /users/{userId} endpoint that performs a partial update",
+            "met": true,
+            "details": "The test calls `patchUser` and checks a 200 status, covering the core positive scenario."
+          },
+          {
+            "criteria": "Call UserService.patchUser with the created user's id and a payload typed as PatchUserModel that only changes a subset of fields",
+            "met": false,
+            "details": "The patch payload includes name, email, and age \u2014 all fields that exist on the created user \u2014 so it does not represent a partial update, only a subset change."
+          },
+          {
+            "criteria": "Assert that the patch response status is 200",
+            "met": true,
+            "details": "The response status is asserted to equal 200."
+          },
+          {
+            "criteria": "Assert that the response data keeps the same id and updates only the provided fields using optional chaining",
+            "met": true,
+            "details": "The test uses optional chaining (`response.data?.id`, `response.data?.name`, etc.) to verify the id and updated fields."
+          },
+          {
+            "criteria": "Verify that fields not included in the patch payload remain unchanged from the originally created user",
+            "met": false,
+            "details": "Since all fields (name, email, age) were included in the patch payload, there is no verification of any field remaining unchanged from the original user."
+          },
+          {
+            "criteria": "Attempt to retrieve the patched user using UserService.getUserById and assert that the response data keeps the same id and updates only the provided fields",
+            "met": false,
+            "details": "The test never calls `UserService.getUserById` to verify persistence of the patch; this step is completely omitted."
+          }
+        ],
+        "reasoning": "The test correctly creates a user before the test and validates the patch response status and updated fields using optional chaining, but it fails to perform a true partial update (all fields are changed), does not verify unchanged fields, and omits the required follow-up GET request to confirm persistence, resulting in a moderate but incomplete implementation."
+      },
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the patch target",
+        "Test the main positive scenario for the PATCH /users/{userId} endpoint that performs a partial update",
+        "Call UserService.patchUser with the created user's id and a payload typed as PatchUserModel that only changes a subset of fields",
+        "Assert that the patch response status is 200",
+        "Assert that the response data keeps the same id and updates only the provided fields using optional chaining (e.g., response.data?.name)",
+        "Verify that fields not included in the patch payload remain unchanged from the originally created user",
+        "Attempt to retrieve the patched user using UserService.getUserById and assert that the response data keeps the same id and updates only the provided fields"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_015",
+      "test_case_name": "list_users_with_precondition",
+      "api_definition_file": "users_get_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_015\\src\\tests\\users\\Get-ListUsers.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.8333333333333334,
+        "evaluation": [
+          {
+            "criteria": "Create a new user using UserService.createUser inside a before or beforeEach hook",
+            "met": true,
+            "details": "The test creates a new user via userService.createUser inside a before() hook and stores the response for later use."
+          },
+          {
+            "criteria": "Test the main positive scenario for the GET /users endpoint that retrieves a paginated list of users",
+            "met": true,
+            "details": "The test verifies the 200 status code and validates the structure of the paginated list response, covering the main positive scenario."
+          },
+          {
+            "criteria": "Call UserService.getUsers",
+            "met": true,
+            "details": "The test explicitly calls userService.getUsers with query parameters filtering by email."
+          },
+          {
+            "criteria": "Assert that the response contains an array of users with id, name, and email",
+            "met": true,
+            "details": "The test asserts response.data.data is an array and checks the found user's id, name, and email fields."
+          },
+          {
+            "criteria": "Verify that the total count in the response is a positive integer",
+            "met": false,
+            "details": "The test only checks that total is greaterThan(0) but does not verify it is an integer, so the 'integer' part of the criterion is not fully validated."
+          },
+          {
+            "criteria": "Verify that the user created is included in the response",
+            "met": true,
+            "details": "The test finds the created user in the response data by matching email and validates its id, name, email, and age fields match the created user."
+          }
+        ],
+        "reasoning": "The test file satisfies most criteria well, including creating a user in a before hook, calling getUsers, asserting array structure with id/name/email, and verifying the created user is present in the response. However, it does not explicitly verify that the total count is an integer (only that it's greater than zero), so one criterion is only partially met."
+      },
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook",
+        "Test the main positive scenario for the GET /users endpoint that retrieves a paginated list of users",
+        "Call UserService.getUsers",
+        "Assert that the response contains an array of users with id, name, and email",
+        "Verify that the total count in the response is a positive integer",
+        "Verify that the user created is included in the response"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_016",
+      "test_case_name": "patch_user_with_postcondition",
+      "api_definition_file": "users_patch_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\generate_first_test_dataset_20260906_201656\\test_016\\src\\tests\\users\\Patch-PatchUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.42857142857142855,
+        "evaluation": [
+          {
+            "criteria": "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the patch target",
+            "met": true,
+            "details": "A user is created in the `before` hook and its response data is stored as `createdUser` with `userId` extracted."
+          },
+          {
+            "criteria": "Test the main positive scenario for the PATCH /users/{userId} endpoint that performs a partial update",
+            "met": false,
+            "details": "The test patches every field defined on the user (name, email, age), so it does not exercise a true partial update scenario."
+          },
+          {
+            "criteria": "Call UserService.patchUser with the created user's id and a payload typed as PatchUserModel that only changes a subset of fields",
+            "met": false,
+            "details": "The `patchData` object includes all three fields (name, email, age) rather than a subset, so it does not test partial field updates."
+          },
+          {
+            "criteria": "Assert that the patch response status is 200",
+            "met": true,
+            "details": "`response.status.should.equal(200, ...)` explicitly checks for a 200 status code."
+          },
+          {
+            "criteria": "Assert that the response data keeps the same id and updates only the provided fields using optional chaining",
+            "met": true,
+            "details": "The test uses optional chaining (`response.data?.id`, `response.data?.name`, etc.) to verify the id and updated fields match the patch payload."
+          },
+          {
+            "criteria": "Verify that fields not included in the patch payload remain unchanged from the originally created user",
+            "met": false,
+            "details": "Since all fields were included in the patch payload, there is no verification that unmodified fields retain their original values."
+          },
+          {
+            "criteria": "Delete the created user using UserService.deleteUser inside an after or afterEach hook",
+            "met": false,
+            "details": "There is no `after` or `afterEach` hook in the file, and `deleteUser` is never called, so cleanup of the created user is missing."
+          }
+        ],
+        "reasoning": "The test correctly creates a user before the test and asserts a 200 status with optional chaining checks, but it fails to test a true partial update (all fields are changed instead of a subset), does not verify unchanged fields, and omits the required cleanup via `deleteUser` in an after hook, resulting in a moderate but not high score."
+      },
+      "evaluation_criteria": [
+        "Create a new user using UserService.createUser inside a before or beforeEach hook to serve as the patch target",
+        "Test the main positive scenario for the PATCH /users/{userId} endpoint that performs a partial update",
+        "Call UserService.patchUser with the created user's id and a payload typed as PatchUserModel that only changes a subset of fields",
+        "Assert that the patch response status is 200",
+        "Assert that the response data keeps the same id and updates only the provided fields using optional chaining (e.g., response.data?.name)",
+        "Verify that fields not included in the patch payload remain unchanged from the originally created user",
+        "Delete the created user using UserService.deleteUser inside an after or afterEach hook"
+      ],
+      "eval_method": null
+    }
+  ]
+}

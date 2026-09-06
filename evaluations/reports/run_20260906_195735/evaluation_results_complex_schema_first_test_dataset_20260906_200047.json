@@ -1,0 +1,288 @@
+{
+  "dataset_name": "complex_schema_first_test_dataset",
+  "llm_model": "claude-opus-5",
+  "total_test_cases": 6,
+  "graded_count": 6,
+  "not_evaluated_count": 0,
+  "error_count": 0,
+  "total_input_tokens": 40185,
+  "total_output_tokens": 5330,
+  "total_cost": 0.334175,
+  "average_score": 0.9583333333333334,
+  "generated_files_path": "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\complex_schema_first_test_dataset_20260906_200022",
+  "results": [
+    {
+      "test_id": "test_004",
+      "test_case_name": "enum_query_params",
+      "api_definition_file": "test_004_enum_params_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\complex_schema_first_test_dataset_20260906_200022\\test_004\\src\\models\\responses\\ReportModel.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\complex_schema_first_test_dataset_20260906_200022\\test_004\\src\\tests\\reports\\Get-GetReports.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test GET /reports with all-enum query parameters",
+            "met": true,
+            "details": "The test calls getReports with type, format, and period parameters, which appear to be enum-based query parameters based on their usage."
+          },
+          {
+            "criteria": "Use valid enum values for type, format, and period parameters",
+            "met": true,
+            "details": "The test uses 'sales', 'json', and 'monthly' as values, which are plausible valid enum values, though the actual enum definitions in ReportService are not visible to confirm validity."
+          },
+          {
+            "criteria": "Assert status code is 200",
+            "met": true,
+            "details": "The test explicitly asserts response.status.should.equal(200, ...)."
+          },
+          {
+            "criteria": "Assert response contains report data",
+            "met": true,
+            "details": "The test asserts multiple fields including reportId, type, format, period, data (as an array), and generatedAt, confirming report data is present and correctly structured."
+          }
+        ],
+        "reasoning": "All four criteria are satisfied: the test targets GET /reports with enum-like query parameters (type, format, period), uses plausible valid values, asserts a 200 status code, and validates the presence and structure of report data fields. The score is not a perfect 1.0 only because the actual enum definitions are not visible in the provided files to fully confirm parameter validity."
+      },
+      "evaluation_criteria": [
+        "Test GET /reports with all-enum query parameters",
+        "Use valid enum values for type, format, and period parameters",
+        "Assert status code is 200",
+        "Assert response contains report data"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_001",
+      "test_case_name": "allof_composition",
+      "api_definition_file": "test_001_allof_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\complex_schema_first_test_dataset_20260906_200022\\test_001\\src\\models\\requests\\EmployeeModel.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\complex_schema_first_test_dataset_20260906_200022\\test_001\\src\\models\\responses\\EmployeeResponse.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\complex_schema_first_test_dataset_20260906_200022\\test_001\\src\\tests\\employees\\Post-CreateEmployee.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test POST /employees with allOf composed schema",
+            "met": true,
+            "details": "The spec calls employeeService.createEmployee(employee) which corresponds to POST /employees, using EmployeeModel that combines PersonBase and EmploymentDetails fields."
+          },
+          {
+            "criteria": "Assert response contains fields from both PersonBase (firstName, lastName, email) and EmploymentDetails (department, position, startDate)",
+            "met": true,
+            "details": "The test asserts firstName, lastName, email, department, position, and startDate all match the expected values from the request."
+          },
+          {
+            "criteria": "Assert status code is 201",
+            "met": true,
+            "details": "The test explicitly checks response.status.should.equal(201, ...)."
+          },
+          {
+            "criteria": "Use proper optional chaining for response assertions",
+            "met": true,
+            "details": "All response.data field accesses use optional chaining (e.g., response.data?.firstName?.should.equal(...))."
+          }
+        ],
+        "reasoning": "All four criteria are clearly satisfied in the generated test file; the test covers the allOf composed schema fields, asserts 201 status, and consistently uses optional chaining for safe property access."
+      },
+      "evaluation_criteria": [
+        "Test POST /employees with allOf composed schema",
+        "Assert response contains fields from both PersonBase (firstName, lastName, email) and EmploymentDetails (department, position, startDate)",
+        "Assert status code is 201",
+        "Use proper optional chaining for response assertions"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_002",
+      "test_case_name": "oneof_notification",
+      "api_definition_file": "test_002_oneof_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\complex_schema_first_test_dataset_20260906_200022\\test_002\\src\\models\\requests\\NotificationModels.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\complex_schema_first_test_dataset_20260906_200022\\test_002\\src\\models\\responses\\NotificationResponse.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\complex_schema_first_test_dataset_20260906_200022\\test_002\\src\\tests\\notifications\\Post-SendNotification.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test POST /notifications with oneOf schema",
+            "met": true,
+            "details": "The test uses NotificationService.sendNotification which implies a POST to /notifications, and the model definitions use a discriminated union (oneOf-style) for email, sms, and push notification types."
+          },
+          {
+            "criteria": "Use one valid notification type (email, sms, or push)",
+            "met": true,
+            "details": "The test constructs and sends a valid EmailNotificationModel object with all required fields (to, subject, body) populated with randomized data."
+          },
+          {
+            "criteria": "Assert status code is 201",
+            "met": true,
+            "details": "The test explicitly asserts response.status.should.equal(201, ...)."
+          },
+          {
+            "criteria": "Assert response contains the notification id and type",
+            "met": true,
+            "details": "The test asserts response.data?.id?.should.be.a('string') and response.data?.type?.should.equal(emailNotification.type), confirming both id and type are present and correct."
+          }
+        ],
+        "reasoning": "All four criteria are fully satisfied: the test targets the notification creation endpoint with a valid email notification payload, asserts a 201 status code, and validates both the id and type fields in the response, along with additional reasonable assertions on status and sentAt."
+      },
+      "evaluation_criteria": [
+        "Test POST /notifications with oneOf schema",
+        "Use one valid notification type (email, sms, or push)",
+        "Assert status code is 201",
+        "Assert response contains the notification id and type"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_003",
+      "test_case_name": "array_of_objects_invoice",
+      "api_definition_file": "test_003_array_of_objects_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\complex_schema_first_test_dataset_20260906_200022\\test_003\\src\\models\\responses\\InvoiceResponse.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\complex_schema_first_test_dataset_20260906_200022\\test_003\\src\\tests\\invoices\\Post-CreateInvoice.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test POST /invoices with nested lineItems array of objects",
+            "met": true,
+            "details": "The test calls invoiceService.createInvoice with an invoice object containing a lineItems array of objects, presumably mapping to a POST /invoices endpoint."
+          },
+          {
+            "criteria": "Include at least one line item with description, quantity, unitPrice, and tax",
+            "met": true,
+            "details": "Both line items in the test data include description, quantity, unitPrice, and tax fields fully populated."
+          },
+          {
+            "criteria": "Assert status code is 201",
+            "met": true,
+            "details": "The test explicitly asserts response.status.should.equal(201, ...)."
+          },
+          {
+            "criteria": "Assert response contains lineItems array with proper structure",
+            "met": true,
+            "details": "The test checks lengthOf on lineItems and asserts each field (description, quantity, unitPrice, tax) for both line items against the request data."
+          },
+          {
+            "criteria": "Assert response totalAmount is a number",
+            "met": true,
+            "details": "The test asserts response.data?.totalAmount?.should.be.a(\"number\")."
+          }
+        ],
+        "reasoning": "All five criteria are explicitly and correctly satisfied in the test file: proper POST invocation with nested lineItems, full line item fields, 201 status assertion, structural validation of lineItems, and type assertion for totalAmount."
+      },
+      "evaluation_criteria": [
+        "Test POST /invoices with nested lineItems array of objects",
+        "Include at least one line item with description, quantity, unitPrice, and tax",
+        "Assert status code is 201",
+        "Assert response contains lineItems array with proper structure",
+        "Assert response totalAmount is a number"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_006",
+      "test_case_name": "swagger_v2_format",
+      "api_definition_file": "test_006_openapi_v2_api.json",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\complex_schema_first_test_dataset_20260906_200022\\test_006\\src\\models\\requests\\PetModel.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\complex_schema_first_test_dataset_20260906_200022\\test_006\\src\\models\\responses\\PetResponse.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\complex_schema_first_test_dataset_20260906_200022\\test_006\\src\\tests\\pets\\Post-CreatePet.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Test POST /pets endpoint from Swagger 2.0 spec",
+            "met": true,
+            "details": "The test uses petService.createPet(pet) which is implied to call POST /pets, consistent with creating a new pet resource."
+          },
+          {
+            "criteria": "Use PetService.createPet method",
+            "met": true,
+            "details": "The test explicitly calls petService.createPet<PetResponse>(pet), satisfying this requirement."
+          },
+          {
+            "criteria": "Assert status code is 201 or 200",
+            "met": true,
+            "details": "The test asserts response.status.should.equal(201, ...), which matches one of the acceptable status codes."
+          },
+          {
+            "criteria": "Assert response contains pet id and name",
+            "met": true,
+            "details": "The test asserts response.data?.id?.should.not.be.empty and response.data?.name?.should.equal(pet.name), confirming both id and name are validated."
+          }
+        ],
+        "reasoning": "All four criteria are fully satisfied: the test targets pet creation via PetService.createPet, asserts a 201 status code, and validates both id and name in the response. The implementation is clean and well-structured, warranting a high score."
+      },
+      "evaluation_criteria": [
+        "Test POST /pets endpoint from Swagger 2.0 spec",
+        "Use PetService.createPet method",
+        "Assert status code is 201 or 200",
+        "Assert response contains pet id and name"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_005",
+      "test_case_name": "header_params",
+      "api_definition_file": "test_005_header_params_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\complex_schema_first_test_dataset_20260906_200022\\test_005\\src\\models\\responses\\TenantConfigModel.ts",
+        "C:\\Users\\Damian Pereira\\repos\\api-automation-agent\\evaluations\\reports\\run_20260906_195735\\generated-files\\complex_schema_first_test_dataset_20260906_200022\\test_005\\src\\tests\\tenants\\Get-GetTenantConfig.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.75,
+        "evaluation": [
+          {
+            "criteria": "Test GET /tenants/config with required header parameters",
+            "met": true,
+            "details": "The test calls tenantService.getTenantConfig with apiVersion, tenantId, and language parameters, implying a GET request to /tenants/config with header parameters, though the actual endpoint URL and header wiring is not visible in the provided files (service implementation not included)."
+          },
+          {
+            "criteria": "Include X-API-Version, X-Tenant-ID, and Accept-Language headers",
+            "met": false,
+            "details": "The spec file passes apiVersion, tenantId, and language values to the service call, but the TenantService implementation is not included in the generated files, so it cannot be confirmed that these values are mapped to X-API-Version, X-Tenant-ID, and Accept-Language headers specifically."
+          },
+          {
+            "criteria": "Assert status code is 200",
+            "met": true,
+            "details": "The test explicitly asserts response.status.should.equal(200, ...)."
+          },
+          {
+            "criteria": "Assert response contains tenant configuration",
+            "met": true,
+            "details": "The test asserts several fields on response.data (tenantId, apiVersion, locale, name, features), confirming the response contains tenant configuration data matching the TenantConfigModel."
+          }
+        ],
+        "reasoning": "The spec file correctly asserts a 200 status and validates tenant configuration fields against the TenantConfigModel, satisfying two criteria fully. However, since the TenantService implementation file is not provided, it cannot be verified that the header names (X-API-Version, X-Tenant-ID, Accept-Language) are correctly used, leading to a partial deduction for that criterion."
+      },
+      "evaluation_criteria": [
+        "Test GET /tenants/config with required header parameters",
+        "Include X-API-Version, X-Tenant-ID, and Accept-Language headers",
+        "Assert status code is 200",
+        "Assert response contains tenant configuration"
+      ],
+      "eval_method": null
+    }
+  ]
+}
