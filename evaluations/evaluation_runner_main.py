@@ -330,7 +330,7 @@ def parse_args() -> argparse.Namespace:
         help=(
             "Optional: Comma-separated list of LLM models to evaluate. "
             f"Choices: {', '.join(_get_llm_choices())}. "
-            "Example: --llms GPT_5_6_SOL,CLAUDE_SONNET_5"
+            "Example: --llms GPT_6_1_SOL,CLAUDE_SONNET_5_5"
         ),
     )
 
@@ -353,7 +353,7 @@ def parse_args() -> argparse.Namespace:
             "Optional: LLM model to use for grading. "
             f"Choices: {', '.join(_get_llm_choices())}. "
             "If not provided, uses GRADER_MODEL from .env (or MODEL if GRADER_MODEL is not set). "
-            "Example: --grader CLAUDE_SONNET_5"
+            "Example: --grader CLAUDE_SONNET_5_5"
         ),
     )
 
@@ -380,9 +380,9 @@ def main():
             if grader_model_env in [model.value for model in Model]:
                 grader_model = next(m for m in Model if m.value == grader_model_env)
             else:
-                grader_model = Model.CLAUDE_SONNET_5
+                grader_model = Model.CLAUDE_SONNET_5_5
         else:
-            grader_model = Model.CLAUDE_SONNET_5
+            grader_model = Model.CLAUDE_SONNET_5_5
 
     dataset_folders: list[str] = []
 

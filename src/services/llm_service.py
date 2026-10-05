@@ -4,7 +4,9 @@ import pydantic
 from langchain_anthropic import ChatAnthropic
 from langchain_aws.chat_models.bedrock_converse import ChatBedrockConverse
 from langchain_core.language_models import BaseLanguageModel
+from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import BaseTool
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
@@ -107,10 +109,15 @@ class LLMService:
                 )
             if self.config.model.is_bedrock():
                 bedrock_kwargs = {
-                    "model": self.config.model.value,
+                    "model": self.config.model.bedrock_invocation_id,
                     "max_tokens": 8192,
                     "region_name": self.config.aws_region or "us-east-1",
                 }
+                if self.config.model.bedrock_provider in {"anthropic", "openai"}:
+                    bedrock_kwargs["provider"] = self.config.model.bedrock_provider
+                    bedrock_kwargs["supports_tool_choice_values"] = (
+                        self.config.model.bedrock_tool_choice_values
+                    )
                 if not self.config.model.uses_default_sampling():
                     bedrock_kwargs["temperature"] = 1
 
@@ -126,14 +133,12 @@ class LLMService:
                 "max_retries": 3,
                 "api_key": pydantic.SecretStr(self.config.openai_api_key),
             }
-            if not self.config.model.uses_default_sampling():
+            if self.config.model.requires_responses_api():
+                openai_kwargs["use_responses_api"] = True
+            if not self.config.model.uses_default_sampling(use_function_tools):
                 openai_kwargs["temperature"] = 1
-            if use_function_tools and self.config.model in {
-                Model.GPT_5_6_SOL,
-                Model.GPT_5_6_TERRA,
-                Model.GPT_5_6_LUNA,
-            }:
-                openai_kwargs["reasoning_effort"] = "none"
+            if use_function_tools and self.config.model.is_openai():
+                openai_kwargs["reasoning_effort"] = self.config.model.tool_reasoning_effort()
             return ChatOpenAI(**openai_kwargs)
         except Exception as e:
             self.logger.error(f"Model initialization error: {e}")
@@ -188,9 +193,12 @@ class LLMService:
         """
         try:
             all_tools = tools or []
+            if must_use_tool and not all_tools:
+                raise ValueError("A required-tool chain must provide at least one tool")
 
             llm = self._select_language_model(language_model, use_function_tools=bool(tools))
             prompt_template = ChatPromptTemplate.from_template(self._load_prompt(prompt_path))
+            request_model = self.config.model
 
             if tools:
                 tool_choice = "auto"
@@ -199,7 +207,7 @@ class LLMService:
                     or self.config.model.is_google()
                     or self.config.model.is_bedrock()
                 ):
-                    if must_use_tool:
+                    if must_use_tool and request_model.supports_forced_tool_use():
                         tool_choice = "any"
                 else:
                     if must_use_tool:
@@ -208,11 +216,11 @@ class LLMService:
             else:
                 llm_with_tools = llm
 
-            def process_response(response):
+            def record_usage(response):
                 if response.usage_metadata is not None:
                     try:
                         current_usage_metadata = LLMCallUsageData.model_validate(response.usage_metadata)
-                        cost = self._calculate_llm_call_cost(self.config.model, current_usage_metadata)
+                        cost = self._calculate_llm_call_cost(request_model, current_usage_metadata)
                         current_usage_metadata.cost = cost
                         self.aggregated_usage_metadata.add_call_usage(current_usage_metadata)
                     except Exception as validation_error:
@@ -225,22 +233,78 @@ class LLMService:
                     current_usage_metadata = LLMCallUsageData()
                     self.aggregated_usage_metadata.add_call_usage(current_usage_metadata)
 
-                tool_map = {tool.name.lower(): tool for tool in all_tools}
+            tool_map = {tool.name.lower(): tool for tool in all_tools}
 
-                if response.tool_calls:
-                    tool_call = response.tool_calls[0]
-                    selected_tool = tool_map.get(tool_call["name"].lower())
+            def valid_tool_call(response):
+                for call in response.tool_calls or []:
+                    if (
+                        isinstance(call.get("name"), str)
+                        and call["name"].lower() in tool_map
+                        and isinstance(call.get("args"), dict)
+                    ):
+                        tool = tool_map[call["name"].lower()]
+                        schema = getattr(tool, "args_schema", None)
+                        if isinstance(schema, type) and issubclass(schema, pydantic.BaseModel):
+                            try:
+                                # File tools repair JSON-encoded lists before schema validation.
+                                args = (
+                                    tool._parse_input(call["args"])
+                                    if isinstance(tool, FileCreationTool)
+                                    else call["args"]
+                                )
+                                schema.model_validate(args)
+                            except (ValueError, TypeError, KeyError):
+                                continue
+                        return call
+                return None
 
-                    if selected_tool:
-                        return selected_tool.invoke(tool_call["args"])
+            def invoke_required_tool(prompt):
+                response = llm_with_tools.invoke(prompt)
+                if valid_tool_call(response) is not None:
+                    return response
+                record_usage(response)
+                messages = prompt.to_messages()
+                messages.append(
+                    HumanMessage(
+                        content="Call one of the provided tools with valid arguments to complete this task. "
+                        "Do not return prose instead of the required tool call."
+                    )
+                )
+                response = llm_with_tools.invoke(messages)
+                if valid_tool_call(response) is None:
+                    record_usage(response)
+                    raise ValueError("Model failed to call a provided tool after two attempts")
+                return response
 
-                return response.content
+            def process_response(response):
+                record_usage(response)
+                tool_call = valid_tool_call(response)
+                if tool_call is not None:
+                    return tool_map[tool_call["name"].lower()].invoke(tool_call["args"])
 
-            return prompt_template | llm_with_tools | process_response
+                return self._response_text(response)
+
+            model_step = RunnableLambda(invoke_required_tool) if must_use_tool else llm_with_tools
+            return prompt_template | model_step | process_response
 
         except Exception as e:
             self.logger.error(f"Chain creation error: {e}")
             raise
+
+    @staticmethod
+    def _response_text(response: object) -> str:
+        """Return visible text without reasoning or tool blocks."""
+        content = response.content
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            return "".join(
+                block if isinstance(block, str) else block.get("text", "")
+                for block in content
+                if isinstance(block, str)
+                or (isinstance(block, dict) and block.get("type") in {"text", "output_text"})
+            )
+        return str(content)
 
     def generate_models(self, definition_content: str) -> List[ModelFileSpec]:
         """Generate models for the API definition."""

@@ -1,0 +1,199 @@
+{
+  "dataset_name": "prompt_adherence_dataset",
+  "llm_model": "gpt-6.1-sol",
+  "total_test_cases": 6,
+  "graded_count": 6,
+  "not_evaluated_count": 0,
+  "error_count": 0,
+  "total_input_tokens": 22350,
+  "total_output_tokens": 3360,
+  "total_cost": 0.07830000000000001,
+  "average_score": 0.8333333333333334,
+  "generated_files_path": "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\prompt_adherence_dataset_20261004_220207",
+  "results": [
+    {
+      "test_id": "test_003",
+      "test_case_name": "no_response_file",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\prompt_adherence_dataset_20261004_220207\\test_003\\src\\models\\responses\\UserResponseModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\prompt_adherence_dataset_20261004_220207\\test_003\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should not create or reference a Response.ts file",
+            "met": true,
+            "details": "Regex pattern 'Response\\.ts' correctly not found in generated code"
+          },
+          {
+            "criteria": "The test should work without relying on a separate Response.ts model",
+            "met": true,
+            "details": "The test imports only UserModel, UserResponseModel and UserService, with no import of a Response.ts model. It treats the value returned by createUser<UserResponseModel> as the body and asserts on its fields directly, so no response envelope is needed."
+          }
+        ],
+        "reasoning": "Hybrid prompt adherence: 2/2 criteria met (1 rule-based, 1 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "The test should work without relying on a separate Response.ts model"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_001",
+      "test_case_name": "single_test_only",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\prompt_adherence_dataset_20261004_220207\\test_001\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should contain at least one it() block",
+            "met": true,
+            "details": "Regex pattern 'it\\(' matched in generated code"
+          },
+          {
+            "criteria": "Test covers the main positive scenario (creating a user successfully)",
+            "met": true,
+            "details": "The test creates a user with unique valid data (name, email, age) through UserService.createUser. It asserts that the response is an object with a non-empty id and that name, email and age match the request, which covers the happy path. It does not check the HTTP status code, but the service does not expose it, and the test notes this."
+          }
+        ],
+        "reasoning": "Hybrid prompt adherence: 2/2 criteria met (1 rule-based, 1 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "Test covers the main positive scenario (creating a user successfully)"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_004",
+      "test_case_name": "proper_hooks_usage",
+      "api_definition_file": "test_004_users_delete_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\prompt_adherence_dataset_20261004_220207\\test_004\\src\\tests\\users\\Delete-DeleteUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should contain before() or beforeEach() hook for test setup",
+            "met": true,
+            "details": "Regex pattern 'before\\(|beforeEach\\(' matched in generated code"
+          },
+          {
+            "criteria": "Setup hook creates a resource needed for the DELETE test",
+            "met": true,
+            "details": "The `before` hook creates a user with unique data via `userService.createUser`, stores its ID, and asserts the ID is a non-empty string. The DELETE test then deletes that user."
+          }
+        ],
+        "reasoning": "Hybrid prompt adherence: 2/2 criteria met (1 rule-based, 1 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "Setup hook creates a resource needed for the DELETE test"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_002",
+      "test_case_name": "js_import_extensions",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\prompt_adherence_dataset_20261004_220207\\test_002\\src\\models\\responses\\UserCreatedModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\prompt_adherence_dataset_20261004_220207\\test_002\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.5,
+        "evaluation": [
+          {
+            "criteria": "All import paths should end with .js extension",
+            "met": false,
+            "details": "Regex pattern 'from\\s+['\"][^'\"]+(?<!\\.js)['\"]' was found in generated code (should not match)"
+          },
+          {
+            "criteria": "All import paths reference the correct service and model files",
+            "met": true,
+            "details": "From src/tests/users/, '../../models/requests/UserModel.js', '../../models/responses/UserCreatedModel.js' and '../../models/services/UserService.js' resolve to src/models/... The response model path matches the generated file. The request model and service files are not shown, so their existence is assumed from the naming. The '.js' extension is consistent with ESM TypeScript."
+          }
+        ],
+        "reasoning": "Hybrid prompt adherence: 1/2 criteria met (1 rule-based, 1 model-graded). Score: 0.50"
+      },
+      "evaluation_criteria": [
+        "All import paths reference the correct service and model files"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_006",
+      "test_case_name": "random_unique_values",
+      "api_definition_file": "test_001_users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\prompt_adherence_dataset_20261004_220207\\test_006\\src\\models\\responses\\CreatedUserModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\prompt_adherence_dataset_20261004_220207\\test_006\\src\\tests\\users\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Should use randomization for unique values (Math.random, faker, Date.now, template literals, etc.)",
+            "met": true,
+            "details": "Regex pattern 'Math\\.random|faker|Date\\.now|uuid|crypto\\.random|`[^`]*\\$\\{' matched in generated code"
+          },
+          {
+            "criteria": "Random values are used for fields that require uniqueness, and generated values make sense for the field type",
+            "met": true,
+            "details": "The email, which needs to be unique, is built from a randomUUID and has a valid format (user.<uuid>@example.com). The name also includes the UUID. Age is fixed at 28, which is reasonable because it doesn't need to be unique. The values suit their field types, though a UUID in a name is slightly unnatural."
+          }
+        ],
+        "reasoning": "Hybrid prompt adherence: 2/2 criteria met (1 rule-based, 1 model-graded). Score: 1.00"
+      },
+      "evaluation_criteria": [
+        "Random values are used for fields that require uniqueness, and generated values make sense for the field type"
+      ],
+      "eval_method": "hybrid"
+    },
+    {
+      "test_id": "test_005",
+      "test_case_name": "file_name_verb_prefix",
+      "api_definition_file": "test_005_users_patch_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\prompt_adherence_dataset_20261004_220207\\test_005\\src\\models\\responses\\UserModel.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\prompt_adherence_dataset_20261004_220207\\test_005\\src\\tests\\users\\Patch-PatchUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.5,
+        "evaluation": [
+          {
+            "criteria": "File name should start with appropriate verb prefix (Patch- or Update-)",
+            "met": false,
+            "details": "Regex pattern '(Patch|Update)-' did not match in generated code"
+          },
+          {
+            "criteria": "The generated test file tests the PATCH operation correctly",
+            "met": true,
+            "details": "The test creates a user in `before`, patches only email and age, and asserts that id, email and age match the update and that name is unchanged, which verifies partial-update behavior. Weaknesses: it never checks an HTTP status code, it uses an optional-chaining style, and the `after` hook restores state via another PATCH instead of deleting the user. The supporting files (UserService, PatchUserModel) are not shown, so those assumptions can't be checked."
+          }
+        ],
+        "reasoning": "Hybrid prompt adherence: 1/2 criteria met (1 rule-based, 1 model-graded). Score: 0.50"
+      },
+      "evaluation_criteria": [
+        "The generated test file tests the PATCH operation correctly"
+      ],
+      "eval_method": "hybrid"
+    }
+  ]
+}

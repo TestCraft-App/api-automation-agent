@@ -85,16 +85,15 @@ This project supports Anthropic, OpenAI, Google Generative AI, and AWS Bedrock l
 
 **Anthropic**
 
-- Claude Fable 5.1 (claude-fable-5-1) - **Most capable for long-horizon tasks**
-- Claude Opus 5 (claude-opus-5) - **Complex agentic and enterprise workloads**
-- Claude Sonnet 5 (claude-sonnet-5) - **Default: Best balance of quality and cost**
+- Claude Opus 5.5 (claude-opus-5-5) - **Complex agentic and enterprise workloads**
+- Claude Sonnet 5.5 (claude-sonnet-5-5) - **Default: Best balance of quality and cost**
 - Claude Haiku 4.5 (claude-haiku-4-5) - **Fast + low cost**
 
 **OpenAI**
 
-- GPT-5.6 Sol (gpt-5.6-sol) - **Recommended: Flagship capability**
+- GPT-6.1 Sol (gpt-6.1-sol) - **Recommended: Flagship capability**
 - GPT-5.6 Terra (gpt-5.6-terra) - **Balanced quality and cost**
-- GPT-5.6 Luna (gpt-5.6-luna) - **Efficient, high-volume workloads**
+- GPT-6 Luna (gpt-6-luna) - **Efficient, high-volume workloads**
 
 **Google**
 
@@ -104,11 +103,18 @@ This project supports Anthropic, OpenAI, Google Generative AI, and AWS Bedrock l
 
 **AWS Bedrock**
 
-AWS Bedrock provides access to multiple model families through a unified API. Use the actual Bedrock model IDs:
+AWS Bedrock provides access to multiple model families through a unified API. Configure these canonical model IDs:
 
-- Claude models: anthropic.claude-fable-5-1, anthropic.claude-opus-5, anthropic.claude-sonnet-5, anthropic.claude-haiku-4-5-20251001-v1:0
-- OpenAI models: openai.gpt-5.6-sol, openai.gpt-5.6-terra, openai.gpt-5.6-luna
+- Claude models: anthropic.claude-opus-5-5, anthropic.claude-sonnet-5-5, anthropic.claude-haiku-4-5-20251001-v1:0
+- OpenAI models: openai.gpt-6.1-sol, openai.gpt-5.6-terra, openai.gpt-6-luna
 - Google models: google.gemini-3.1-pro-preview, google.gemini-3-flash, google.gemini-3-pro-preview
+
+For Runtime calls, the agent resolves Claude IDs to `global.anthropic.*`, Luna to
+`global.openai.gpt-6-luna`, and Sol to `us.openai.gpt-6.1-sol`. Sol requires an AWS Region
+enabled for its US cross-Region inference profile; use `us-east-1` as the starting Region.
+Claude and Luna use global profiles, which may route inference outside the source Region.
+Your account must have access to the selected model and profile. See the
+[AWS model availability tables](https://docs.aws.amazon.com/bedrock/latest/userguide/models-region-compatibility.html).
 
 **Authentication Options:**
 
@@ -119,13 +125,13 @@ aws configure
 # Enter your AWS Access Key, Secret Key, Region, and Output format
 
 # Then in your .env file:
-MODEL=anthropic.claude-sonnet-5
+MODEL=anthropic.claude-sonnet-5-5
 AWS_REGION=us-east-1
 ```
 
 *Option 2: Environment Variables*
 ```env
-MODEL=anthropic.claude-sonnet-5
+MODEL=anthropic.claude-sonnet-5-5
 AWS_ACCESS_KEY_ID=your_access_key_id
 AWS_SECRET_ACCESS_KEY=your_secret_access_key
 AWS_REGION=us-east-1
@@ -136,11 +142,35 @@ The agent will automatically use your AWS CLI configuration if credentials are n
 You can configure your preferred model in the `.env` file:
 
 ```env
-MODEL=gpt-5.6-sol
+MODEL=gpt-6.1-sol
 ```
 
 > **Important**: Before using any model, check the current pricing and costs on the respective provider's website (Anthropic, OpenAI, or Google). Model costs can vary significantly and may impact your usage budget.
-> Bedrock cost reporting uses the corresponding direct OpenAI short-context rates as an estimate; AWS pricing may differ by deployment and region.
+> Cost reporting estimates standard short-context input/output charges. Bedrock Sol uses $2.20/$11
+> per million tokens for its US profile, including AWS's 10% premium. Other Bedrock estimates use
+> corresponding direct API base rates; cache charges, long-context pricing, and regional differences
+> are not calculated separately.
+
+### Updating existing model configurations
+
+Update `MODEL`, optional `GRADER_MODEL`, and model enum names passed to evaluation or benchmark commands:
+
+| Previous model | Replacement | Enum member |
+|---|---|---|
+| `claude-opus-5` | `claude-opus-5-5` | `CLAUDE_OPUS_5_5` |
+| `claude-sonnet-5` | `claude-sonnet-5-5` | `CLAUDE_SONNET_5_5` |
+| `gpt-5.6-sol` | `gpt-6.1-sol` | `GPT_6_1_SOL` |
+| `gpt-5.6-luna` | `gpt-6-luna` | `GPT_6_LUNA` |
+
+Use the same replacements with the `anthropic.`/`openai.` prefixes and `BEDROCK_` enum prefix for
+Bedrock. Haiku 4.5 and Terra 5.6 remain supported. Fable has been removed; select Opus 5.5 explicitly
+if migrating from Fable. Removed choices have no compatibility aliases. Astra is not in this catalog.
+
+Sol uses the Responses API for tool calls with low reasoning effort. Luna and Terra retain Chat
+Completions tool calls with reasoning disabled. Opus and Sonnet use automatic tool choice and
+provider-default sampling. Required-tool stages retry once with a tool-use reminder when the model
+does not return a valid tool call, then report failure; both attempts contribute to usage totals.
+Install the updated dependencies before using these models.
 
 ## Running the Agent
 

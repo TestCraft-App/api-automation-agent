@@ -74,7 +74,7 @@ You must respond with a JSON object in this exact format:
         # Directly create the model instance (same logic as LLMService._select_language_model)
         import pydantic
         from langchain_anthropic import ChatAnthropic
-        from langchain_aws import ChatBedrock
+        from langchain_aws import ChatBedrock, ChatBedrockConverse
         from langchain_google_genai import ChatGoogleGenerativeAI
         from langchain_openai import ChatOpenAI
 
@@ -99,14 +99,30 @@ You must respond with a JSON object in this exact format:
                     max_retries=3,
                 )
             if self.config.model.is_bedrock():
+                if self.config.model.bedrock_provider in {"anthropic", "openai"}:
+                    converse_kwargs = {
+                        "model": self.config.model.bedrock_invocation_id,
+                        "provider": self.config.model.bedrock_provider,
+                        "supports_tool_choice_values": self.config.model.bedrock_tool_choice_values,
+                        "max_tokens": 8192,
+                        "region_name": self.config.aws_region or "us-east-1",
+                    }
+                    if not self.config.model.uses_default_sampling():
+                        converse_kwargs["temperature"] = 1 if self.config.model.is_openai() else 0
+                    if self.config.aws_access_key_id and self.config.aws_secret_access_key:
+                        converse_kwargs["aws_access_key_id"] = pydantic.SecretStr(
+                            self.config.aws_access_key_id
+                        )
+                        converse_kwargs["aws_secret_access_key"] = pydantic.SecretStr(
+                            self.config.aws_secret_access_key
+                        )
+                    return ChatBedrockConverse(**converse_kwargs)
                 bedrock_kwargs = {
                     "model_id": self.config.model.value,
                     "model_kwargs": {"max_tokens": 8192},
                     "region_name": self.config.aws_region or "us-east-1",
                 }
-                if self.config.model.is_gpt_5_6():
-                    bedrock_kwargs["model_kwargs"]["temperature"] = 1
-                elif not self.config.model.uses_default_sampling():
+                if not self.config.model.uses_default_sampling():
                     bedrock_kwargs["model_kwargs"]["temperature"] = 0
 
                 if self.config.aws_access_key_id and self.config.aws_secret_access_key:
@@ -116,10 +132,13 @@ You must respond with a JSON object in this exact format:
                 return ChatBedrock(**bedrock_kwargs)
             openai_kwargs = {
                 "model": self.config.model.value,
-                "temperature": 1,
                 "max_retries": 3,
                 "api_key": pydantic.SecretStr(self.config.openai_api_key),
             }
+            if self.config.model.requires_responses_api():
+                openai_kwargs["use_responses_api"] = True
+            if not self.config.model.uses_default_sampling():
+                openai_kwargs["temperature"] = 1
             return ChatOpenAI(**openai_kwargs)
         except Exception as e:
             self.logger.error(f"Model initialization error: {e}")

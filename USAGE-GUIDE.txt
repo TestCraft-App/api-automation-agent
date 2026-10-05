@@ -21,15 +21,14 @@ The CLI will create a .env file automatically.
 
 SUPPORTED MODELS:
 Anthropic Models:
-- claude-fable-5-1 (most capable for long-horizon tasks)
-- claude-opus-5 (complex agentic and enterprise workloads)
-- claude-sonnet-5 (default - best balance)
+- claude-opus-5-5 (complex agentic and enterprise workloads)
+- claude-sonnet-5-5 (default - best balance)
 - claude-haiku-4-5 (fast + low cost)
 
 OpenAI Models:
-- gpt-5.6-sol (recommended - flagship capability)
+- gpt-6.1-sol (recommended - flagship capability)
 - gpt-5.6-terra (balanced quality and cost)
-- gpt-5.6-luna (efficient, high-volume workloads)
+- gpt-6-luna (efficient, high-volume workloads)
 
 Google Models:
 - gemini-3.1-pro-preview (recommended - most capable)
@@ -37,11 +36,19 @@ Google Models:
 - gemini-3-pro-preview (deprecated)
 
 AWS Bedrock Models:
-- anthropic.claude-fable-5-1
-- anthropic.claude-opus-5
-- anthropic.claude-sonnet-5 (recommended)
+- anthropic.claude-opus-5-5
+- anthropic.claude-sonnet-5-5 (recommended)
 - anthropic.claude-haiku-4-5-20251001-v1:0
-- openai.gpt-5.6-sol, openai.gpt-5.6-terra, openai.gpt-5.6-luna
+- openai.gpt-6.1-sol, openai.gpt-5.6-terra, openai.gpt-6-luna
+
+Runtime profile routing: Claude -> global.anthropic.*, Luna -> global.openai.gpt-6-luna,
+Sol -> us.openai.gpt-6.1-sol. Use a Region enabled for the selected profile (start with
+us-east-1 for Sol). Global profiles may route outside the source Region.
+Update old Opus 5/Sonnet 5 choices to 5.5 and old Sol/Luna choices to the versions above.
+Fable was removed; select Opus 5.5 explicitly if migrating from Fable. Astra is excluded.
+Removed IDs have no aliases. Reinstall requirements.txt for Responses API support.
+Required generation tools use one reminder retry when a valid tool call is missing;
+both attempts are included in usage totals. See README.md for migration and pricing details.
 - google.gemini-3.1-pro-preview, google.gemini-3-flash, google.gemini-3-pro-preview
 
 NOTE: Bedrock cost reporting uses corresponding direct-provider input/output rates as an estimate. Actual AWS pricing may differ.

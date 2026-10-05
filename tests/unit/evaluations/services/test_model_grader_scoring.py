@@ -14,7 +14,7 @@ def config():
         openai_api_key="test-openai-key",
         anthropic_api_key="test-anthropic-key",
         google_api_key="test-google-key",
-        model=Model.CLAUDE_SONNET_5,
+        model=Model.CLAUDE_SONNET_5_5,
         destination_folder="test-folder",
         debug=False,
         langchain_debug=False,
@@ -122,7 +122,7 @@ def test_temperature_is_omitted_for_claude_5(config, monkeypatch):
     monkeypatch.setattr("langchain_anthropic.ChatAnthropic", FakeChatAnthropic)
 
     grader = ModelGrader(config)
-    grader.config.model = Model.CLAUDE_SONNET_5
+    grader.config.model = Model.CLAUDE_SONNET_5_5
     grader._get_llm()
 
     assert "temperature" not in captured
@@ -130,10 +130,10 @@ def test_temperature_is_omitted_for_claude_5(config, monkeypatch):
 
 @pytest.mark.parametrize(
     "openai_model",
-    [Model.GPT_5_6_SOL, Model.GPT_5_6_TERRA, Model.GPT_5_6_LUNA],
+    [Model.GPT_6_1_SOL, Model.GPT_5_6_TERRA, Model.GPT_6_LUNA],
 )
-def test_temperature_is_one_for_gpt_5_6(config, monkeypatch, openai_model):
-    """Verify GPT-5.6 receives its required temperature explicitly."""
+def test_temperature_is_supported_for_openai_models(config, monkeypatch, openai_model):
+    """Verify reasoning-enabled models omit sampling parameters."""
     captured = {}
 
     class FakeChatOpenAI:
@@ -146,7 +146,10 @@ def test_temperature_is_one_for_gpt_5_6(config, monkeypatch, openai_model):
     grader.config.model = openai_model
     grader._get_llm()
 
-    assert captured["temperature"] == 1
+    if openai_model == Model.GPT_5_6_TERRA:
+        assert captured["temperature"] == 1
+    else:
+        assert "temperature" not in captured
 
 
 def test_temperature_is_zero_google(config, monkeypatch):

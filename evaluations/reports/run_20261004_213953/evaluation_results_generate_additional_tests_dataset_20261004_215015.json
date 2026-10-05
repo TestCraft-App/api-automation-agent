@@ -1,0 +1,717 @@
+{
+  "dataset_name": "generate_additional_tests_dataset",
+  "llm_model": "gpt-6.1-sol",
+  "total_test_cases": 6,
+  "graded_count": 6,
+  "not_evaluated_count": 0,
+  "error_count": 0,
+  "total_input_tokens": 17704,
+  "total_output_tokens": 12623,
+  "total_cost": 0.161638,
+  "average_score": 0.6931733283193776,
+  "generated_files_path": "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_additional_tests_dataset_20261004_214858",
+  "results": [
+    {
+      "test_id": "test_003",
+      "test_case_name": "get_user_by_id",
+      "api_definition_file": "users_get_by_id_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_additional_tests_dataset_20261004_214858\\test_003\\src\\tests\\Get-GetUserById.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.4444444444444444,
+        "evaluation": [
+          {
+            "criteria": "A test that retrieves a user by a valid existing ID",
+            "met": true,
+            "details": "The '@Smoke - Get User By ID successfully - 200' test retrieves user 101 and expects 200."
+          },
+          {
+            "criteria": "A test that verifies the response body matches the User schema fields",
+            "met": true,
+            "details": "assertUser checks id, name, email format, and the optional age range, which covers the User schema fields."
+          },
+          {
+            "criteria": "A test that verifies the userId path parameter must be provided",
+            "met": false,
+            "details": "No test calls the endpoint without a userId."
+          },
+          {
+            "criteria": "A test that rejects a request when userId is not an integer",
+            "met": false,
+            "details": "No test sends a non-integer such as 1.5. The numeric-string test expects success."
+          },
+          {
+            "criteria": "A test that rejects a request when userId is negative",
+            "met": false,
+            "details": "No negative ID test exists."
+          },
+          {
+            "criteria": "A test that rejects a request when userId is zero",
+            "met": false,
+            "details": "No zero ID test exists."
+          },
+          {
+            "criteria": "A test that rejects a request when userId is provided as text",
+            "met": false,
+            "details": "No test sends non-numeric text such as 'abc'. The string tests use numeric strings only."
+          },
+          {
+            "criteria": "A test that returns 404 when the userId does not match any user",
+            "met": true,
+            "details": "The deleted-user tests expect 404 for an ID that no longer exists, which is a valid non-matching ID."
+          },
+          {
+            "criteria": "All users created in the test suite are deleted inside an after or afterEach hook",
+            "met": true,
+            "details": "Created IDs are tracked in a set and deleted in the after hook. The deleted user is removed within before, which is acceptable because it is deleted anyway."
+          }
+        ],
+        "reasoning": "The suite covers the happy path, schema validation, the 404 case, and cleanup. It has none of the negative input validation tests: missing, non-integer, negative, zero, and text IDs."
+      },
+      "evaluation_criteria": [
+        "A test that retrieves a user by a valid existing ID",
+        "A test that verifies the response body matches the User schema fields",
+        "A test that verifies the userId path parameter must be provided",
+        "A test that rejects a request when userId is not an integer",
+        "A test that rejects a request when userId is negative",
+        "A test that rejects a request when userId is zero",
+        "A test that rejects a request when userId is provided as text",
+        "A test that returns 404 when the userId does not match any user",
+        "All users created in the test suite are deleted inside an after or afterEach hook"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_001",
+      "test_case_name": "create_user",
+      "api_definition_file": "users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_additional_tests_dataset_20261004_214858\\test_001\\src\\tests\\Post-CreateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.7368421052631579,
+        "evaluation": [
+          {
+            "criteria": "A test that creates a user when name and email are valid",
+            "met": true,
+            "details": "The '@Smoke - Create User successfully - 201' case posts a valid name and email and expects 201."
+          },
+          {
+            "criteria": "A test that creates a user with optional age omitted",
+            "met": true,
+            "details": "The 'without optional age' case creates a user with only name and email and expects 201."
+          },
+          {
+            "criteria": "A test that creates a user with age at minimum boundary (0)",
+            "met": true,
+            "details": "The 'minimum age 0' case sends age 0 and expects 201."
+          },
+          {
+            "criteria": "A test that creates a user with age at maximum boundary (150)",
+            "met": true,
+            "details": "The 'maximum age 150' case sends age 150 and expects 201."
+          },
+          {
+            "criteria": "A test that tries to get the created user by its id and verifies it was created successfully",
+            "met": false,
+            "details": "No test performs a GET by id after creation. Tests only inspect the POST response."
+          },
+          {
+            "criteria": "A test that rejects a request missing required name field",
+            "met": true,
+            "details": "The 'Missing name' invalid case expects 400."
+          },
+          {
+            "criteria": "A test that rejects a request missing required email field",
+            "met": true,
+            "details": "The 'Missing email' invalid case expects 400."
+          },
+          {
+            "criteria": "A test that rejects a request with empty name value",
+            "met": false,
+            "details": "An empty name is treated as valid and expects 201. No test rejects it."
+          },
+          {
+            "criteria": "A test that rejects a request with empty email value",
+            "met": true,
+            "details": "The 'Empty email' invalid case expects 400."
+          },
+          {
+            "criteria": "A test that rejects a request with malformed email format (missing @)",
+            "met": true,
+            "details": "The 'Email without at sign' case expects 400."
+          },
+          {
+            "criteria": "A test that rejects a request with age below minimum (negative)",
+            "met": true,
+            "details": "The 'Age below minimum' case sends -1 and expects 400."
+          },
+          {
+            "criteria": "A test that rejects a request with age above maximum (151)",
+            "met": true,
+            "details": "The 'Age above maximum' case sends 151 and expects 400."
+          },
+          {
+            "criteria": "A test that rejects a request with non-integer age value",
+            "met": true,
+            "details": "The 'Fractional age' case sends 30.5 and expects 400."
+          },
+          {
+            "criteria": "A test that rejects a request with unexpected additional top-level property",
+            "met": false,
+            "details": "No test sends an extra top-level property."
+          },
+          {
+            "criteria": "A test that rejects a request using unsupported content type (e.g., text/plain)",
+            "met": false,
+            "details": "No test sets a different content type. The service call only takes a payload."
+          },
+          {
+            "criteria": "A test that rejects a request when required User schema properties are null",
+            "met": true,
+            "details": "The 'Null name' and 'Null email' cases expect 400."
+          },
+          {
+            "criteria": "A test that validates JSON response matches User schema on success",
+            "met": true,
+            "details": "The success tests check that the body is an object and verify name, email, age and an integer id. This is a reasonable if not formal schema validation."
+          },
+          {
+            "criteria": "A test that validates a 400 status code with error message for invalid payload",
+            "met": true,
+            "details": "Invalid cases assert 400 and, if present, that error is a string. The error message is optional in the check, so the assertion is weak."
+          },
+          {
+            "criteria": "All users created in the test suite are deleted inside an after or afterEach hook",
+            "met": false,
+            "details": "There is no after or afterEach hook, and created users are never deleted."
+          }
+        ],
+        "reasoning": "Most create and validation cases are covered. Missing are the GET-by-id verification, the empty-name rejection, the additional-property case, the unsupported content type case and the cleanup hook, so the score is 13/19 minus some partial strictness."
+      },
+      "evaluation_criteria": [
+        "A test that creates a user when name and email are valid",
+        "A test that creates a user with optional age omitted",
+        "A test that creates a user with age at minimum boundary (0)",
+        "A test that creates a user with age at maximum boundary (150)",
+        "A test that tries to get the created user by its id and verifies it was created successfully",
+        "A test that rejects a request missing required name field",
+        "A test that rejects a request missing required email field",
+        "A test that rejects a request with empty name value",
+        "A test that rejects a request with empty email value",
+        "A test that rejects a request with malformed email format (missing @)",
+        "A test that rejects a request with age below minimum (negative)",
+        "A test that rejects a request with age above maximum (151)",
+        "A test that rejects a request with non-integer age value",
+        "A test that rejects a request with unexpected additional top-level property",
+        "A test that rejects a request using unsupported content type (e.g., text/plain)",
+        "A test that rejects a request when required User schema properties are null",
+        "A test that validates JSON response matches User schema on success",
+        "A test that validates a 400 status code with error message for invalid payload",
+        "All users created in the test suite are deleted inside an after or afterEach hook"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_004",
+      "test_case_name": "update_user",
+      "api_definition_file": "users_put_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_additional_tests_dataset_20261004_214858\\test_004\\src\\tests\\Put-UpdateUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.8095238095238095,
+        "evaluation": [
+          {
+            "criteria": "Updates an existing user with valid name and email",
+            "met": true,
+            "details": "The smoke test updates the user with a valid payload and expects 200."
+          },
+          {
+            "criteria": "Updates an existing user while omitting optional age",
+            "met": true,
+            "details": "The 'Required fields only - 200' test sends name and email without age."
+          },
+          {
+            "criteria": "Updates with age minimum (0)",
+            "met": true,
+            "details": "The loop over valid ages includes age 0."
+          },
+          {
+            "criteria": "Updates with age maximum (150)",
+            "met": true,
+            "details": "The loop over valid ages includes age 150."
+          },
+          {
+            "criteria": "Gets the updated user by id and verifies the update",
+            "met": true,
+            "details": "The smoke test calls getUserById after the update and asserts the persisted values."
+          },
+          {
+            "criteria": "Verifies the response body matches the User schema and reflects submitted changes",
+            "met": true,
+            "details": "assertUser checks id, name, email and age against the payload. It is only a partial schema check, but it does reflect the submitted changes."
+          },
+          {
+            "criteria": "Rejects update missing required name",
+            "met": true,
+            "details": "The 'Missing name' case expects 400."
+          },
+          {
+            "criteria": "Rejects update missing required email",
+            "met": true,
+            "details": "The 'Missing email' case expects 400."
+          },
+          {
+            "criteria": "Rejects update with empty name",
+            "met": false,
+            "details": "An empty name is treated as valid and expects 200. No test expects it to be rejected."
+          },
+          {
+            "criteria": "Rejects update with empty email",
+            "met": true,
+            "details": "The invalid email list includes '' and expects 400."
+          },
+          {
+            "criteria": "Rejects invalid email format",
+            "met": true,
+            "details": "The invalid email list includes 'not-an-email', 'user@' and similar values."
+          },
+          {
+            "criteria": "Rejects age below minimum (negative)",
+            "met": true,
+            "details": "The invalid age list includes -1."
+          },
+          {
+            "criteria": "Rejects age above maximum (151)",
+            "met": true,
+            "details": "The invalid age list includes 151."
+          },
+          {
+            "criteria": "Rejects non-integer age",
+            "met": true,
+            "details": "The invalid age list includes 1.5 and the string '41'."
+          },
+          {
+            "criteria": "Rejects required fields explicitly null",
+            "met": true,
+            "details": "The invalid name list includes null and the invalid email list includes null."
+          },
+          {
+            "criteria": "Rejects unexpected additional top-level properties",
+            "met": false,
+            "details": "No test sends extra properties in the payload."
+          },
+          {
+            "criteria": "Rejects unsupported content type (text/plain)",
+            "met": false,
+            "details": "No test sends a different content type. The string body test most likely still goes out as JSON."
+          },
+          {
+            "criteria": "Rejects userId that is not a valid integer",
+            "met": true,
+            "details": "The invalid path identifier tests use 'abc', '1.5' and similar values and expect 400."
+          },
+          {
+            "criteria": "Rejects userId zero or negative",
+            "met": false,
+            "details": "The invalid path identifiers do not include 0 or negative values."
+          },
+          {
+            "criteria": "Returns 404 for non-existent user",
+            "met": true,
+            "details": "The test updates a deleted user and expects 404."
+          },
+          {
+            "criteria": "All created users are deleted in afterEach",
+            "met": true,
+            "details": "afterEach deletes the user created in beforeEach."
+          }
+        ],
+        "reasoning": "Most happy-path, validation and cleanup criteria are covered. The suite treats an empty name as valid, so that rejection criterion fails. It also has no tests for extra properties, unsupported content type, or zero/negative userId."
+      },
+      "evaluation_criteria": [
+        "A test that updates an existing user with valid name and email",
+        "A test that updates an existing user while omitting the optional age field",
+        "A test that updates an existing user with age set to the minimum allowed value (0)",
+        "A test that updates an existing user with age set to the maximum allowed value (150)",
+        "A test that tries to get the updated user by its id and verifies it was updated successfully",
+        "A test that verifies the successful response body matches the User schema and reflects submitted changes",
+        "A test that rejects an update request missing the required name field",
+        "A test that rejects an update request missing the required email field",
+        "A test that rejects an update request containing an empty name value",
+        "A test that rejects an update request containing an empty email value",
+        "A test that rejects an update request with an invalid email format",
+        "A test that rejects an update request with age below the minimum (negative)",
+        "A test that rejects an update request with age above the maximum (151)",
+        "A test that rejects an update request with age provided as a non-integer value",
+        "A test that rejects an update request where required fields are explicitly null",
+        "A test that rejects an update request containing unexpected additional top-level properties",
+        "A test that rejects an update request using an unsupported content type (e.g., text/plain)",
+        "A test that rejects an update request when userId is not a valid integer",
+        "A test that rejects an update request when userId is zero or negative",
+        "A test that returns 404 when the userId does not resolve to an existing user",
+        "All users created in the test suite are deleted inside an after or afterEach hook"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_002",
+      "test_case_name": "list_users",
+      "api_definition_file": "users_get_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_additional_tests_dataset_20261004_214858\\test_002\\src\\tests\\Get-GetUsers.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.9411764705882353,
+        "evaluation": [
+          {
+            "criteria": "A test that retrieves users without any query parameters",
+            "met": true,
+            "details": "The smoke test calls getUsers() with no parameters and expects 200."
+          },
+          {
+            "criteria": "A test that retrieves users filtered by an exact email address",
+            "met": true,
+            "details": "The 'Existing email filter' test fetches an existing email and filters by it, asserting that all results match."
+          },
+          {
+            "criteria": "A test that retrieves users with pagination using page 1 and default pageSize",
+            "met": true,
+            "details": "The 'page only' case uses { page: 1 } without pageSize and expects 200."
+          },
+          {
+            "criteria": "A test that retrieves users with page set to the minimum allowed value (1)",
+            "met": true,
+            "details": "Several valid queries use page: 1."
+          },
+          {
+            "criteria": "A test that retrieves users with pageSize set to the minimum allowed value (1)",
+            "met": true,
+            "details": "The 'pageSize only at minimum' case uses pageSize: 1."
+          },
+          {
+            "criteria": "A test that retrieves users with pageSize set to the maximum allowed value (100)",
+            "met": true,
+            "details": "The 'pageSize only at maximum' case uses pageSize: 100."
+          },
+          {
+            "criteria": "A test that verifies the response includes total count aligned with returned data",
+            "met": true,
+            "details": "assertUserList checks that total is an integer and that data.length is at most total, and the pagination test checks lengths against total."
+          },
+          {
+            "criteria": "A test that rejects a request with an email filter in an invalid format",
+            "met": true,
+            "details": "Several invalid email cases are expected to return 400."
+          },
+          {
+            "criteria": "A test that rejects a request with page set to zero",
+            "met": true,
+            "details": "The 'zero page' case expects 400."
+          },
+          {
+            "criteria": "A test that rejects a request with page set to a negative number",
+            "met": true,
+            "details": "The 'negative page' case with page -1 expects 400."
+          },
+          {
+            "criteria": "A test that rejects a request with page set to a non-integer value",
+            "met": true,
+            "details": "The 'fractional page' (1.5) and 'non-numeric page' cases expect 400."
+          },
+          {
+            "criteria": "A test that rejects a request with pageSize set to zero",
+            "met": true,
+            "details": "The 'zero pageSize' case expects 400."
+          },
+          {
+            "criteria": "A test that rejects a request with pageSize set to a negative number",
+            "met": true,
+            "details": "The 'negative pageSize' case expects 400."
+          },
+          {
+            "criteria": "A test that rejects a request with pageSize greater than the maximum allowed (101)",
+            "met": true,
+            "details": "The 'pageSize above maximum' case with 101 expects 400."
+          },
+          {
+            "criteria": "A test that rejects a request with pageSize set to a non-integer value",
+            "met": true,
+            "details": "The 'fractional pageSize' (1.5) and 'non-numeric pageSize' cases expect 400."
+          },
+          {
+            "criteria": "A test that rejects a request containing an unexpected additional query parameter",
+            "met": false,
+            "details": "No test sends an unknown query parameter."
+          },
+          {
+            "criteria": "All users created in the test suite (if any) are deleted inside an after or afterEach hook",
+            "met": true,
+            "details": "The suite creates no users, so there is nothing to clean up."
+          }
+        ],
+        "reasoning": "Every criterion is covered except the rejection of an unexpected additional query parameter, which no test exercises. The cleanup criterion is met vacuously because the suite creates no users."
+      },
+      "evaluation_criteria": [
+        "A test that retrieves users without any query parameters",
+        "A test that retrieves users filtered by an exact email address",
+        "A test that retrieves users with pagination using page 1 and default pageSize",
+        "A test that retrieves users with page set to the minimum allowed value (1)",
+        "A test that retrieves users with pageSize set to the minimum allowed value (1)",
+        "A test that retrieves users with pageSize set to the maximum allowed value (100)",
+        "A test that verifies the response includes total count aligned with returned data",
+        "A test that rejects a request with an email filter in an invalid format",
+        "A test that rejects a request with page set to zero",
+        "A test that rejects a request with page set to a negative number",
+        "A test that rejects a request with page set to a non-integer value",
+        "A test that rejects a request with pageSize set to zero",
+        "A test that rejects a request with pageSize set to a negative number",
+        "A test that rejects a request with pageSize greater than the maximum allowed (101)",
+        "A test that rejects a request with pageSize set to a non-integer value",
+        "A test that rejects a request containing an unexpected additional query parameter",
+        "All users created in the test suite (if any) are deleted inside an after or afterEach hook"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_006",
+      "test_case_name": "delete_user",
+      "api_definition_file": "users_delete_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_additional_tests_dataset_20261004_214858\\test_006\\src\\tests\\Delete-DeleteUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.4444444444444444,
+        "evaluation": [
+          {
+            "criteria": "A test that deletes a user with a valid existing ID",
+            "met": true,
+            "details": "The smoke test creates a user and deletes it, expecting 204."
+          },
+          {
+            "criteria": "A test that verifies the API returns 204 with no response body on successful delete",
+            "met": false,
+            "details": "The tests assert status 204 but never assert that the response body is empty; the data is only used in the failure message."
+          },
+          {
+            "criteria": "A test that verifies the user is no longer retrievable after a successful delete",
+            "met": true,
+            "details": "The 'Deleted User can no longer be retrieved' test deletes the user and then expects 404 from getUserById."
+          },
+          {
+            "criteria": "A test that rejects a delete request when userId is not an integer",
+            "met": false,
+            "details": "No test sends a non-integer ID such as 1.5 and expects a rejection."
+          },
+          {
+            "criteria": "A test that rejects a delete request when userId is zero",
+            "met": false,
+            "details": "No test deletes with ID 0."
+          },
+          {
+            "criteria": "A test that rejects a delete request when userId is negative",
+            "met": false,
+            "details": "No test deletes with a negative ID."
+          },
+          {
+            "criteria": "A test that rejects a delete request when userId is provided as text",
+            "met": false,
+            "details": "Only a numeric string such as '123' is tested, and it expects success; no non-numeric text like 'abc' is tested."
+          },
+          {
+            "criteria": "A test that returns 404 when the userId does not match any user",
+            "met": true,
+            "details": "The non-existent user test finds an unused ID and expects 404."
+          },
+          {
+            "criteria": "A test that handles repeated delete requests for the same user gracefully",
+            "met": true,
+            "details": "Deleting the same user twice is tested, with 404 expected on the second attempt, using both numeric and string IDs."
+          }
+        ],
+        "reasoning": "The valid delete, post-delete retrieval, 404 for a non-existent ID, and repeated delete cases are covered. The no-body assertion and all invalid-ID tests (non-integer, zero, negative, text) are missing."
+      },
+      "evaluation_criteria": [
+        "A test that deletes a user with a valid existing ID",
+        "A test that verifies the API returns 204 with no response body on successful delete",
+        "A test that verifies the user is no longer retrievable after a successful delete",
+        "A test that rejects a delete request when userId is not an integer",
+        "A test that rejects a delete request when userId is zero",
+        "A test that rejects a delete request when userId is negative",
+        "A test that rejects a delete request when userId is provided as text",
+        "A test that returns 404 when the userId does not match any user",
+        "A test that handles repeated delete requests for the same user gracefully"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_005",
+      "test_case_name": "patch_user",
+      "api_definition_file": "users_patch_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_additional_tests_dataset_20261004_214858\\test_005\\src\\tests\\Patch-PatchUser.spec.ts"
+      ],
+      "grade_result": {
+        "score": 0.782608695652174,
+        "evaluation": [
+          {
+            "criteria": "Patch user updating only the name field",
+            "met": true,
+            "details": "The 'Name only preserves email and age' test patches only the name."
+          },
+          {
+            "criteria": "Get the patched user by id and verify patched successfully",
+            "met": true,
+            "details": "Each successful patch test follows up with getUserById and verifies the persisted fields."
+          },
+          {
+            "criteria": "Patch updating only the email field",
+            "met": true,
+            "details": "The 'Email only' test patches only the email."
+          },
+          {
+            "criteria": "Patch updating only the age field",
+            "met": true,
+            "details": "The 'Age only' test patches only the age."
+          },
+          {
+            "criteria": "Patch updating name and email together",
+            "met": true,
+            "details": "The 'Name and email preserve age' test covers this."
+          },
+          {
+            "criteria": "Patch updating email and age together",
+            "met": true,
+            "details": "The 'Email and age preserve name' test covers this."
+          },
+          {
+            "criteria": "Patch updating name and age together",
+            "met": true,
+            "details": "The 'Name and age preserve email' test covers this."
+          },
+          {
+            "criteria": "Patch with valid values for all fields",
+            "met": true,
+            "details": "The Smoke test patches name, email and age together."
+          },
+          {
+            "criteria": "Omit name, email, and age and leave the user unchanged",
+            "met": true,
+            "details": "The empty patch {} test verifies a no-op via expected values and the GET."
+          },
+          {
+            "criteria": "Verify patched user response conforms to User schema",
+            "met": false,
+            "details": "Only individual fields are checked; there is no explicit schema validation, such as types of all properties or no extra properties."
+          },
+          {
+            "criteria": "Reject patch with name as empty string",
+            "met": false,
+            "details": "The test expects an empty name to be accepted with 200, the opposite of the criterion."
+          },
+          {
+            "criteria": "Reject patch with email as empty string",
+            "met": true,
+            "details": "The 'Empty email' payload test expects 400."
+          },
+          {
+            "criteria": "Reject patch with invalid email format",
+            "met": true,
+            "details": "Several invalid email formats are tested and expect 400."
+          },
+          {
+            "criteria": "Reject age below minimum (negative)",
+            "met": true,
+            "details": "The 'Negative age' test with -1 expects 400."
+          },
+          {
+            "criteria": "Reject age above maximum (151)",
+            "met": true,
+            "details": "The 'Age above maximum' test with 151 expects 400."
+          },
+          {
+            "criteria": "Reject age as non-integer",
+            "met": true,
+            "details": "The fractional age 30.5 test and the string age test expect 400."
+          },
+          {
+            "criteria": "Reject a provided field that is explicitly null",
+            "met": true,
+            "details": "Null name, email and age tests expect 400."
+          },
+          {
+            "criteria": "Reject unexpected additional top-level properties",
+            "met": false,
+            "details": "No test sends extra unknown properties."
+          },
+          {
+            "criteria": "Reject unsupported content type (text/plain)",
+            "met": false,
+            "details": "No test sets a text/plain content type; a string body is sent but likely still serialized as JSON."
+          },
+          {
+            "criteria": "Reject userId that is not a valid integer",
+            "met": true,
+            "details": "Tests with 'not-an-integer', '1.5' and an oversized number expect 400."
+          },
+          {
+            "criteria": "Reject userId zero or negative",
+            "met": false,
+            "details": "No test uses 0 or a negative userId."
+          },
+          {
+            "criteria": "Return 404 when userId does not exist",
+            "met": true,
+            "details": "The deleted-user test expects 404 on patch."
+          },
+          {
+            "criteria": "All created users deleted in after/afterEach hook",
+            "met": true,
+            "details": "afterEach deletes the user unless it was already deleted in the test."
+          }
+        ],
+        "reasoning": "Most success-path, validation and cleanup criteria are met. The unmet ones are the schema validation, rejection of an empty name (the test asserts acceptance), extra properties, unsupported content type, and zero/negative userId."
+      },
+      "evaluation_criteria": [
+        "A test that patches a user updating only the name field",
+        "A test that tries to get the patched user by its id and verifies it was patched successfully",
+        "A test that patches a user updating only the email field",
+        "A test that patches a user updating only the age field",
+        "A test that patches a user updating name and email together",
+        "A test that patches a user updating email and age together",
+        "A test that patches a user updating name and age together",
+        "A test that patches a user with valid values for all fields",
+        "A test that omits name, email, and age and leaves the user unchanged",
+        "A test that verifies the patched user response conforms to the User schema",
+        "A test that rejects a patch request with name provided as an empty string",
+        "A test that rejects a patch request with email provided as an empty string",
+        "A test that rejects a patch request with an invalid email format",
+        "A test that rejects a patch request with age below the minimum (negative)",
+        "A test that rejects a patch request with age above the maximum (151)",
+        "A test that rejects a patch request with age provided as a non-integer value",
+        "A test that rejects a patch request where a provided field is explicitly null",
+        "A test that rejects a patch request containing unexpected additional top-level properties",
+        "A test that rejects a patch request using an unsupported content type (e.g., text/plain)",
+        "A test that rejects a patch request when userId is not a valid integer",
+        "A test that rejects a patch request when userId is zero or negative",
+        "A test that returns 404 when the userId does not resolve to an existing user",
+        "All users created in the test suite are deleted inside an after or afterEach hook"
+      ],
+      "eval_method": null
+    }
+  ]
+}
