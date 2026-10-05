@@ -23,16 +23,14 @@ def llm_service(temp_config):
 @pytest.mark.parametrize(
     ("model", "input_rate", "output_rate"),
     [
-        (Model.GPT_5_6_SOL, 4.0, 20.0),
+        (Model.GPT_6_1_SOL, 2.0, 10.0),
         (Model.GPT_5_6_TERRA, 2.0, 12.0),
-        (Model.GPT_5_6_LUNA, 0.2, 1.2),
-        (Model.CLAUDE_FABLE_5_1, 10.0, 50.0),
-        (Model.CLAUDE_OPUS_5, 5.0, 25.0),
-        (Model.CLAUDE_SONNET_5, 2.0, 10.0),
+        (Model.GPT_6_LUNA, 0.1, 0.5),
+        (Model.CLAUDE_OPUS_5_5, 4.0, 20.0),
+        (Model.CLAUDE_SONNET_5_5, 2.0, 10.0),
         (Model.CLAUDE_HAIKU_4_5, 1.0, 5.0),
-        (Model.BEDROCK_CLAUDE_FABLE_5_1, 10.0, 50.0),
-        (Model.BEDROCK_CLAUDE_OPUS_5, 5.0, 25.0),
-        (Model.BEDROCK_CLAUDE_SONNET_5, 2.0, 10.0),
+        (Model.BEDROCK_CLAUDE_OPUS_5_5, 4.0, 20.0),
+        (Model.BEDROCK_CLAUDE_SONNET_5_5, 2.0, 10.0),
         (Model.BEDROCK_CLAUDE_HAIKU_4_5, 1.0, 5.0),
     ],
 )
@@ -52,7 +50,7 @@ def test_calculate_llm_call_cost_returns_none_on_error(llm_service, monkeypatch)
     monkeypatch.setattr(Model, "get_costs", raise_error)
     usage_data = LLMCallUsageData(input_tokens=500, output_tokens=500)
 
-    cost = llm_service._calculate_llm_call_cost(Model.GPT_5_6_LUNA, usage_data)
+    cost = llm_service._calculate_llm_call_cost(Model.GPT_6_LUNA, usage_data)
 
     assert cost is None
 
@@ -111,7 +109,7 @@ def test_create_ai_chain_appends_usage_metadata(llm_service, tmp_path, monkeypat
     fake_response = FakeResponse("final result", usage_payload)
     fake_llm = FakeLLM(fake_response)
 
-    llm_service.config.model = Model.GPT_5_6_LUNA
+    llm_service.config.model = Model.GPT_6_LUNA
 
     monkeypatch.setattr(
         LLMService, "_select_language_model", lambda self, language_model=None, **_kwargs: fake_llm
@@ -131,9 +129,9 @@ def test_create_ai_chain_appends_usage_metadata(llm_service, tmp_path, monkeypat
 
     aggregated_usage = llm_service.get_aggregated_usage_metadata()
 
-    expected_cost = (usage_payload["input_tokens"] / 1_000_000) * 0.2 + (
+    expected_cost = (usage_payload["input_tokens"] / 1_000_000) * 0.1 + (
         usage_payload["output_tokens"] / 1_000_000
-    ) * 1.2
+    ) * 0.5
 
     assert aggregated_usage.total_input_tokens == usage_payload["input_tokens"]
     assert aggregated_usage.total_output_tokens == usage_payload["output_tokens"]
@@ -201,7 +199,7 @@ def test_create_ai_chain_usage_metadata_validation_fallback(llm_service, tmp_pat
 
     from src.configuration.models import Model  # local import to avoid unused at module import
 
-    llm_service.config.model = Model.GPT_5_6_LUNA
+    llm_service.config.model = Model.GPT_6_LUNA
 
     monkeypatch.setattr(
         LLMService, "_select_language_model", lambda self, language_model=None, **_kwargs: fake_llm
@@ -238,7 +236,7 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
     Expectations:
       - If tools provided:
           default tool_choice = 'auto'
-          Anthropic + must_use_tool True  -> 'any'
+          Opus/Sonnet + must_use_tool True -> 'auto'
           OpenAI (non-Anthropic) + must_use_tool True -> 'required'
           must_use_tool False -> stays 'auto'
     We simulate both providers by setting llm_service.config.model accordingly and monkeypatching
@@ -304,31 +302,31 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
     scenarios = [
         # (model_enum, must_use_tool, expected_tool_choice, label, tools_provider)
         # Single tool cases
-        (Model.GPT_5_6_LUNA, False, "auto", "openai_no_force_single", lambda: [DummyTool()]),
-        (Model.GPT_5_6_LUNA, True, "required", "openai_force_single", lambda: [DummyTool()]),
-        (Model.CLAUDE_SONNET_5, False, "auto", "anthropic_no_force_single", lambda: [DummyTool()]),
-        (Model.CLAUDE_SONNET_5, True, "any", "anthropic_force_single", lambda: [DummyTool()]),
-        (Model.BEDROCK_CLAUDE_SONNET_5, False, "auto", "bedrock_no_force_single", lambda: [DummyTool()]),
-        (Model.BEDROCK_CLAUDE_SONNET_5, True, "any", "bedrock_force_single", lambda: [DummyTool()]),
+        (Model.GPT_6_LUNA, False, "auto", "openai_no_force_single", lambda: [DummyTool()]),
+        (Model.GPT_6_LUNA, True, "required", "openai_force_single", lambda: [DummyTool()]),
+        (Model.CLAUDE_SONNET_5_5, False, "auto", "anthropic_no_force_single", lambda: [DummyTool()]),
+        (Model.CLAUDE_SONNET_5_5, True, "auto", "anthropic_force_single", lambda: [DummyTool()]),
+        (Model.BEDROCK_CLAUDE_SONNET_5_5, False, "auto", "bedrock_no_force_single", lambda: [DummyTool()]),
+        (Model.BEDROCK_CLAUDE_SONNET_5_5, True, "auto", "bedrock_force_single", lambda: [DummyTool()]),
         # Multiple tools cases (should behave identically wrt tool_choice)
         (
-            Model.GPT_5_6_LUNA,
+            Model.GPT_6_LUNA,
             True,
             "required",
             "openai_force_multi",
             lambda: [DummyTool("a"), DummyTool("b")],
         ),
         (
-            Model.CLAUDE_SONNET_5,
+            Model.CLAUDE_SONNET_5_5,
             True,
-            "any",
+            "auto",
             "anthropic_force_multi",
             lambda: [DummyTool("a"), DummyTool("b")],
         ),
         (
-            Model.BEDROCK_GPT_5_6_SOL,
+            Model.BEDROCK_GPT_6_1_SOL,
             True,
-            "any",
+            "auto",
             "bedrock_force_multi",
             lambda: [DummyTool("a"), DummyTool("b")],
         ),
@@ -357,7 +355,7 @@ def test_create_ai_chain_tool_choice_selection(llm_service, monkeypatch, tmp_pat
         initial_bind_calls = fake_llm.bind_calls
 
     # No-tools scenarios: ensure bind_tools NOT called and chain creation still works.
-    for model_enum in (Model.GPT_5_6_LUNA, Model.CLAUDE_SONNET_5):
+    for model_enum in (Model.GPT_6_LUNA, Model.CLAUDE_SONNET_5_5):
         llm_service.config.model = model_enum
         chain = llm_service.create_ai_chain(
             str(prompt_path), tools=None, must_use_tool=False, language_model=model_enum
@@ -437,7 +435,7 @@ def test_create_ai_chain_tool_call_invokes_selected_tool(llm_service, monkeypatc
 
     from src.configuration.models import Model
 
-    llm_service.config.model = Model.GPT_5_6_LUNA
+    llm_service.config.model = Model.GPT_6_LUNA
 
     monkeypatch.setattr(
         LLMService, "_select_language_model", lambda self, language_model=None, **_kwargs: fake_llm
@@ -518,7 +516,7 @@ def test_create_ai_chain_tool_call_name_not_found_returns_content(llm_service, m
 
     from src.configuration.models import Model
 
-    llm_service.config.model = Model.GPT_5_6_LUNA
+    llm_service.config.model = Model.GPT_6_LUNA
 
     monkeypatch.setattr(
         LLMService, "_select_language_model", lambda self, language_model=None, **_kwargs: fake_llm
@@ -542,9 +540,8 @@ def test_create_ai_chain_tool_call_name_not_found_returns_content(llm_service, m
 @pytest.mark.parametrize(
     ("anthropic_model", "expected_temperature"),
     [
-        (Model.CLAUDE_FABLE_5_1, None),
-        (Model.CLAUDE_OPUS_5, None),
-        (Model.CLAUDE_SONNET_5, None),
+        (Model.CLAUDE_OPUS_5_5, None),
+        (Model.CLAUDE_SONNET_5_5, None),
         (Model.CLAUDE_HAIKU_4_5, 1),
     ],
 )
@@ -574,7 +571,7 @@ def test_select_language_model_returns_anthropic_client_for_anthropic_model(
 
 @pytest.mark.parametrize(
     "openai_model",
-    [Model.GPT_5_6_SOL, Model.GPT_5_6_TERRA, Model.GPT_5_6_LUNA],
+    [Model.GPT_6_1_SOL, Model.GPT_5_6_TERRA, Model.GPT_6_LUNA],
 )
 def test_select_language_model_returns_openai_client_for_openai_model(llm_service, monkeypatch, openai_model):
     captured = {}
@@ -590,16 +587,20 @@ def test_select_language_model_returns_openai_client_for_openai_model(llm_servic
 
     assert isinstance(result, FakeOpenAI)
     assert captured["model"] == openai_model.value
-    assert captured["temperature"] == 1
+    if openai_model == Model.GPT_5_6_TERRA:
+        assert captured["temperature"] == 1
+    else:
+        assert "temperature" not in captured
+    assert captured.get("use_responses_api", False) == (openai_model == Model.GPT_6_1_SOL)
     assert captured["max_retries"] == 3
     assert "reasoning_effort" not in captured
 
 
 @pytest.mark.parametrize(
     "openai_model",
-    [Model.GPT_5_6_SOL, Model.GPT_5_6_TERRA, Model.GPT_5_6_LUNA],
+    [Model.GPT_6_1_SOL, Model.GPT_5_6_TERRA, Model.GPT_6_LUNA],
 )
-def test_select_language_model_disables_reasoning_for_openai_function_tools(
+def test_select_language_model_sets_supported_reasoning_for_openai_function_tools(
     llm_service, monkeypatch, openai_model
 ):
     captured = {}
@@ -613,7 +614,12 @@ def test_select_language_model_disables_reasoning_for_openai_function_tools(
 
     llm_service._select_language_model(use_function_tools=True)
 
-    assert captured["reasoning_effort"] == "none"
+    assert captured["reasoning_effort"] == ("low" if openai_model == Model.GPT_6_1_SOL else "none")
+    if openai_model == Model.GPT_6_1_SOL:
+        assert captured["use_responses_api"] is True
+        assert "temperature" not in captured
+    else:
+        assert captured["temperature"] == 1
 
 
 def test_select_language_model_override_updates_config(llm_service, monkeypatch):
@@ -621,7 +627,7 @@ def test_select_language_model_override_updates_config(llm_service, monkeypatch)
 
     from src.configuration.models import Model
 
-    llm_service.config.model = Model.CLAUDE_SONNET_5
+    llm_service.config.model = Model.CLAUDE_SONNET_5_5
 
     class FakeOpenAI:
         def __init__(self, **kwargs):
@@ -629,11 +635,11 @@ def test_select_language_model_override_updates_config(llm_service, monkeypatch)
 
     monkeypatch.setattr("src.services.llm_service.ChatOpenAI", FakeOpenAI)
 
-    result = llm_service._select_language_model(language_model=Model.GPT_5_6_LUNA, override=True)
+    result = llm_service._select_language_model(language_model=Model.GPT_6_LUNA, override=True)
 
     assert isinstance(result, FakeOpenAI)
-    assert llm_service.config.model == Model.GPT_5_6_LUNA, "Config model should be updated when override=True"
-    assert result.kwargs["model"] == Model.GPT_5_6_LUNA.value
+    assert llm_service.config.model == Model.GPT_6_LUNA, "Config model should be updated when override=True"
+    assert result.kwargs["model"] == Model.GPT_6_LUNA.value
 
 
 def test_select_language_model_without_override_ignores_language_model_arg(llm_service, monkeypatch):
@@ -642,7 +648,7 @@ def test_select_language_model_without_override_ignores_language_model_arg(llm_s
 
     from src.configuration.models import Model
 
-    llm_service.config.model = Model.CLAUDE_SONNET_5
+    llm_service.config.model = Model.CLAUDE_SONNET_5_5
 
     class FakeAnthropic:
         def __init__(self, **kwargs):
@@ -650,13 +656,13 @@ def test_select_language_model_without_override_ignores_language_model_arg(llm_s
 
     monkeypatch.setattr("src.services.llm_service.ChatAnthropic", FakeAnthropic)
 
-    result = llm_service._select_language_model(language_model=Model.GPT_5_6_LUNA, override=False)
+    result = llm_service._select_language_model(language_model=Model.GPT_6_LUNA, override=False)
 
     assert isinstance(result, FakeAnthropic)
     assert (
-        llm_service.config.model == Model.CLAUDE_SONNET_5
+        llm_service.config.model == Model.CLAUDE_SONNET_5_5
     ), "Config model should remain unchanged when override=False"
-    assert result.kwargs["model_name"] == Model.CLAUDE_SONNET_5.value
+    assert result.kwargs["model_name"] == Model.CLAUDE_SONNET_5_5.value
 
 
 def test_select_language_model_propagates_initialization_error(llm_service, monkeypatch):
@@ -664,7 +670,7 @@ def test_select_language_model_propagates_initialization_error(llm_service, monk
 
     from src.configuration.models import Model
 
-    llm_service.config.model = Model.GPT_5_6_LUNA
+    llm_service.config.model = Model.GPT_6_LUNA
 
     def exploding_constructor(**_):
         raise RuntimeError("init failure")
@@ -678,9 +684,8 @@ def test_select_language_model_propagates_initialization_error(llm_service, monk
 @pytest.mark.parametrize(
     ("bedrock_model", "expected_temperature"),
     [
-        (Model.BEDROCK_CLAUDE_FABLE_5_1, None),
-        (Model.BEDROCK_CLAUDE_OPUS_5, None),
-        (Model.BEDROCK_CLAUDE_SONNET_5, None),
+        (Model.BEDROCK_CLAUDE_OPUS_5_5, None),
+        (Model.BEDROCK_CLAUDE_SONNET_5_5, None),
         (Model.BEDROCK_CLAUDE_HAIKU_4_5, 1),
     ],
 )
@@ -704,7 +709,7 @@ def test_select_language_model_returns_bedrock_client_for_bedrock_model(
     result = llm_service._select_language_model()
 
     assert isinstance(result, FakeBedrock)
-    assert captured["model"] == bedrock_model.value
+    assert captured["model"] == bedrock_model.bedrock_invocation_id
     assert captured["region_name"] == "us-west-2"
     assert captured["aws_access_key_id"].get_secret_value() == "test-access-key"
     assert captured["aws_secret_access_key"].get_secret_value() == "test-secret-key"
@@ -717,7 +722,7 @@ def test_select_language_model_returns_bedrock_client_for_bedrock_model(
 
 @pytest.mark.parametrize(
     "bedrock_model",
-    [Model.BEDROCK_GPT_5_6_SOL, Model.BEDROCK_GPT_5_6_TERRA, Model.BEDROCK_GPT_5_6_LUNA],
+    [Model.BEDROCK_GPT_6_1_SOL, Model.BEDROCK_GPT_5_6_TERRA, Model.BEDROCK_GPT_6_LUNA],
 )
 def test_select_language_model_bedrock_gpt_model(llm_service, monkeypatch, bedrock_model):
     """Test that Bedrock GPT models use correct model IDs."""
@@ -735,9 +740,13 @@ def test_select_language_model_bedrock_gpt_model(llm_service, monkeypatch, bedro
     result = llm_service._select_language_model()
 
     assert isinstance(result, FakeBedrock)
-    assert captured["model"] == bedrock_model.value
+    assert captured["model"] == bedrock_model.bedrock_invocation_id
     assert captured["region_name"] == "eu-west-1"
-    assert captured["temperature"] == 1
+    if bedrock_model == Model.BEDROCK_GPT_5_6_TERRA:
+        assert captured["temperature"] == 1
+    else:
+        assert "temperature" not in captured
+    assert captured["provider"] == "openai"
 
 
 def test_select_language_model_bedrock_gemini_model(llm_service, monkeypatch):
@@ -770,7 +779,7 @@ def test_select_language_model_bedrock_without_credentials(llm_service, monkeypa
         def __init__(self, **kwargs):
             captured.update(kwargs)
 
-    llm_service.config.model = Model.BEDROCK_CLAUDE_SONNET_5
+    llm_service.config.model = Model.BEDROCK_CLAUDE_SONNET_5_5
     llm_service.config.aws_region = "eu-west-1"
     llm_service.config.aws_access_key_id = ""  # No credentials provided
     llm_service.config.aws_secret_access_key = ""
@@ -780,7 +789,7 @@ def test_select_language_model_bedrock_without_credentials(llm_service, monkeypa
     result = llm_service._select_language_model()
 
     assert isinstance(result, FakeBedrock)
-    assert captured["model"] == Model.BEDROCK_CLAUDE_SONNET_5.value
+    assert captured["model"] == Model.BEDROCK_CLAUDE_SONNET_5_5.bedrock_invocation_id
     assert captured["region_name"] == "eu-west-1"
     # Verify credentials were NOT passed (will use AWS default credential chain)
     assert "aws_access_key_id" not in captured
@@ -795,7 +804,7 @@ def test_select_language_model_bedrock_default_region(llm_service, monkeypatch):
         def __init__(self, **kwargs):
             captured.update(kwargs)
 
-    llm_service.config.model = Model.BEDROCK_CLAUDE_SONNET_5
+    llm_service.config.model = Model.BEDROCK_CLAUDE_SONNET_5_5
     llm_service.config.aws_region = ""  # No region specified
     llm_service.config.aws_access_key_id = ""
     llm_service.config.aws_secret_access_key = ""
@@ -806,3 +815,167 @@ def test_select_language_model_bedrock_default_region(llm_service, monkeypatch):
 
     assert isinstance(result, FakeBedrock)
     assert captured["region_name"] == "us-east-1"  # Default region
+
+
+@pytest.mark.parametrize("first_call", [None, {"name": "unknown", "args": {}}, {"name": "save", "args": {}}])
+def test_required_tool_retries_invalid_response_and_counts_both_calls(
+    llm_service, monkeypatch, tmp_path, first_call
+):
+    from types import SimpleNamespace
+    from langchain_core.runnables import RunnableLambda
+    from pydantic import BaseModel
+
+    class Input(BaseModel):
+        value: int
+
+    class Tool:
+        name = "save"
+        args_schema = Input
+        calls = []
+
+        def invoke(self, args):
+            self.calls.append(args)
+            return args["value"]
+
+    usage = {"input_tokens": 100, "output_tokens": 20, "total_tokens": 120}
+    responses = iter(
+        [
+            SimpleNamespace(
+                content="prose", tool_calls=[first_call] if first_call else [], usage_metadata=usage
+            ),
+            SimpleNamespace(
+                content="", tool_calls=[{"name": "save", "args": {"value": 42}}], usage_metadata=usage
+            ),
+        ]
+    )
+    prompts = []
+
+    class LLM:
+        def bind_tools(self, tools, tool_choice):
+            assert tool_choice == "auto"
+            return self
+
+        def invoke(self, prompt):
+            prompts.append(prompt)
+            return next(responses)
+
+    llm_service.config.model = Model.CLAUDE_SONNET_5_5
+    monkeypatch.setattr(llm_service, "_select_language_model", lambda *args, **kwargs: LLM())
+    prompt_path = tmp_path / "prompt.txt"
+    prompt_path.write_text("Task: {task}")
+    tool = Tool()
+    chain = llm_service.create_ai_chain(str(prompt_path), tools=[tool], must_use_tool=True)
+    assert isinstance(chain.steps[1], RunnableLambda)
+    assert chain.invoke({"task": "save"}) == 42
+    assert tool.calls == [{"value": 42}]
+    assert len(prompts) == 2
+    assert "provided tools" in prompts[1][-1].content
+    assert prompts[1][0].content == "Task: save"
+    usage_total = llm_service.get_aggregated_usage_metadata()
+    assert usage_total.total_tokens == 240
+    assert len(usage_total.call_details) == 2
+    assert usage_total.total_cost == pytest.approx(0.0008)
+
+
+def test_required_tool_reports_failure_after_two_attempts(llm_service, monkeypatch, tmp_path):
+    from langchain_core.messages import AIMessage
+
+    class LLM:
+        calls = 0
+
+        def bind_tools(self, tools, tool_choice):
+            return self
+
+        def invoke(self, prompt):
+            self.calls += 1
+            return AIMessage(
+                content="I did not call a tool",
+                usage_metadata={
+                    "input_tokens": 10,
+                    "output_tokens": 5,
+                    "total_tokens": 15,
+                },
+            )
+
+    class Tool:
+        name = "save"
+
+        def invoke(self, args):
+            pytest.fail("No valid tool call was returned")
+
+    llm = LLM()
+    monkeypatch.setattr(llm_service, "_select_language_model", lambda *args, **kwargs: llm)
+    prompt_path = tmp_path / "prompt.txt"
+    prompt_path.write_text("Task: {task}")
+    chain = llm_service.create_ai_chain(str(prompt_path), tools=[Tool()], must_use_tool=True)
+    with pytest.raises(ValueError, match="after two attempts"):
+        chain.invoke({"task": "save"})
+    assert llm.calls == 2
+    assert llm_service.get_aggregated_usage_metadata().total_tokens == 30
+
+
+def test_text_chain_extracts_visible_structured_text(llm_service, monkeypatch, tmp_path):
+    from langchain_core.messages import AIMessage
+    from langchain_core.runnables import RunnableLambda
+
+    response = AIMessage(
+        content=[
+            {"type": "reasoning", "reasoning": "private"},
+            {"type": "text", "text": "visible "},
+            {"type": "text", "text": "answer"},
+        ]
+    )
+    monkeypatch.setattr(
+        llm_service, "_select_language_model", lambda *args, **kwargs: RunnableLambda(lambda prompt: response)
+    )
+    prompt_path = tmp_path / "prompt.txt"
+    prompt_path.write_text("{task}")
+    assert llm_service.create_ai_chain(str(prompt_path)).invoke({"task": "summarize"}) == "visible answer"
+
+
+@pytest.mark.parametrize("tool_kind", ["create", "create_json", "read"])
+def test_required_tool_executes_file_tools(llm_service, monkeypatch, tmp_path, tool_kind):
+    from langchain_core.messages import AIMessage
+    from src.ai_tools.file_creation_tool import FileCreationTool
+    from src.ai_tools.file_reading_tool import FileReadingTool
+
+    if tool_kind.startswith("create"):
+        tool = FileCreationTool(llm_service.config, llm_service.file_service)
+        args = {"files": [{"path": "sample.ts", "fileContent": "export const value = 1;"}]}
+        if tool_kind == "create_json":
+            import json
+
+            args["files"] = json.dumps(args["files"])
+    else:
+        (tmp_path / "sample.ts").write_text("export const value = 1;")
+        tool = FileReadingTool(llm_service.config, llm_service.file_service)
+        args = {"files": ["sample.ts"]}
+
+    class LLM:
+        def bind_tools(self, tools, tool_choice):
+            return self
+
+        def invoke(self, prompt):
+            return AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": tool.name,
+                        "args": args,
+                        "id": "call_1",
+                        "type": "tool_call",
+                    }
+                ],
+            )
+
+    monkeypatch.setattr(llm_service, "_select_language_model", lambda *args, **kwargs: LLM())
+    prompt_path = tmp_path / "prompt.txt"
+    prompt_path.write_text("{task}")
+    result = llm_service.create_ai_chain(str(prompt_path), tools=[tool], must_use_tool=True).invoke(
+        {"task": "work on sample.ts"}
+    )
+    assert (tmp_path / "sample.ts").read_text() == "export const value = 1;"
+    if tool_kind.startswith("create"):
+        assert "sample.ts" in result
+    else:
+        assert result[0].path == "sample.ts"

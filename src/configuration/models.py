@@ -8,28 +8,24 @@ class ModelCost(NamedTuple):
 
 
 class Model(Enum):
-    GPT_5_6_SOL = (
-        "gpt-5.6-sol",
-        ModelCost(input_cost_per_million_tokens=4.0, output_cost_per_million_tokens=20.0),
+    GPT_6_1_SOL = (
+        "gpt-6.1-sol",
+        ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=10.0),
     )
     GPT_5_6_TERRA = (
         "gpt-5.6-terra",
         ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=12.0),
     )
-    GPT_5_6_LUNA = (
-        "gpt-5.6-luna",
-        ModelCost(input_cost_per_million_tokens=0.2, output_cost_per_million_tokens=1.2),
+    GPT_6_LUNA = (
+        "gpt-6-luna",
+        ModelCost(input_cost_per_million_tokens=0.1, output_cost_per_million_tokens=0.5),
     )
-    CLAUDE_FABLE_5_1 = (
-        "claude-fable-5-1",
-        ModelCost(input_cost_per_million_tokens=10.0, output_cost_per_million_tokens=50.0),
+    CLAUDE_OPUS_5_5 = (
+        "claude-opus-5-5",
+        ModelCost(input_cost_per_million_tokens=4.0, output_cost_per_million_tokens=20.0),
     )
-    CLAUDE_OPUS_5 = (
-        "claude-opus-5",
-        ModelCost(input_cost_per_million_tokens=5.0, output_cost_per_million_tokens=25.0),
-    )
-    CLAUDE_SONNET_5 = (
-        "claude-sonnet-5",
+    CLAUDE_SONNET_5_5 = (
+        "claude-sonnet-5-5",
         ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=10.0),
     )
     CLAUDE_HAIKU_4_5 = (
@@ -50,35 +46,30 @@ class Model(Enum):
     )
     # Bedrock pricing can differ from direct Anthropic API pricing. These rates are estimates based
     # on the corresponding Anthropic base input/output rates, consistent with the existing cost model.
-    BEDROCK_CLAUDE_FABLE_5_1 = (
-        "anthropic.claude-fable-5-1",
-        ModelCost(input_cost_per_million_tokens=10.0, output_cost_per_million_tokens=50.0),
+    BEDROCK_CLAUDE_OPUS_5_5 = (
+        "anthropic.claude-opus-5-5",
+        ModelCost(input_cost_per_million_tokens=4.0, output_cost_per_million_tokens=20.0),
     )
-    BEDROCK_CLAUDE_OPUS_5 = (
-        "anthropic.claude-opus-5",
-        ModelCost(input_cost_per_million_tokens=5.0, output_cost_per_million_tokens=25.0),
-    )
-    BEDROCK_CLAUDE_SONNET_5 = (
-        "anthropic.claude-sonnet-5",
+    BEDROCK_CLAUDE_SONNET_5_5 = (
+        "anthropic.claude-sonnet-5-5",
         ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=10.0),
     )
     BEDROCK_CLAUDE_HAIKU_4_5 = (
         "anthropic.claude-haiku-4-5-20251001-v1:0",
         ModelCost(input_cost_per_million_tokens=1.0, output_cost_per_million_tokens=5.0),
     )
-    # Bedrock pricing can differ from direct OpenAI API pricing. These rates are estimates based on
-    # the corresponding OpenAI standard short-context rates, consistent with the existing cost model.
-    BEDROCK_GPT_5_6_SOL = (
-        "openai.gpt-5.6-sol",
-        ModelCost(input_cost_per_million_tokens=4.0, output_cost_per_million_tokens=20.0),
+    # Standard short-context estimates; Sol's US inference profile includes the 10% AWS premium.
+    BEDROCK_GPT_6_1_SOL = (
+        "openai.gpt-6.1-sol",
+        ModelCost(input_cost_per_million_tokens=2.2, output_cost_per_million_tokens=11.0),
     )
     BEDROCK_GPT_5_6_TERRA = (
         "openai.gpt-5.6-terra",
         ModelCost(input_cost_per_million_tokens=2.0, output_cost_per_million_tokens=12.0),
     )
-    BEDROCK_GPT_5_6_LUNA = (
-        "openai.gpt-5.6-luna",
-        ModelCost(input_cost_per_million_tokens=0.2, output_cost_per_million_tokens=1.2),
+    BEDROCK_GPT_6_LUNA = (
+        "openai.gpt-6-luna",
+        ModelCost(input_cost_per_million_tokens=0.1, output_cost_per_million_tokens=0.5),
     )
     BEDROCK_GEMINI_3_PRO_PREVIEW = (
         "google.gemini-3-pro-preview",
@@ -105,33 +96,59 @@ class Model(Enum):
 
     def is_anthropic(self) -> bool:
         return self in [
-            Model.CLAUDE_FABLE_5_1,
-            Model.CLAUDE_OPUS_5,
-            Model.CLAUDE_SONNET_5,
+            Model.CLAUDE_OPUS_5_5,
+            Model.CLAUDE_SONNET_5_5,
             Model.CLAUDE_HAIKU_4_5,
         ]
 
-    def uses_default_sampling(self) -> bool:
+    def uses_default_sampling(self, use_function_tools: bool = False) -> bool:
         """Whether provider-default sampling parameters must be omitted."""
         return self in [
-            Model.CLAUDE_FABLE_5_1,
-            Model.CLAUDE_OPUS_5,
-            Model.CLAUDE_SONNET_5,
-            Model.BEDROCK_CLAUDE_FABLE_5_1,
-            Model.BEDROCK_CLAUDE_OPUS_5,
-            Model.BEDROCK_CLAUDE_SONNET_5,
-        ]
+            Model.CLAUDE_OPUS_5_5,
+            Model.CLAUDE_SONNET_5_5,
+            Model.BEDROCK_CLAUDE_OPUS_5_5,
+            Model.BEDROCK_CLAUDE_SONNET_5_5,
+            Model.GPT_6_1_SOL,
+            Model.BEDROCK_GPT_6_1_SOL,
+            Model.BEDROCK_GPT_6_LUNA,
+        ] or (self == Model.GPT_6_LUNA and not use_function_tools)
 
-    def is_gpt_5_6(self) -> bool:
-        """Whether this is a direct or Bedrock GPT-5.6 model."""
-        return self in [
-            Model.GPT_5_6_SOL,
-            Model.GPT_5_6_TERRA,
-            Model.GPT_5_6_LUNA,
-            Model.BEDROCK_GPT_5_6_SOL,
-            Model.BEDROCK_GPT_5_6_TERRA,
-            Model.BEDROCK_GPT_5_6_LUNA,
-        ]
+    def is_openai(self) -> bool:
+        return self.value.startswith(("gpt-", "openai."))
+
+    def requires_responses_api(self) -> bool:
+        return self == Model.GPT_6_1_SOL
+
+    def tool_reasoning_effort(self) -> str:
+        """Direct OpenAI reasoning setting for function-tool requests."""
+        return "low" if self.requires_responses_api() else "none"
+
+    def supports_forced_tool_use(self) -> bool:
+        return self not in {
+            Model.CLAUDE_OPUS_5_5,
+            Model.CLAUDE_SONNET_5_5,
+            Model.BEDROCK_CLAUDE_OPUS_5_5,
+            Model.BEDROCK_CLAUDE_SONNET_5_5,
+            Model.BEDROCK_GPT_6_1_SOL,
+            Model.BEDROCK_GPT_6_LUNA,
+        }
+
+    @property
+    def bedrock_invocation_id(self) -> str:
+        """Resolve canonical configuration IDs to supported Runtime inference profiles."""
+        if self.value.startswith("anthropic.") or self == Model.BEDROCK_GPT_6_LUNA:
+            return f"global.{self.value}"
+        if self == Model.BEDROCK_GPT_6_1_SOL:
+            return f"us.{self.value}"
+        return self.value
+
+    @property
+    def bedrock_provider(self) -> str:
+        return self.value.split(".", 1)[0]
+
+    @property
+    def bedrock_tool_choice_values(self) -> tuple:
+        return ("auto", "any", "tool") if self.supports_forced_tool_use() else ("auto",)
 
     def is_google(self) -> bool:
         return self in [
@@ -142,13 +159,12 @@ class Model(Enum):
 
     def is_bedrock(self) -> bool:
         return self in [
-            Model.BEDROCK_CLAUDE_FABLE_5_1,
-            Model.BEDROCK_CLAUDE_OPUS_5,
-            Model.BEDROCK_CLAUDE_SONNET_5,
+            Model.BEDROCK_CLAUDE_OPUS_5_5,
+            Model.BEDROCK_CLAUDE_SONNET_5_5,
             Model.BEDROCK_CLAUDE_HAIKU_4_5,
-            Model.BEDROCK_GPT_5_6_SOL,
+            Model.BEDROCK_GPT_6_1_SOL,
             Model.BEDROCK_GPT_5_6_TERRA,
-            Model.BEDROCK_GPT_5_6_LUNA,
+            Model.BEDROCK_GPT_6_LUNA,
             Model.BEDROCK_GEMINI_3_PRO_PREVIEW,
             Model.BEDROCK_GEMINI_3_1_PRO_PREVIEW,
             Model.BEDROCK_GEMINI_3_FLASH,

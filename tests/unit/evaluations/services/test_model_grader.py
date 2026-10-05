@@ -21,7 +21,7 @@ def config():
         aws_access_key_id="test-access-key",
         aws_secret_access_key="test-secret-key",
         aws_region="us-west-2",
-        model=Model.CLAUDE_SONNET_5,
+        model=Model.CLAUDE_SONNET_5_5,
         destination_folder="test-folder",
         debug=False,
         langchain_debug=False,
@@ -37,9 +37,8 @@ def grader(config):
 @pytest.mark.parametrize(
     ("anthropic_model", "expected_temperature"),
     [
-        (Model.CLAUDE_FABLE_5_1, None),
-        (Model.CLAUDE_OPUS_5, None),
-        (Model.CLAUDE_SONNET_5, None),
+        (Model.CLAUDE_OPUS_5_5, None),
+        (Model.CLAUDE_SONNET_5_5, None),
         (Model.CLAUDE_HAIKU_4_5, 0),
     ],
 )
@@ -83,7 +82,7 @@ def test_get_llm_google(grader, monkeypatch):
 
 @pytest.mark.parametrize(
     "openai_model",
-    [Model.GPT_5_6_SOL, Model.GPT_5_6_TERRA, Model.GPT_5_6_LUNA],
+    [Model.GPT_6_1_SOL, Model.GPT_5_6_TERRA, Model.GPT_6_LUNA],
 )
 def test_get_llm_openai(grader, monkeypatch, openai_model):
     """Test LLM initialization for OpenAI models."""
@@ -100,19 +99,23 @@ def test_get_llm_openai(grader, monkeypatch, openai_model):
 
     assert isinstance(llm, FakeChatOpenAI)
     assert captured["model"] == openai_model.value
-    assert captured["temperature"] == 1
+    if openai_model == Model.GPT_5_6_TERRA:
+        assert captured["temperature"] == 1
+    else:
+        assert "temperature" not in captured
+    assert captured.get("use_responses_api", False) == (openai_model == Model.GPT_6_1_SOL)
+    assert "reasoning_effort" not in captured
 
 
 @pytest.mark.parametrize(
     ("bedrock_model", "expected_temperature"),
     [
-        (Model.BEDROCK_CLAUDE_FABLE_5_1, None),
-        (Model.BEDROCK_CLAUDE_OPUS_5, None),
-        (Model.BEDROCK_CLAUDE_SONNET_5, None),
+        (Model.BEDROCK_CLAUDE_OPUS_5_5, None),
+        (Model.BEDROCK_CLAUDE_SONNET_5_5, None),
         (Model.BEDROCK_CLAUDE_HAIKU_4_5, 0),
-        (Model.BEDROCK_GPT_5_6_SOL, 1),
+        (Model.BEDROCK_GPT_6_1_SOL, None),
         (Model.BEDROCK_GPT_5_6_TERRA, 1),
-        (Model.BEDROCK_GPT_5_6_LUNA, 1),
+        (Model.BEDROCK_GPT_6_LUNA, None),
     ],
 )
 def test_get_llm_bedrock_with_credentials(grader, monkeypatch, bedrock_model, expected_temperature):
@@ -123,7 +126,7 @@ def test_get_llm_bedrock_with_credentials(grader, monkeypatch, bedrock_model, ex
         def __init__(self, **kwargs):
             captured.update(kwargs)
 
-    monkeypatch.setattr("langchain_aws.ChatBedrock", FakeChatBedrock)
+    monkeypatch.setattr("langchain_aws.ChatBedrockConverse", FakeChatBedrock)
 
     grader.config.model = bedrock_model
     grader.config.aws_access_key_id = "test-access-key"
@@ -133,14 +136,14 @@ def test_get_llm_bedrock_with_credentials(grader, monkeypatch, bedrock_model, ex
     llm = grader._get_llm()
 
     assert isinstance(llm, FakeChatBedrock)
-    assert captured["model_id"] == bedrock_model.value
+    assert captured["model"] == bedrock_model.bedrock_invocation_id
     assert captured["region_name"] == "eu-west-1"
-    assert captured["aws_access_key_id"] == "test-access-key"
-    assert captured["aws_secret_access_key"] == "test-secret-key"
+    assert captured["aws_access_key_id"].get_secret_value() == "test-access-key"
+    assert captured["aws_secret_access_key"].get_secret_value() == "test-secret-key"
     if expected_temperature is None:
-        assert "temperature" not in captured["model_kwargs"]
+        assert "temperature" not in captured
     else:
-        assert captured["model_kwargs"]["temperature"] == expected_temperature
+        assert captured["temperature"] == expected_temperature
 
 
 def test_get_llm_bedrock_without_credentials(grader, monkeypatch):
@@ -151,9 +154,9 @@ def test_get_llm_bedrock_without_credentials(grader, monkeypatch):
         def __init__(self, **kwargs):
             captured.update(kwargs)
 
-    monkeypatch.setattr("langchain_aws.ChatBedrock", FakeChatBedrock)
+    monkeypatch.setattr("langchain_aws.ChatBedrockConverse", FakeChatBedrock)
 
-    grader.config.model = Model.BEDROCK_CLAUDE_SONNET_5
+    grader.config.model = Model.BEDROCK_CLAUDE_SONNET_5_5
     grader.config.aws_access_key_id = ""
     grader.config.aws_secret_access_key = ""
     grader.config.aws_region = "ap-southeast-2"
@@ -161,7 +164,7 @@ def test_get_llm_bedrock_without_credentials(grader, monkeypatch):
     llm = grader._get_llm()
 
     assert isinstance(llm, FakeChatBedrock)
-    assert captured["model_id"] == Model.BEDROCK_CLAUDE_SONNET_5.value
+    assert captured["model"] == Model.BEDROCK_CLAUDE_SONNET_5_5.bedrock_invocation_id
     assert captured["region_name"] == "ap-southeast-2"
     assert "aws_access_key_id" not in captured
     assert "aws_secret_access_key" not in captured
@@ -175,9 +178,9 @@ def test_get_llm_bedrock_default_region(grader, monkeypatch):
         def __init__(self, **kwargs):
             captured.update(kwargs)
 
-    monkeypatch.setattr("langchain_aws.ChatBedrock", FakeChatBedrock)
+    monkeypatch.setattr("langchain_aws.ChatBedrockConverse", FakeChatBedrock)
 
-    grader.config.model = Model.BEDROCK_GPT_5_6_SOL
+    grader.config.model = Model.BEDROCK_GPT_6_1_SOL
     grader.config.aws_access_key_id = ""
     grader.config.aws_secret_access_key = ""
     grader.config.aws_region = ""

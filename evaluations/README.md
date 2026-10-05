@@ -117,7 +117,7 @@ Before running evaluations:
 ```bash
 # All datasets
 python evaluations/evaluation_runner_main.py \
-  --all --llms CLAUDE_SONNET_5 --grader CLAUDE_SONNET_5
+  --all --llms CLAUDE_SONNET_5_5 --grader CLAUDE_SONNET_5_5
 
 # Single dataset
 python evaluations/evaluation_runner_main.py \
@@ -135,13 +135,13 @@ python evaluations/evaluation_runner_main.py \
 
 # Smoke test: run test_001 from every dataset
 python evaluations/evaluation_runner_main.py \
-  --all --test-ids test_001 --llms CLAUDE_SONNET_5
+  --all --test-ids test_001 --llms CLAUDE_SONNET_5_5
 
 # Multiple LLMs with specific grader
 python evaluations/evaluation_runner_main.py \
   --test-data-folder evaluations/data/generate_first_test_dataset \
-  --llms GPT_5_6_SOL,CLAUDE_SONNET_5 \
-  --grader CLAUDE_SONNET_5
+  --llms GPT_6_1_SOL,CLAUDE_SONNET_5_5 \
+  --grader CLAUDE_SONNET_5_5
 ```
 
 ### Arguments
@@ -295,11 +295,16 @@ Tests whether the LLM invents things not in the API spec:
 
 ## Model Grading
 
-The grader uses `temperature=0` where the provider supports it. Claude 5 models use Anthropic's required default sampling settings. Scores are computed deterministically as `criteria_met / total_criteria` regardless of the LLM's freeform score field.
+The grader uses `temperature=0` for Google and Haiku, and `temperature=1` for Terra.
+Opus 5.5, Sonnet 5.5, Sol 6.1, and Luna 6 omit sampling parameters and use provider-default
+reasoning effort. Direct Sol uses the Responses API; the selected Anthropic/OpenAI Bedrock
+models use Converse. Scores are computed deterministically as `criteria_met / total_criteria`
+regardless of the LLM's freeform score field. See the main README for model migration and
+Bedrock inference-profile routing.
 
 ### Configuring the Grader Model
 
 The grader model can be configured via (in order of precedence):
-1. `--grader CLAUDE_SONNET_5` (CLI argument)
-2. `GRADER_MODEL=claude-sonnet-5` (environment variable)
+1. `--grader CLAUDE_SONNET_5_5` (CLI argument)
+2. `GRADER_MODEL=claude-sonnet-5-5` (environment variable)
 3. `MODEL` from `.env` (fallback)
