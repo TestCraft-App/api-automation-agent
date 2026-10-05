@@ -1,0 +1,301 @@
+{
+  "dataset_name": "generate_models_dataset",
+  "llm_model": "gpt-5.6-terra",
+  "total_test_cases": 7,
+  "graded_count": 7,
+  "not_evaluated_count": 0,
+  "error_count": 0,
+  "total_input_tokens": 26725,
+  "total_output_tokens": 2089,
+  "total_cost": 0.078518,
+  "average_score": 0.7000000000000001,
+  "generated_files_path": "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736",
+  "results": [
+    {
+      "test_id": "test_002",
+      "test_case_name": "list_users_models",
+      "api_definition_file": "users_get_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736\\test_002\\src\\models\\services\\UserService.ts"
+      ],
+      "grade_result": {
+        "score": 0.0,
+        "evaluation": [
+          {
+            "criteria": "Generate a Service Model file for the User service, containing the getUsers method",
+            "met": false,
+            "details": "A UserService file exists, but its method is named listUsers rather than getUsers. The criterion asks for getUsers, so the method name does not match."
+          },
+          {
+            "criteria": "Generate a Response Model file for the User response body",
+            "met": false,
+            "details": "No User response model file was generated. UserService only imports a generic Response class from another file that is not provided."
+          },
+          {
+            "criteria": "Ensure the generated models include id, name, and email properties",
+            "met": false,
+            "details": "No generated model defines id, name, or email properties."
+          }
+        ],
+        "reasoning": "Only the service file was produced, and its method is named listUsers instead of getUsers. There is no User response model and no id, name, or email properties, so the criteria are essentially unmet."
+      },
+      "evaluation_criteria": [
+        "Generate a Service Model file for the User service, containing the getUsers method",
+        "Generate a Response Model file for the User response body",
+        "Ensure the generated models include id, name, and email properties"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_003",
+      "test_case_name": "get_users_by_id_models",
+      "api_definition_file": "users_get_by_id_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736\\test_003\\src\\models\\services\\UsersService.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736\\test_003\\src\\models\\responses\\UserResponse.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Generate a Service Model file for the User service, containing the getUserById method",
+            "met": true,
+            "details": "UsersService.ts defines UsersService extending ServiceBase with an async getUserById method that GETs /users/{id} and returns Response<UserResponse>."
+          },
+          {
+            "criteria": "Generate a Response Model file for the User response body",
+            "met": true,
+            "details": "UserResponse.ts exports a UserResponse interface that is used by the service as the response body type."
+          },
+          {
+            "criteria": "Ensure the generated models include id, name, and email properties",
+            "met": true,
+            "details": "The UserResponse interface includes id (number), name (string), and email (string), plus an extra age property."
+          }
+        ],
+        "reasoning": "Both the service model with getUserById and the UserResponse model were generated, and the response model includes id, name, and email. All criteria are satisfied."
+      },
+      "evaluation_criteria": [
+        "Generate a Service Model file for the User service, containing the getUserById method",
+        "Generate a Response Model file for the User response body",
+        "Ensure the generated models include id, name, and email properties"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_001",
+      "test_case_name": "create_users_models",
+      "api_definition_file": "users_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736\\test_001\\src\\models\\services\\UserService.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736\\test_001\\src\\models\\requests\\UserRequestModel.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Generate a Service Model file for the User service, containing the createUser method",
+            "met": true,
+            "details": "UserService.ts defines a UserService class extending ServiceBase with an async createUser method that POSTs to the /users URL."
+          },
+          {
+            "criteria": "Generate a Request Model file for the User request body",
+            "met": true,
+            "details": "UserRequestModel.ts exports a UserRequestModel interface to represent the user request body."
+          },
+          {
+            "criteria": "Ensure the generated models include id, name, and email properties",
+            "met": true,
+            "details": "UserRequestModel includes optional id, name, and email properties, plus age. The service model has no properties of its own, so this applies to the request model."
+          }
+        ],
+        "reasoning": "All three criteria are met: the service file has createUser, the request model file exists, and it includes id, name, and email. A small deduction because createUser takes `unknown` and casts it to UserRequestModel, which is weak typing."
+      },
+      "evaluation_criteria": [
+        "Generate a Service Model file for the User service, containing the createUser method",
+        "Generate a Request Model file for the User request body",
+        "Ensure the generated models include id, name, and email properties"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_004",
+      "test_case_name": "update_users_models",
+      "api_definition_file": "users_put_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736\\test_004\\src\\models\\services\\UsersService.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736\\test_004\\src\\models\\requests\\UpdateUserRequest.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736\\test_004\\src\\models\\responses\\User.ts"
+      ],
+      "grade_result": {
+        "score": 0.75,
+        "evaluation": [
+          {
+            "criteria": "Generate a Service Model file for the User service, containing the updateUser method",
+            "met": true,
+            "details": "UsersService.ts exists and defines an updateUser method that sends a PUT request. The parameters are typed as unknown and the UpdateUserRequest import is unused, but the method is present."
+          },
+          {
+            "criteria": "Generate a Request Model file for the User request body",
+            "met": true,
+            "details": "UpdateUserRequest.ts exists and defines an interface for the request body."
+          },
+          {
+            "criteria": "Generate a Response Model file for the User response body (may be the same as the Request Model file)",
+            "met": true,
+            "details": "User.ts exists in the responses folder and defines the User response model."
+          },
+          {
+            "criteria": "Ensure the generated models include id, name, and email properties",
+            "met": false,
+            "details": "The User response model has id, name and email, but UpdateUserRequest omits id. It has only name, email and age, so the request model does not fully satisfy the criterion."
+          }
+        ],
+        "reasoning": "All three required files were generated, and the User response model has id, name and email. The request model lacks id, and the service uses unknown types and leaves the request import unused, so the score is reduced."
+      },
+      "evaluation_criteria": [
+        "Generate a Service Model file for the User service, containing the updateUser method",
+        "Generate a Request Model file for the User request body",
+        "Generate a Response Model file for the User response body. This could be the same as the Request Model file.",
+        "Ensure the generated models include id, name, and email properties"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_005",
+      "test_case_name": "delete_users_models",
+      "api_definition_file": "users_delete_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736\\test_005\\src\\models\\services\\UserService.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Generate a Service Model file for the User service, containing the deleteUser method",
+            "met": true,
+            "details": "src/models/services/UserService.ts defines UserService extending ServiceBase, with an async deleteUser method that calls this.delete on `${this.url}/${userId}`."
+          },
+          {
+            "criteria": "No other files should be generated",
+            "met": true,
+            "details": "Only one file, UserService.ts, was generated."
+          }
+        ],
+        "reasoning": "The single generated file is a User service model containing deleteUser, and no other files were produced, so both criteria are met."
+      },
+      "evaluation_criteria": [
+        "Generate a Service Model file for the User service, containing the deleteUser method",
+        "No other files should be generated"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_006",
+      "test_case_name": "patch_users_models",
+      "api_definition_file": "users_patch_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736\\test_006\\src\\models\\services\\UserService.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736\\test_006\\src\\models\\requests\\PatchUserRequest.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736\\test_006\\src\\models\\responses\\User.ts"
+      ],
+      "grade_result": {
+        "score": 0.75,
+        "evaluation": [
+          {
+            "criteria": "Generate a Service Model file for the User service, containing the patchUser method",
+            "met": true,
+            "details": "UserService.ts is generated and extends ServiceBase. It contains an async patchUser method that issues a PATCH request to /users/{userId}."
+          },
+          {
+            "criteria": "Generate a Request Model file for the User request body",
+            "met": true,
+            "details": "PatchUserRequest.ts is generated with optional name, email, and age properties, which is a valid request body model."
+          },
+          {
+            "criteria": "Generate a Response Model file for the User response body. This could be the same as the Request Model file.",
+            "met": true,
+            "details": "User.ts is generated under responses as the response model. The service does not reference it, since it returns a generic Response<T>, but the file exists."
+          },
+          {
+            "criteria": "Ensure the generated models include id, name, and email properties",
+            "met": false,
+            "details": "User.ts includes id, name, and email. PatchUserRequest.ts omits id and has only name, email, and age, so the models do not all include id."
+          }
+        ],
+        "reasoning": "The service, request, and response files are all present. The request model lacks the id property, so the last criterion is only partly satisfied, which lowers the score."
+      },
+      "evaluation_criteria": [
+        "Generate a Service Model file for the User service, containing the patchUser method",
+        "Generate a Request Model file for the User request body",
+        "Generate a Response Model file for the User response body. This could be the same as the Request Model file.",
+        "Ensure the generated models include id, name, and email properties"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_007",
+      "test_case_name": "full_users_api_models",
+      "api_definition_file": "users_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736\\test_007\\src\\models\\services\\UsersService.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736\\test_007\\src\\models\\requests\\CreateUserRequest.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736\\test_007\\src\\models\\requests\\UpdateUserRequest.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\generate_models_dataset_20261004_215736\\test_007\\src\\models\\requests\\PatchUserRequest.ts"
+      ],
+      "grade_result": {
+        "score": 0.4,
+        "evaluation": [
+          {
+            "criteria": "Generate a Service Model file for the User service, containing listUsers, createUser, getUserById, updateUser, patchUser, and deleteUser methods",
+            "met": true,
+            "details": "UsersService.ts defines all six methods: listUsers, createUser, getUserById, updateUser, patchUser, and deleteUser."
+          },
+          {
+            "criteria": "Generate Request Model files for createUser, updateUser, and patchUser payloads. Some of the files could be the same.",
+            "met": true,
+            "details": "CreateUserRequest, UpdateUserRequest, and PatchUserRequest files were generated, each with name, email, and age."
+          },
+          {
+            "criteria": "Generate Response Model files for listUsers, getUserById, updateUser, and patchUser operations. Some of the files could be the same.",
+            "met": false,
+            "details": "No response model files were provided. The service imports ../responses/Response.js, but it is not among the generated files, and it is generic rather than operation-specific."
+          },
+          {
+            "criteria": "Ensure models reuse shared User schemas where appropriate and include id, name, email, and age properties",
+            "met": false,
+            "details": "No shared User model exists. The request models lack an id property and each duplicates the same fields instead of reusing a common schema."
+          },
+          {
+            "criteria": "Generate an ErrorResponse model.",
+            "met": false,
+            "details": "No ErrorResponse model file was generated."
+          }
+        ],
+        "reasoning": "The service and request models are present, but the response models, shared User schema with id, and ErrorResponse model are all missing, so only two of five criteria are met."
+      },
+      "evaluation_criteria": [
+        "Generate a Service Model file for the User service, containing listUsers, createUser, getUserById, updateUser, patchUser, and deleteUser methods",
+        "Generate Request Model files for createUser, updateUser, and patchUser payloads. Some of the files could be the same.",
+        "Generate Response Model files for listUsers, getUserById, updateUser, and patchUser operations. Some of the files could be the same.",
+        "Ensure models reuse shared User schemas where appropriate and include id, name, email, and age properties",
+        "Generate an ErrorResponse model."
+      ],
+      "eval_method": null
+    }
+  ]
+}

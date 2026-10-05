@@ -1,0 +1,310 @@
+{
+  "dataset_name": "ecommerce_models_dataset",
+  "llm_model": "gpt-6-luna",
+  "total_test_cases": 7,
+  "graded_count": 7,
+  "not_evaluated_count": 0,
+  "error_count": 0,
+  "total_input_tokens": 31739,
+  "total_output_tokens": 2412,
+  "total_cost": 0.0043799,
+  "average_score": 0.4785714285714286,
+  "generated_files_path": "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\ecommerce_models_dataset_20261004_214650",
+  "results": [
+    {
+      "test_id": "test_002",
+      "test_case_name": "product_list_models",
+      "api_definition_file": "test_002_products_get_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\ecommerce_models_dataset_20261004_214650\\test_002\\src\\models\\services\\ProductsServiceV1.ts"
+      ],
+      "grade_result": {
+        "score": 0.3333333333333333,
+        "evaluation": [
+          {
+            "criteria": "Generate a ProductService with listProducts method accepting query parameters",
+            "met": true,
+            "details": "ProductsServiceV1 defines listProducts(params, config), which passes the params as query parameters to the GET call. However, params is typed as unknown rather than a specific query-parameter type."
+          },
+          {
+            "criteria": "Generate response model with products array, total, page, limit fields",
+            "met": false,
+            "details": "No response model with products, total, page, and limit fields was generated. The file only imports a generic Response<T> from elsewhere."
+          },
+          {
+            "criteria": "Properly type the product items in the array",
+            "met": false,
+            "details": "No Product type or interface exists. The method returns a generic Response<T> with no concrete product typing."
+          }
+        ],
+        "reasoning": "Only the service class with listProducts was generated. The response model with products, total, page, and limit fields and the product item typing are missing, and the params type is a loose unknown."
+      },
+      "evaluation_criteria": [
+        "Generate a ProductService with listProducts method accepting query parameters",
+        "Generate response model with products array, total, page, limit fields",
+        "Properly type the product items in the array"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_004",
+      "test_case_name": "order_get_models",
+      "api_definition_file": "test_004_orders_get_by_id_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\ecommerce_models_dataset_20261004_214650\\test_004\\src\\models\\services\\OrdersServiceV1.ts"
+      ],
+      "grade_result": {
+        "score": 0.3333333333333333,
+        "evaluation": [
+          {
+            "criteria": "Generate OrderService with getOrderById method taking orderId parameter",
+            "met": true,
+            "details": "OrdersServiceV1 has a getOrderById method that takes an orderId parameter and calls the base get. The class is named OrdersServiceV1 rather than OrderService, which is a minor naming deviation."
+          },
+          {
+            "criteria": "Response type should include nested items array and shippingAddress",
+            "met": false,
+            "details": "The method uses a generic Response<T> with no concrete order type. No items array or shippingAddress is defined anywhere in the file."
+          },
+          {
+            "criteria": "Path parameter should be properly typed as string",
+            "met": false,
+            "details": "orderId is typed as unknown, not string."
+          }
+        ],
+        "reasoning": "Only the basic method structure is present. The response model with nested items and shippingAddress is missing, and orderId is typed as unknown instead of string."
+      },
+      "evaluation_criteria": [
+        "Generate OrderService with getOrderById method taking orderId parameter",
+        "Response type should include nested items array and shippingAddress",
+        "Path parameter should be properly typed as string"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_003",
+      "test_case_name": "order_models_nested",
+      "api_definition_file": "test_003_orders_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\ecommerce_models_dataset_20261004_214650\\test_003\\src\\models\\services\\OrdersServiceV1.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\ecommerce_models_dataset_20261004_214650\\test_003\\src\\models\\requests\\CreateOrderRequest.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\ecommerce_models_dataset_20261004_214650\\test_003\\src\\models\\responses\\OrderResponse.ts"
+      ],
+      "grade_result": {
+        "score": 0.6,
+        "evaluation": [
+          {
+            "criteria": "Generate OrderModel with nested items array (OrderItemModel type)",
+            "met": false,
+            "details": "OrderResponse has an items array, but its element type is an inline anonymous object. There is no OrderItemModel type and no file named OrderModel."
+          },
+          {
+            "criteria": "Generate ShippingAddress interface as a nested object type",
+            "met": false,
+            "details": "shippingAddress is an inline object literal type in both CreateOrderRequest and OrderResponse. No separate ShippingAddress interface exists."
+          },
+          {
+            "criteria": "Generate OrderService with createOrder method",
+            "met": true,
+            "details": "OrdersServiceV1 has a createOrder method that posts to /v1/orders. It types the order parameter as unknown rather than CreateOrderRequest, and the CreateOrderRequest import is unused. The name is OrdersServiceV1 rather than OrderService, but the criterion is substantially met."
+          },
+          {
+            "criteria": "Properly type status as enum or string literal union",
+            "met": true,
+            "details": "status is typed as the union \"pending\" | \"confirmed\" | \"shipped\" | \"delivered\" | \"cancelled\"."
+          },
+          {
+            "criteria": "Handle datetime (createdAt) as string type",
+            "met": true,
+            "details": "createdAt is typed as string."
+          }
+        ],
+        "reasoning": "The status union, the string createdAt and the createOrder service method are present. The separate OrderItemModel and ShippingAddress types are missing because everything is inlined, and the service is loosely typed with an unused import."
+      },
+      "evaluation_criteria": [
+        "Generate OrderModel with nested items array (OrderItemModel type)",
+        "Generate ShippingAddress interface as a nested object type",
+        "Generate OrderService with createOrder method",
+        "Properly type status as enum or string literal union",
+        "Handle datetime (createdAt) as string type"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_001",
+      "test_case_name": "product_models",
+      "api_definition_file": "test_001_products_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\ecommerce_models_dataset_20261004_214650\\test_001\\src\\models\\services\\ProductServiceV1.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\ecommerce_models_dataset_20261004_214650\\test_001\\src\\models\\requests\\ProductRequest.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\ecommerce_models_dataset_20261004_214650\\test_001\\src\\models\\responses\\ProductResponse.ts"
+      ],
+      "grade_result": {
+        "score": 0.75,
+        "evaluation": [
+          {
+            "criteria": "Generate a ProductModel interface with name (string), price (number), description (optional string), category (string), inStock (optional boolean), tags (optional string[])",
+            "met": false,
+            "details": "No ProductModel interface exists. ProductRequest and ProductResponse were generated instead, and in both name, price and category are optional rather than required, so the required/optional spec is not followed."
+          },
+          {
+            "criteria": "Generate a ProductService class with createProduct method",
+            "met": true,
+            "details": "ProductServiceV1 is a class with a createProduct method. The name differs slightly from ProductService, but the intent is met."
+          },
+          {
+            "criteria": "Service method should use proper generic type parameter",
+            "met": true,
+            "details": "createProduct<T> returns Promise<Response<T>> and passes T to this.post<T>. However, the product parameter is typed unknown and then cast, which is weak typing."
+          },
+          {
+            "criteria": "All imports should use .js extensions",
+            "met": true,
+            "details": "All three imports in ProductServiceV1.ts (ServiceBase, ProductRequest, Response) end in .js."
+          }
+        ],
+        "reasoning": "The service class has a generic method and its imports use .js extensions. The required ProductModel interface is missing, and the generated request/response interfaces make required fields optional. The `unknown` parameter type is also weak."
+      },
+      "evaluation_criteria": [
+        "Generate a ProductModel interface with name (string), price (number), description (optional string), category (string), inStock (optional boolean), tags (optional string[])",
+        "Generate a ProductService class with createProduct method",
+        "Service method should use proper generic type parameter",
+        "All imports should use .js extensions"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_006",
+      "test_case_name": "search_models",
+      "api_definition_file": "test_006_products_search_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\ecommerce_models_dataset_20261004_214650\\test_006\\src\\models\\services\\ProductsSearchServiceV1.ts"
+      ],
+      "grade_result": {
+        "score": 0.3333333333333333,
+        "evaluation": [
+          {
+            "criteria": "Generate ProductService with searchProducts method",
+            "met": true,
+            "details": "The generated class is named ProductsSearchServiceV1 rather than ProductService, but it does define a searchProducts method. This is close enough to count as met."
+          },
+          {
+            "criteria": "Method should accept query string and optional sort parameter",
+            "met": false,
+            "details": "The method takes a required q and an optional sort, but both are typed as unknown instead of string, so the query string requirement is only loosely satisfied. The parameter shape is correct and the typing is weak."
+          },
+          {
+            "criteria": "Response model should include results array, total, and query fields",
+            "met": false,
+            "details": "No response model is defined. The method returns a generic Response<T> and nothing declares results, total, or query fields."
+          }
+        ],
+        "reasoning": "The service and method exist and have the right parameter shape, but the typing is weak (unknown instead of string) and there is no response model with results, total, and query fields."
+      },
+      "evaluation_criteria": [
+        "Generate ProductService with searchProducts method",
+        "Method should accept query string and optional sort parameter",
+        "Response model should include results array, total, and query fields"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_007",
+      "test_case_name": "product_array_boolean_types",
+      "api_definition_file": "test_001_products_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\ecommerce_models_dataset_20261004_214650\\test_007\\src\\models\\services\\ProductsServiceV1.ts"
+      ],
+      "grade_result": {
+        "score": 0.0,
+        "evaluation": [
+          {
+            "criteria": "tags field should be typed as string[] or Array<string>",
+            "met": false,
+            "details": "No tags field or product type is defined. The product parameter is typed as `unknown`."
+          },
+          {
+            "criteria": "inStock field should be typed as boolean",
+            "met": false,
+            "details": "No inStock field exists anywhere in the file."
+          },
+          {
+            "criteria": "price field should be typed as number",
+            "met": false,
+            "details": "No price field is defined. The product is typed as `unknown`."
+          },
+          {
+            "criteria": "Optional fields should use ? syntax or be marked as optional",
+            "met": false,
+            "details": "No interface or type has any fields, so there are no optional fields marked with `?`. The only optional element is the `config` parameter's default value, which is unrelated to product fields."
+          }
+        ],
+        "reasoning": "The file only defines a service class with a `createProduct` method that takes `product: unknown`. It has no product model with tags, inStock, price, or optional fields, so none of the criteria are satisfied."
+      },
+      "evaluation_criteria": [
+        "tags field should be typed as string[] or Array<string>",
+        "inStock field should be typed as boolean",
+        "price field should be typed as number",
+        "Optional fields should use ? syntax or be marked as optional"
+      ],
+      "eval_method": null
+    },
+    {
+      "test_id": "test_005",
+      "test_case_name": "payment_models_nested_resource",
+      "api_definition_file": "test_005_payments_post_api.yaml",
+      "status": "GRADED",
+      "error_message": null,
+      "generated_files": [
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\ecommerce_models_dataset_20261004_214650\\test_005\\src\\models\\services\\OrderPaymentsServiceV1.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\ecommerce_models_dataset_20261004_214650\\test_005\\src\\models\\requests\\CreatePaymentRequest.ts",
+        "C:\\repos\\api-automation-agent\\evaluations\\reports\\run_20261004_213953\\generated-files\\ecommerce_models_dataset_20261004_214650\\test_005\\src\\models\\responses\\PaymentResponse.ts"
+      ],
+      "grade_result": {
+        "score": 1.0,
+        "evaluation": [
+          {
+            "criteria": "Generate PaymentModel with amount (number), currency (enum), method (enum)",
+            "met": true,
+            "details": "CreatePaymentRequest has amount as number and currency and method as string literal unions, which work as enums. It is named CreatePaymentRequest rather than PaymentModel, but it carries the required fields. A separate PaymentResponse also exists."
+          },
+          {
+            "criteria": "Generate PaymentService with createPayment method taking orderId and payment",
+            "met": true,
+            "details": "OrderPaymentsServiceV1 has createPayment(orderId, payment, config). The class name differs from PaymentService, and the parameters are typed `unknown` instead of using CreatePaymentRequest. The CreatePaymentRequest import is unused."
+          },
+          {
+            "criteria": "Enum values should be properly typed (USD/EUR/GBP for currency)",
+            "met": true,
+            "details": "currency is typed as the union \"USD\" | \"EUR\" | \"GBP\", and method has proper literal values."
+          },
+          {
+            "criteria": "Service method path should include /orders/{orderId}/payments",
+            "met": true,
+            "details": "The path is built as `${this.url}/${orderId}/payments` with the base URL \"/orders\", giving /orders/{orderId}/payments."
+          }
+        ],
+        "reasoning": "All four criteria are met in substance, with unions standing in for enums. Deductions are for the naming deviations (PaymentModel, PaymentService), the `unknown` parameter types instead of the request model, and the unused import."
+      },
+      "evaluation_criteria": [
+        "Generate PaymentModel with amount (number), currency (enum), method (enum)",
+        "Generate PaymentService with createPayment method taking orderId and payment",
+        "Enum values should be properly typed (USD/EUR/GBP for currency)",
+        "Service method path should include /orders/{orderId}/payments"
+      ],
+      "eval_method": null
+    }
+  ]
+}
